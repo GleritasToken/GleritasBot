@@ -36,7 +36,7 @@ const Header: React.FC = () => {
           <Button 
             variant="secondary"
             size="sm"
-            className="bg-white text-primary-600 hover:bg-primary-50"
+            className="bg-white text-black hover:bg-primary-50"
             onClick={handleConnectWallet}
             disabled={connecting}
           >
