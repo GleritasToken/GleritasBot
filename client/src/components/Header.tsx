@@ -6,7 +6,6 @@ import { useUser } from '@/providers/UserProvider';
 
 const Header: React.FC = () => {
   const { user, connectWallet } = useUser();
-  const { theme, setTheme } = useTheme();
   const [location, navigate] = useLocation();
   const [connecting, setConnecting] = useState(false);
 
@@ -22,7 +21,7 @@ const Header: React.FC = () => {
   };
 
   return (
-    <header className="bg-primary-600 dark:bg-gray-900 shadow-md">
+    <header className="bg-[#12243B] shadow-md">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
         <div className="flex items-center space-x-2">
           <div className="rounded-full bg-white p-2 flex items-center justify-center">
@@ -33,22 +32,7 @@ const Header: React.FC = () => {
             <p className="text-primary-100 text-xs">Token Airdrop</p>
           </div>
         </div>
-        <div className="flex items-center space-x-4">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="bg-white/10 hover:bg-white/20 text-white"
-            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-          >
-            {theme === 'dark' ? (
-              <Sun className="h-4 w-4 mr-2" />
-            ) : (
-              <Moon className="h-4 w-4 mr-2" />
-            )}
-            <span className="hidden sm:inline">
-              {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
-            </span>
-          </Button>
+        <div className="flex items-center">
           <Button 
             variant="secondary"
             size="sm"
