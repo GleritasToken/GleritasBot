@@ -1,3 +1,7 @@
-run = "npm run start"
-build = ["npm", "run", "build"]
-ignorePorts = false
+{
+  "build": ["npm", "run", "build"],
+  "run": ["npm", "run", "start"],
+  "deployment": {
+    "deploymentTarget": "cloudrun"
+  }
+}
