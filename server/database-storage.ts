@@ -59,8 +59,8 @@ export class DatabaseStorage implements IStorage {
   }
   
   async createUser(insertUser: InsertUser): Promise<User> {
-    // Generate a unique referral code if not provided
-    const referralCode = insertUser.referralCode || this.generateReferralCode();
+    // Use the username as the referral code (Telegram username)
+    const referralCode = insertUser.username;
     
     // Create user with proper default values for nullable fields
     const userData = {
@@ -270,10 +270,7 @@ export class DatabaseStorage implements IStorage {
     return result[0];
   }
   
-  // Helper methods
-  private generateReferralCode(): string {
-    return crypto.randomBytes(4).toString('hex');
-  }
+  // No longer needed as we use the username directly as the referral code
   
   // Initialize default tasks
   async initializeDefaultTasks(): Promise<void> {
