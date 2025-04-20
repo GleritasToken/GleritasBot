@@ -87,6 +87,7 @@ export const withdrawals = pgTable("withdrawals", {
   id: serial("id").primaryKey(),
   userId: integer("user_id").notNull(),
   amount: integer("amount").notNull(),
+  walletAddress: text("wallet_address").notNull(),
   transactionHash: text("transaction_hash"),
   status: text("status").notNull(), // pending, processed, failed
   createdAt: timestamp("created_at").notNull().defaultNow(),

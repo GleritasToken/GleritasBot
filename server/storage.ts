@@ -368,8 +368,11 @@ export class MemStorage implements IStorage {
   }
 }
 
-// Create and export storage instance
-export const storage = new MemStorage();
+// Import database storage implementation
+import { DatabaseStorage } from './database-storage';
+
+// Use database storage instead of memory storage
+export const storage = new DatabaseStorage();
 
 // Initialize default tasks
 storage.initializeDefaultTasks();
