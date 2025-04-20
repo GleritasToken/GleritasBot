@@ -46,29 +46,56 @@ export const TelegramProvider: React.FC<{ children: ReactNode }> = ({ children }
   useEffect(() => {
     const initTelegram = async () => {
       try {
+        console.log("Starting Telegram initialization...");
+        
         // Check if this is a Telegram WebApp
         const isTelegramApp = isTelegramWebApp();
+        console.log("Is this a Telegram WebApp?", isTelegramApp);
         setIsTelegram(isTelegramApp);
         
         if (isTelegramApp) {
+          console.log("This is a Telegram WebApp, getting WebApp instance");
+          
           // Get the WebApp instance
           const app = getTelegramWebApp();
+          console.log("WebApp instance:", app ? "Obtained successfully" : "Failed to obtain");
           setWebApp(app);
           
-          // Let Telegram know the app is ready
-          telegramWebAppReady();
-          
-          // Get user data from Telegram
-          const user = await validateTelegramUser();
-          if (user) {
-            setTelegramUser(user);
+          if (app) {
+            console.log("WebApp available properties:", Object.keys(app));
+            console.log("WebApp initData available:", !!app.initData);
+            console.log("WebApp initDataUnsafe available:", !!app.initDataUnsafe);
+            
+            // Let Telegram know the app is ready
+            console.log("Calling telegramWebAppReady()");
+            telegramWebAppReady();
+            
+            // Get user data from Telegram
+            console.log("Validating Telegram user...");
+            const user = await validateTelegramUser();
+            console.log("Validation result:", user ? "User obtained" : "No user data");
+            
+            if (user) {
+              console.log("Setting Telegram user:", user.username);
+              setTelegramUser(user);
+            } else {
+              console.error("Could not validate Telegram account");
+              toast({
+                title: "Telegram User Error",
+                description: "Could not validate your Telegram account.",
+                variant: "destructive",
+              });
+            }
           } else {
+            console.error("WebApp instance is null despite isTelegramApp being true");
             toast({
-              title: "Telegram User Error",
-              description: "Could not validate your Telegram account.",
+              title: "Telegram Error",
+              description: "Failed to load Telegram mini app. Please try again.",
               variant: "destructive",
             });
           }
+        } else {
+          console.log("Not running in Telegram WebApp environment");
         }
       } catch (error) {
         console.error('Error initializing Telegram:', error);
@@ -78,6 +105,7 @@ export const TelegramProvider: React.FC<{ children: ReactNode }> = ({ children }
           variant: "destructive",
         });
       } finally {
+        console.log("Telegram initialization complete, setting isLoading to false");
         setIsLoading(false);
       }
     };

@@ -14,10 +14,44 @@ import { ProtectedRoute } from "./lib/protected-route";
 import { useEffect } from "react";
 import { telegramWebAppReady } from "@/lib/telegram-app";
 
+// This function is used only for development when testing the Telegram WebApp
+function setupTelegramMock() {
+  if (typeof window !== 'undefined' && !window.Telegram) {
+    console.log("Creating mock Telegram WebApp for development testing");
+    
+    // Create a minimal mock of the Telegram WebApp
+    window.Telegram = {
+      WebApp: {
+        initData: "mock_init_data",
+        initDataUnsafe: { 
+          user: { 
+            id: 12345, 
+            username: "test_user",
+            first_name: "Test",
+            language_code: "en" // Required for the mock to work correctly
+          } 
+        },
+        ready: () => console.log("Telegram WebApp mock ready called"),
+        expand: () => console.log("Telegram WebApp mock expand called"),
+        close: () => console.log("Telegram WebApp mock close called"),
+        BackButton: {
+          show: () => console.log("Mock back button show"),
+          hide: () => console.log("Mock back button hide"),
+          onClick: (cb: () => void) => console.log("Mock back button onClick"),
+          offClick: () => console.log("Mock back button offClick")
+        }
+      }
+    };
+  }
+}
+
+// We're not initializing Telegram here anymore since it's handled in TelegramProvider
 function TelegramAppInitializer() {
   useEffect(() => {
-    // Let Telegram know the app is ready
-    telegramWebAppReady();
+    // Only in development and when requested, we could enable a mock
+    if (import.meta.env.DEV && new URLSearchParams(window.location.search).get('telegram_mock') === 'true') {
+      setupTelegramMock();
+    }
   }, []);
   
   return null;
