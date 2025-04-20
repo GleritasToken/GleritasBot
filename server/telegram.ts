@@ -224,67 +224,29 @@ export { bot };
 // Initialize and start the bot
 export async function startBot() {
   try {
-    // First try to stop any existing webhook to resolve conflict
-    try {
-      await bot.telegram.deleteWebhook();
-      console.log('Deleted any existing webhooks');
-    } catch (error) {
-      console.warn('Could not delete webhook:', error);
-    }
-
-    // Set up webhook or polling based on environment
+    // Only enable bot in production to avoid conflicts during deployment
     if (process.env.NODE_ENV === 'production') {
-      // Use webhooks in production
-      const webhookUrl = `https://${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.repl.co/api/telegram-webhook`;
-      await bot.telegram.setWebhook(webhookUrl);
-      console.log(`Webhook set to ${webhookUrl}`);
-    } else {
-      // In development, check if we can use polling, but don't crash if we can't
       try {
-        // Use polling with a drop_pending_updates option to prevent conflict
+        // First try to stop any existing webhook to resolve conflict
         await bot.telegram.deleteWebhook({ drop_pending_updates: true });
+        console.log('Deleted any existing webhooks');
         
-        // Use long polling in development mode, but add a timeout
-        const launchPromise = new Promise((resolve, reject) => {
-          try {
-            bot.launch({ dropPendingUpdates: true });
-            console.log('Bot started with long polling');
-            resolve(true);
-          } catch (error) {
-            reject(error);
-          }
-        });
+        // Use webhooks in production
+        const webhookUrl = `https://${process.env.REPL_SLUG}.${process.env.REPL_OWNER}.repl.co/api/telegram-webhook`;
+        await bot.telegram.setWebhook(webhookUrl);
+        console.log(`Webhook set to ${webhookUrl}`);
         
-        // Add a 5-second timeout in case bot.launch() hangs
-        const timeoutPromise = new Promise((resolve) => {
-          setTimeout(() => {
-            console.log('Bot launch timed out, continuing with application startup');
-            resolve(false);
-          }, 5000);
-        });
-        
-        // Race the promises
-        await Promise.race([launchPromise, timeoutPromise]);
+        // Get bot information
+        const botInfo = await bot.telegram.getMe();
+        if (botInfo) {
+          console.log(`Bot started: @${botInfo.username}`);
+        }
       } catch (error) {
-        console.error('Could not start bot polling, continuing anyway:', error);
+        console.error('Error setting up bot webhook:', error);
       }
-    }
-    
-    try {
-      // Get bot information with a timeout
-      const botInfoPromise = bot.telegram.getMe();
-      const timeoutPromise = new Promise((resolve) => {
-        setTimeout(() => resolve(null), 5000);
-      });
-      
-      const botInfo: any = await Promise.race([botInfoPromise, timeoutPromise]);
-      if (botInfo && botInfo.username) {
-        console.log(`Bot started: @${botInfo.username}`);
-      } else {
-        console.log('Unable to get bot information, continuing anyway');
-      }
-    } catch (error) {
-      console.error('Error getting bot info:', error);
+    } else {
+      // In development mode, simply log that the bot is disabled
+      console.log('Bot disabled in development mode to prevent conflicts');
     }
     
     return true;
