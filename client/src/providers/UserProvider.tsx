@@ -173,6 +173,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       
       // Clear user data from cache
       queryClient.setQueryData(['/api/user'], null);
+      queryClient.invalidateQueries({ queryKey: ['/api/user'] });
       
       toast({
         title: "Logged out",

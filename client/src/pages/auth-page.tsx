@@ -77,17 +77,21 @@ export default function AuthPage() {
       const response = await apiRequest("POST", "/api/login", data);
       return await response.json();
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log("Login successful, response:", data);
       toast({
         title: "Login successful",
         description: "Welcome back!",
       });
-      setLocation("/");
+      
+      // Force a page refresh to ensure all auth state is properly updated
+      window.location.href = "/";
     },
     onError: (error: Error) => {
+      console.error("Login error:", error);
       toast({
         title: "Login failed",
-        description: error.message,
+        description: error.message || "Invalid username or password",
         variant: "destructive",
       });
     }
@@ -96,6 +100,8 @@ export default function AuthPage() {
   // Register mutation
   const registerMutation = useMutation({
     mutationFn: async (data: RegisterFormValues) => {
+      console.log("Registering with data:", { ...data, password: "[REDACTED]" });
+      
       // Add device fingerprint and IP in a real app
       const formData = {
         ...data,
@@ -109,17 +115,21 @@ export default function AuthPage() {
       const response = await apiRequest("POST", "/api/register", submitData);
       return await response.json();
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log("Registration successful, response:", data);
       toast({
         title: "Registration successful",
         description: "Your account has been created!",
       });
-      setLocation("/");
+      
+      // Force a page refresh to ensure all auth state is properly updated
+      window.location.href = "/";
     },
     onError: (error: Error) => {
+      console.error("Registration error:", error);
       toast({
         title: "Registration failed",
-        description: error.message,
+        description: error.message || "Could not create account",
         variant: "destructive",
       });
     }
