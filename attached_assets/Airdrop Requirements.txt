@@ -1,0 +1,44 @@
+Airdrop Requirements for Users
+Join Telegram Group
+– Users must join our official Telegram group
+🪙 +10 GLRS
+
+Join Telegram Channel
+– Users must subscribe to our announcement channel
+🪙 +5 GLRS
+
+Follow Twitter (@GleritasToken)
+– User must follow our Twitter page
+🪙 +10 GLRS
+
+Like, Retweet, and Comment on the Pinned Tweet
+– Engage with pinned tweet
+🪙 +10 GLRS
+
+Watch and Like Intro Video on YouTube (Optional but encouraged)
+– Helps spread awareness
+🪙 +10 GLRS
+
+Referral Program
+– Each user gets a unique referral link
+– Earn +5 GLRS per valid referral (must complete required tasks)
+
+Submit Wallet Address
+– User must provide a valid BEP-20 address (MetaMask, TrustWallet, etc.)
+
+CAPTCHA Verification
+– To prevent bots and fake accounts
+
+One Airdrop Per User
+– Must block double registrations (same IP, device, etc.)
+
+$1 BNB Withdrawal Fee
+– Users will pay a small fee during withdrawal phase
+– This will prevent mass farming and ensure genuine participation
+
+🛠️ Optional Features (If Possible)
+Show current GLRS balance inside the bot
+
+Display referral count and GLRS earned from referrals
+
+Optional: Set a referral cap per user (e.g. max 50 referrals)
