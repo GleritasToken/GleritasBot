@@ -1,30 +1,44 @@
 import React from 'react';
 
-// SVG Logo for Gleritas Token - updated design
+// SVG Logo for Gleritas Token - based on provided logo
 const Logo: React.FC = () => {
   return (
     <svg
       width="40"
       height="40"
-      viewBox="0 0 40 40"
+      viewBox="0 0 100 100"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
       className="h-8 w-8"
     >
-      {/* Circle background with gradient */}
-      <circle cx="20" cy="20" r="20" fill="url(#glrGradient)" />
-      
-      {/* Letter G stylized */}
+      {/* Blue circular elements */}
       <path
-        d="M26 13.5C26 12.6716 25.3284 12 24.5 12H15.5C14.6716 12 14 12.6716 14 13.5V26.5C14 27.3284 14.6716 28 15.5 28H24.5C25.3284 28 26 27.3284 26 26.5V19H21V22H23V25H17V15H23V18H21V21H26V13.5Z"
-        fill="white"
+        d="M50 30C40 30 25 40 25 50C25 60 40 70 50 70"
+        stroke="url(#blueGradient1)"
+        strokeWidth="10"
+        fill="none"
       />
+      <path
+        d="M50 30C60 30 75 40 75 50C75 60 60 70 50 70"
+        stroke="url(#blueGradient2)"
+        strokeWidth="10"
+        fill="none"
+      />
+
+      {/* Gold connector elements */}
+      <circle cx="25" cy="50" r="5" fill="#E6B980" />
+      <circle cx="75" cy="50" r="5" fill="#E6B980" />
+      <rect x="25" y="47.5" width="50" height="5" fill="#E6B980" />
       
-      {/* Define the gradient */}
+      {/* Define the gradients */}
       <defs>
-        <linearGradient id="glrGradient" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse">
+        <linearGradient id="blueGradient1" x1="25" y1="30" x2="50" y2="70" gradientUnits="userSpaceOnUse">
           <stop offset="0%" stopColor="#1E40AF" />
           <stop offset="100%" stopColor="#3B82F6" />
+        </linearGradient>
+        <linearGradient id="blueGradient2" x1="75" y1="30" x2="50" y2="70" gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor="#3B82F6" />
+          <stop offset="100%" stopColor="#1E40AF" />
         </linearGradient>
       </defs>
     </svg>
