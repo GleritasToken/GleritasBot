@@ -1,65 +1,77 @@
-# Gleritas Token Airdrop Platform Deployment Instructions
+# Deploying Your GLRS Token Airdrop Platform
 
-## Deployment to Replit
+This guide will walk you through deploying your GLRS Token Airdrop platform and connecting it to your Telegram bot.
 
-This application is fully configured for deployment on Replit. Follow these steps to deploy your application:
+## 1. Deploy on Replit
 
-1. Click the "Deploy" button at the top of the Replit editor
-2. Confirm the deployment when prompted
-3. Wait for the build process to complete
-4. Your application will be deployed to a URL like: `https://your-repl-name.yourusername.repl.co`
+1. Click the "Deploy" button in the Replit interface.
+2. Choose the deployment settings:
+   - Name: `glrs-airdrop` (or your preferred name)
+   - Environment variables: All environment variables will be automatically copied from your development environment
+   - Domain: You can use the default Replit domain or connect a custom domain
 
-## Environment Variables
+3. Wait for the deployment process to complete (usually takes a few minutes).
 
-The following environment variables are required for the application to function properly:
+## 2. Setting Up Your Telegram Bot
 
-- `DATABASE_URL`: The URL for your PostgreSQL database (already set up)
-- `TELEGRAM_BOT_TOKEN`: Your Telegram Bot token (already set up)
-- `NODE_ENV`: Should be set to "production" when deployed (automatically set during deployment)
-- `SESSION_SECRET`: A secret string used for session encryption (will be set automatically)
+### Update Webhook URL
 
-## Post-Deployment Configuration
+After deployment, you need to update your Telegram bot's webhook URL to point to your deployed application:
 
-After deployment, you should:
+1. Replace `YOUR_BOT_TOKEN` with your actual bot token
+2. Replace `YOUR_DEPLOYMENT_URL` with your Replit deployment URL (e.g., `https://glrs-airdrop.example.repl.co`)
 
-1. Configure your Telegram Bot to use the webhook URL:
-   - The webhook URL will be: `https://your-repl-name.yourusername.repl.co/api/telegram-webhook`
-   - This is automatically set up during deployment
+```
+https://api.telegram.org/botYOUR_BOT_TOKEN/setWebhook?url=YOUR_DEPLOYMENT_URL/api/telegram-webhook
+```
 
-2. Update your Telegram Bot settings:
-   - Go to BotFather on Telegram
-   - Set up the Bot Domain to point to your Replit URL
-   - Configure menu buttons for easy navigation
+For example:
+```
+https://api.telegram.org/bot7761039144:AAF3HnwJdn0W0EGVRbcXUMQc9onI2VXQ9xg/setWebhook?url=https://glrs-airdrop.example.repl.co/api/telegram-webhook
+```
 
-3. Test the application:
-   - Try accessing via the Telegram Mini App
-   - Test user registration and login
-   - Verify task completion works
-   - Test referral links
+Visit this URL in your browser to set the webhook.
+
+### Set Up Mini App URL
+
+To set up your Mini App URL in Telegram:
+
+1. Open Telegram and message @BotFather
+2. Send `/mybots` and select your bot
+3. Click "Bot Settings" > "Menu Button" or "Menu Commands"
+4. Click "Configure Menu Button"
+5. Set the button text (e.g., "GLRS Airdrop") and use your deployment URL as the website
+
+### Test Your Deployment
+
+1. Open your Telegram bot in Telegram
+2. Click the Menu Button you configured
+3. Verify that the Mini App loads correctly
+4. Test all functionality including:
+   - User registration
+   - Social media task verification
+   - Referral system
+   - Wallet submission
 
 ## Troubleshooting
 
-If you encounter issues after deployment:
+If you encounter issues with your deployment:
 
-1. Check the Replit logs for any errors
-2. Verify all environment variables are correctly set
-3. Ensure the database connection is working
-4. Check if the Telegram Bot is properly configured
+1. Check the deployment logs in Replit
+2. Verify that all environment variables are set correctly
+3. Ensure the Telegram webhook is set to the correct URL
+4. Test the API endpoints directly using tools like Postman
 
-For persistent database issues, you may need to run migrations manually:
-```
-npm run db:push
-```
+## Additional Configuration
 
-## Maintenance
+### Custom Domain
 
-Regular maintenance tasks:
+For a professional look, you can configure a custom domain:
 
-1. Monitor the application logs for errors
-2. Periodically backup the database
-3. Keep dependencies updated
-4. Monitor Telegram API changes that might affect the application
+1. In Replit deployment settings, add your custom domain
+2. Follow Replit's instructions to verify domain ownership
+3. Update your Telegram webhook URL to use the custom domain
 
-## Contact
+### SSL Certificate
 
-For assistance with deployment or troubleshooting, contact support.
+Replit automatically provides SSL certificates for both Replit domains and custom domains.

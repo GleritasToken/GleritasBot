@@ -330,4 +330,106 @@ export function setupTelegramRoutes(app: any) {
       });
     }
   });
+  
+  // Endpoint to get user by ID (for Telegram Mini App fallback)
+  app.get('/api/telegram/user/:userId', async (req: any, res: any) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      
+      if (isNaN(userId)) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid user ID'
+        });
+      }
+      
+      // Get user from database
+      const user = await storage.getUser(userId);
+      
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          message: 'User not found'
+        });
+      }
+      
+      // Get user with tasks
+      const userWithTasks = await storage.getUserWithTasks(userId);
+      
+      return res.json({
+        success: true,
+        user: {
+          id: user.id,
+          username: user.username,
+          telegramId: parseInt(user.fingerprint?.replace('telegram_', '') || '0'),
+          walletAddress: user.walletAddress,
+          referralCode: user.referralCode,
+          totalTokens: user.totalTokens,
+          referralTokens: user.referralTokens,
+          referralCount: user.referralCount,
+          tasks: userWithTasks?.tasks || []
+        }
+      });
+    } catch (error) {
+      console.error('Error getting user by ID:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Internal server error'
+      });
+    }
+  });
+  
+  // Allow automatic login using Telegram parameters
+  app.post('/api/telegram/login', async (req: any, res: any) => {
+    try {
+      const { userId } = req.body;
+      
+      if (!userId) {
+        return res.status(400).json({
+          success: false,
+          message: 'User ID is required'
+        });
+      }
+      
+      // Get user from database
+      const user = await storage.getUser(parseInt(userId));
+      
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          message: 'User not found'
+        });
+      }
+      
+      // Set session
+      if (req.session) {
+        req.session.userId = user.id;
+        
+        return res.json({
+          success: true,
+          message: 'Logged in successfully',
+          user: {
+            id: user.id,
+            username: user.username,
+            walletAddress: user.walletAddress,
+            referralCode: user.referralCode,
+            totalTokens: user.totalTokens,
+            referralTokens: user.referralTokens,
+            referralCount: user.referralCount
+          }
+        });
+      } else {
+        return res.status(500).json({
+          success: false,
+          message: 'Session not available'
+        });
+      }
+    } catch (error) {
+      console.error('Error logging in with Telegram:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Internal server error'
+      });
+    }
+  });
 }

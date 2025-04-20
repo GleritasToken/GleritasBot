@@ -2,15 +2,41 @@ import { WebApp } from 'telegram-web-app';
 
 // Function to check if the page is running inside a Telegram WebApp
 export function isTelegramWebApp(): boolean {
-  const isTelegram = typeof window !== 'undefined' && window.Telegram?.WebApp !== undefined;
-  console.log('isTelegramWebApp check:', isTelegram, 'window.Telegram exists:', typeof window !== 'undefined' && window.Telegram !== undefined);
+  // First check if we're in a browser environment
+  if (typeof window === 'undefined') return false;
+
+  // Check for Telegram's WebApp object
+  const isTelegram = window.Telegram?.WebApp !== undefined;
+  
+  // Check URL parameters for Telegram Mini App detection
+  const url = new URL(window.location.href);
+  const hasWebAppParams = url.searchParams.has('tgWebAppData') || 
+                          url.searchParams.has('tgWebAppStartParam') ||
+                          window.location.hash.includes('tgWebApp');
+  
+  console.log('Telegram detection:', {
+    isTelegram,
+    hasWebAppParams,
+    telegramExists: typeof window.Telegram !== 'undefined',
+    webAppExists: typeof window.Telegram?.WebApp !== 'undefined',
+    currentUrl: window.location.href,
+  });
   
   // Debug what's available in window
   if (typeof window !== 'undefined') {
-    console.log('Available global objects:', Object.keys(window).filter(key => key.startsWith('Tele')));
+    console.log('Available global objects:', Object.keys(window).filter(key => 
+      key.startsWith('Tele') || key.includes('telegram') || key.includes('Telegram')
+    ));
   }
   
-  return isTelegram;
+  // For testing in development, we can use a query param to simulate Telegram WebApp
+  const forceEnable = url.searchParams.get('telegram_mode') === 'true';
+  if (forceEnable) {
+    console.log('Forcing Telegram mode via URL parameter');
+    return true;
+  }
+  
+  return isTelegram || hasWebAppParams;
 }
 
 // Get the Telegram WebApp instance if available

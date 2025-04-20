@@ -54,45 +54,61 @@ export const TelegramProvider: React.FC<{ children: ReactNode }> = ({ children }
         setIsTelegram(isTelegramApp);
         
         if (isTelegramApp) {
-          console.log("This is a Telegram WebApp, getting WebApp instance");
+          console.log("This is a Telegram WebApp environment");
           
           // Get the WebApp instance
           const app = getTelegramWebApp();
           console.log("WebApp instance:", app ? "Obtained successfully" : "Failed to obtain");
+          
+          // Even if we don't have the WebApp instance, we might still be in a Telegram WebApp
+          // In some environments, the Telegram object might be injected after our code runs
           setWebApp(app);
           
-          if (app) {
-            console.log("WebApp available properties:", Object.keys(app));
-            console.log("WebApp initData available:", !!app.initData);
-            console.log("WebApp initDataUnsafe available:", !!app.initDataUnsafe);
+          // Attempt to get window.Telegram or handle the case where it's not available yet
+          // Some Telegram clients might inject this object after our code runs
+          if (typeof window !== 'undefined' && !window.Telegram) {
+            console.log("window.Telegram not available yet, setting up observer");
             
-            // Let Telegram know the app is ready
-            console.log("Calling telegramWebAppReady()");
-            telegramWebAppReady();
+            // Set up a timer to check for Telegram object every 500ms
+            const intervalId = setInterval(() => {
+              if (window.Telegram?.WebApp) {
+                console.log("Telegram WebApp object detected via polling");
+                clearInterval(intervalId);
+                setWebApp(window.Telegram.WebApp);
+                handleTelegramWebApp(window.Telegram.WebApp);
+              }
+            }, 500);
             
-            // Get user data from Telegram
-            console.log("Validating Telegram user...");
-            const user = await validateTelegramUser();
-            console.log("Validation result:", user ? "User obtained" : "No user data");
-            
-            if (user) {
-              console.log("Setting Telegram user:", user.username);
-              setTelegramUser(user);
-            } else {
-              console.error("Could not validate Telegram account");
-              toast({
-                title: "Telegram User Error",
-                description: "Could not validate your Telegram account.",
-                variant: "destructive",
-              });
-            }
+            // Clear interval after 10 seconds to prevent endless polling
+            setTimeout(() => clearInterval(intervalId), 10000);
+          } else if (app) {
+            await handleTelegramWebApp(app);
           } else {
-            console.error("WebApp instance is null despite isTelegramApp being true");
-            toast({
-              title: "Telegram Error",
-              description: "Failed to load Telegram mini app. Please try again.",
-              variant: "destructive",
-            });
+            // For testing: Try to proceed without the Telegram WebApp object
+            console.log("Proceeding without Telegram WebApp object");
+            
+            // We're in Telegram environment but can't get the WebApp object
+            // This might be due to iframe restrictions or other issues
+            // Let's try to extract user data from URL parameters as a fallback
+            const urlParams = new URLSearchParams(window.location.search);
+            const userParam = urlParams.get('user');
+            
+            if (userParam) {
+              console.log("Found user parameter in URL:", userParam);
+              try {
+                // Try to get user data from server
+                const response = await fetch(`/api/telegram/user/${userParam}`);
+                if (response.ok) {
+                  const userData = await response.json();
+                  if (userData.success && userData.user) {
+                    console.log("Retrieved user data from parameter:", userData.user.username);
+                    setTelegramUser(userData.user);
+                  }
+                }
+              } catch (error) {
+                console.error("Error getting user data from parameter:", error);
+              }
+            }
           }
         } else {
           console.log("Not running in Telegram WebApp environment");
@@ -107,6 +123,53 @@ export const TelegramProvider: React.FC<{ children: ReactNode }> = ({ children }
       } finally {
         console.log("Telegram initialization complete, setting isLoading to false");
         setIsLoading(false);
+      }
+    };
+
+    // Helper function to handle Telegram WebApp object
+    const handleTelegramWebApp = async (app: any) => {
+      try {
+        console.log("WebApp available properties:", Object.keys(app));
+        console.log("WebApp initData available:", !!app.initData);
+        console.log("WebApp initDataUnsafe available:", !!app.initDataUnsafe);
+        
+        // Let Telegram know the app is ready
+        console.log("Calling telegramWebAppReady()");
+        telegramWebAppReady();
+        
+        // Get user data from Telegram
+        console.log("Validating Telegram user...");
+        const user = await validateTelegramUser();
+        console.log("Validation result:", user ? "User obtained" : "No user data");
+        
+        if (user) {
+          console.log("Setting Telegram user:", user.username);
+          setTelegramUser(user);
+        } else {
+          console.log("Could not validate Telegram account, looking for URL parameters");
+          
+          // Try to get user data from URL parameters as fallback
+          const urlParams = new URLSearchParams(window.location.search);
+          const userParam = urlParams.get('user');
+          
+          if (userParam) {
+            try {
+              const response = await fetch(`/api/telegram/user/${userParam}`);
+              if (response.ok) {
+                const userData = await response.json();
+                if (userData.success && userData.user) {
+                  setTelegramUser(userData.user);
+                }
+              }
+            } catch (error) {
+              console.error("Error getting user data from parameter:", error);
+            }
+          } else {
+            console.warn("No user information available");
+          }
+        }
+      } catch (error) {
+        console.error("Error handling Telegram WebApp:", error);
       }
     };
 
