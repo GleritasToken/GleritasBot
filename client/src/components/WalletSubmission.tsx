@@ -134,10 +134,10 @@ const WalletSubmission: React.FC = () => {
   }, [user]);
 
   return (
-    <Card>
+    <Card className="bg-[#1c3252] border border-[#2a4365]">
       <CardContent className="p-6">
-        <h3 className="font-semibold text-lg mb-4">Submit Your BEP-20 Wallet Address</h3>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+        <h3 className="font-semibold text-lg mb-4 text-white">Submit Your BEP-20 Wallet Address</h3>
+        <p className="text-sm text-blue-200 mb-4">
           Enter your BEP-20 compatible wallet address (e.g., MetaMask, Trust Wallet) to receive your GLRS tokens.
         </p>
         
@@ -157,31 +157,32 @@ const WalletSubmission: React.FC = () => {
               name="walletAddress"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Wallet Address</FormLabel>
+                  <FormLabel className="text-white">Wallet Address</FormLabel>
                   <FormControl>
                     <Input
                       placeholder="0x..."
                       {...field}
                       disabled={isWalletTaskCompleted || submitting}
+                      className="bg-[#243b5c] border-[#2a4365] text-white"
                     />
                   </FormControl>
-                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                  <p className="mt-1 text-xs text-blue-200">
                     Must be a valid BEP-20 address. Tokens will be sent to this address after the airdrop ends.
                   </p>
-                  <FormMessage />
+                  <FormMessage className="text-red-300" />
                 </FormItem>
               )}
             />
 
             {/* CAPTCHA Verification */}
-            <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800/50">
+            <div className="p-4 border border-[#2a4365] rounded-lg bg-[#243b5c]">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium">CAPTCHA Verification</span>
+                <span className="text-sm font-medium text-white">CAPTCHA Verification</span>
                 <Button
                   type="button"
                   variant="ghost"
                   size="sm"
-                  className="text-primary-600 dark:text-primary-400 text-sm hover:text-primary-700 dark:hover:text-primary-300 p-0 h-auto"
+                  className="text-blue-300 text-sm hover:text-blue-200 p-0 h-auto"
                   onClick={refreshCaptcha}
                   disabled={submitting}
                 >
@@ -189,7 +190,7 @@ const WalletSubmission: React.FC = () => {
                   Refresh
                 </Button>
               </div>
-              <div className="h-16 bg-gray-200 dark:bg-gray-700 rounded flex items-center justify-center mb-3 font-mono text-lg">
+              <div className="h-16 bg-[#1c3252] rounded flex items-center justify-center mb-3 font-mono text-lg text-white">
                 {captchaCode}
               </div>
               <FormField
@@ -202,9 +203,10 @@ const WalletSubmission: React.FC = () => {
                         placeholder="Enter the code above"
                         {...field}
                         disabled={isWalletTaskCompleted || submitting}
+                        className="bg-[#243b5c] border-[#2a4365] text-white"
                       />
                     </FormControl>
-                    <FormMessage />
+                    <FormMessage className="text-red-300" />
                   </FormItem>
                 )}
               />
@@ -212,7 +214,7 @@ const WalletSubmission: React.FC = () => {
 
             <Button 
               type="submit" 
-              className="w-full bg-primary-600 hover:bg-primary-700 text-white py-3 px-4 rounded-lg font-medium flex items-center justify-center"
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-lg font-medium flex items-center justify-center"
               disabled={isWalletTaskCompleted || submitting}
             >
               <CheckCircle className="h-4 w-4 mr-2" />

@@ -43,14 +43,14 @@ const ProgressTracker: React.FC<{ tasks: Task[], userTasks: any[] }> = ({ tasks,
   return (
     <div className="mb-8">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-semibold">Your Airdrop Progress</h2>
-        <div className="bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-300 py-1 px-3 rounded-full text-sm font-medium flex items-center">
+        <h2 className="text-xl font-semibold text-white">Your Airdrop Progress</h2>
+        <div className="bg-blue-900/30 text-blue-300 py-1 px-3 rounded-full text-sm font-medium flex items-center border border-blue-800">
           <i className="fas fa-coins mr-2"></i>
           <span>{user?.totalTokens || 0} GLRS Earned</span>
         </div>
       </div>
       
-      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm p-4">
+      <div className="bg-[#1c3252] rounded-xl shadow-sm p-4 border border-[#2a4365]">
         <div className="flex justify-between items-center mb-2">
           <span className="text-sm text-gray-500 dark:text-gray-400">
             Progress: {completedTasksCount}/{requiredTasksCount} Tasks Completed
