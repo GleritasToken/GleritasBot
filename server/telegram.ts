@@ -2,7 +2,7 @@ import { Telegraf, Markup, Context } from 'telegraf';
 import { storage } from './storage';
 import { User } from '@shared/schema';
 
-// Create a Telegraf instance
+// Create a Telegraf instance with updated token
 const bot = new Telegraf(process.env.TELEGRAM_BOT_TOKEN || '');
 
 // Set up commands
@@ -224,6 +224,14 @@ export { bot };
 // Initialize and start the bot
 export async function startBot() {
   try {
+    // First try to stop any existing webhook to resolve conflict
+    try {
+      await bot.telegram.deleteWebhook();
+      console.log('Deleted any existing webhooks');
+    } catch (error) {
+      console.warn('Could not delete webhook:', error);
+    }
+
     // Set up webhook or polling based on environment
     if (process.env.NODE_ENV === 'production') {
       // Use webhooks in production
@@ -231,27 +239,35 @@ export async function startBot() {
       await bot.telegram.setWebhook(webhookUrl);
       console.log(`Webhook set to ${webhookUrl}`);
     } else {
-      // Use long polling in development mode, but add a timeout
-      const launchPromise = new Promise((resolve, reject) => {
-        try {
-          bot.launch();
-          console.log('Bot started with long polling');
-          resolve(true);
-        } catch (error) {
-          reject(error);
-        }
-      });
-      
-      // Add a 5-second timeout in case bot.launch() hangs
-      const timeoutPromise = new Promise((resolve) => {
-        setTimeout(() => {
-          console.log('Bot launch timed out, continuing with application startup');
-          resolve(false);
-        }, 5000);
-      });
-      
-      // Race the promises
-      await Promise.race([launchPromise, timeoutPromise]);
+      // In development, check if we can use polling, but don't crash if we can't
+      try {
+        // Use polling with a drop_pending_updates option to prevent conflict
+        await bot.telegram.deleteWebhook({ drop_pending_updates: true });
+        
+        // Use long polling in development mode, but add a timeout
+        const launchPromise = new Promise((resolve, reject) => {
+          try {
+            bot.launch({ dropPendingUpdates: true });
+            console.log('Bot started with long polling');
+            resolve(true);
+          } catch (error) {
+            reject(error);
+          }
+        });
+        
+        // Add a 5-second timeout in case bot.launch() hangs
+        const timeoutPromise = new Promise((resolve) => {
+          setTimeout(() => {
+            console.log('Bot launch timed out, continuing with application startup');
+            resolve(false);
+          }, 5000);
+        });
+        
+        // Race the promises
+        await Promise.race([launchPromise, timeoutPromise]);
+      } catch (error) {
+        console.error('Could not start bot polling, continuing anyway:', error);
+      }
     }
     
     try {
