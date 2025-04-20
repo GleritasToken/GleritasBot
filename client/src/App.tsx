@@ -20,7 +20,7 @@ function setupTelegramMock() {
   if (typeof window !== 'undefined' && !window.Telegram) {
     console.log("Creating mock Telegram WebApp for development testing");
     
-    // Create a minimal mock of the Telegram WebApp
+    // Create a minimal mock of the Telegram WebApp with all required properties
     window.Telegram = {
       WebApp: {
         initData: "mock_init_data",
@@ -35,16 +35,54 @@ function setupTelegramMock() {
           auth_date: Math.floor(Date.now() / 1000),
           hash: "mock_hash"
         },
+        colorScheme: "dark",
+        viewportHeight: window.innerHeight,
+        viewportStableHeight: window.innerHeight,
+        headerColor: "#12243B", // Match our dark theme
+        backgroundColor: "#12243B",
+        isExpanded: true,
+        MainButton: {
+          text: "Connect Wallet",
+          color: "#FFFFFF",
+          textColor: "#000000",
+          isVisible: false,
+          isActive: true,
+          isProgressVisible: false,
+          onClick: (callback: any) => console.log("MainButton onClick called"),
+          offClick: () => console.log("MainButton offClick called"),
+          show: () => console.log("MainButton show called"),
+          hide: () => console.log("MainButton hide called"),
+          setParams: (params: any) => console.log("MainButton setParams called", params),
+          setText: (text: string) => console.log("MainButton setText called", text),
+          disable: () => console.log("MainButton disable called"),
+          enable: () => console.log("MainButton enable called"),
+          showProgress: () => console.log("MainButton showProgress called"),
+          hideProgress: () => console.log("MainButton hideProgress called"),
+        },
+        BackButton: {
+          isVisible: false,
+          onClick: (callback: any) => console.log("BackButton onClick called"),
+          offClick: () => console.log("BackButton offClick called"),
+          show: () => console.log("BackButton show called"),
+          hide: () => console.log("BackButton hide called")
+        },
+        themeParams: {
+          bg_color: "#12243B",
+          text_color: "#FFFFFF",
+          hint_color: "#999999",
+          link_color: "#4373D8",
+          button_color: "#4373D8",
+          button_text_color: "#FFFFFF"
+        },
         ready: () => console.log("Telegram WebApp mock ready called"),
         expand: () => console.log("Telegram WebApp mock expand called"),
         close: () => console.log("Telegram WebApp mock close called"),
-        BackButton: {
-          isVisible: false,
-          show: () => console.log("Mock back button show"),
-          hide: () => console.log("Mock back button hide"),
-          onClick: (cb: () => void) => console.log("Mock back button onClick"),
-          offClick: () => console.log("Mock back button offClick")
-        }
+        onEvent: (event: string, callback: any) => console.log("onEvent called", event),
+        offEvent: (event: string, callback: any) => console.log("offEvent called", event),
+        sendData: (data: any) => console.log("sendData called", data),
+        openLink: (url: string) => window.open(url, '_blank'),
+        openTelegramLink: (url: string) => window.open(url, '_blank'),
+        showPopup: (params: any, callback: any) => console.log("showPopup called", params)
       }
     };
   }
