@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLocation } from 'wouter';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
@@ -14,12 +14,15 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardFooter } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import Logo from '@/components/logo';
 import { useUser } from '@/providers/UserProvider';
+import { useTelegram } from '@/providers/TelegramProvider';
+import { telegramWebAppReady, expandTelegramWebApp } from '@/lib/telegram-app';
 import { useToast } from '@/hooks/use-toast';
-import { RefreshCw, ArrowRight } from 'lucide-react';
+import { RefreshCw, ArrowRight, MessageCircle } from 'lucide-react';
 
 // Create registration schema
 const registrationSchema = z.object({
@@ -34,6 +37,7 @@ const registrationSchema = z.object({
 const Landing: React.FC = () => {
   const [location, navigate] = useLocation();
   const { registerUser, user } = useUser();
+  const { isTelegram, telegramUser } = useTelegram();
   const { toast } = useToast();
   const [submitting, setSubmitting] = useState(false);
   const [captchaCode, setCaptchaCode] = useState("ABC123"); // In a real app, this would be generated server-side
@@ -41,6 +45,14 @@ const Landing: React.FC = () => {
   // Get referral code from URL if present
   const urlParams = new URLSearchParams(window.location.search);
   const referralCode = urlParams.get('ref');
+  
+  // Initialize Telegram Mini App if we're in Telegram
+  useEffect(() => {
+    if (isTelegram) {
+      telegramWebAppReady();
+      expandTelegramWebApp();
+    }
+  }, [isTelegram]);
 
   // Initialize form
   const form = useForm<z.infer<typeof registrationSchema>>({
@@ -100,12 +112,17 @@ const Landing: React.FC = () => {
     }
   };
 
-  // If user is already registered, redirect to dashboard
+  // If user or telegramUser is already registered, redirect to dashboard
   React.useEffect(() => {
-    if (user) {
+    if (user || telegramUser) {
       navigate('/dashboard');
     }
-  }, [user, navigate]);
+  }, [user, telegramUser, navigate]);
+
+  // Handle direct entry from Telegram
+  const handleTelegramEntry = () => {
+    navigate('/dashboard');
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex flex-col">
@@ -125,59 +142,46 @@ const Landing: React.FC = () => {
             </CardHeader>
             
             <CardContent className="pt-6">
+              {/* Telegram-specific UI */}
+              {isTelegram && !telegramUser && (
+                <div className="mb-6">
+                  <div className="p-4 border border-blue-200 dark:border-blue-800 rounded-lg bg-blue-50 dark:bg-blue-900/20 mb-4">
+                    <div className="flex items-center mb-2">
+                      <MessageCircle className="h-5 w-5 text-blue-600 dark:text-blue-400 mr-2" />
+                      <span className="font-medium">Telegram Mini App</span>
+                    </div>
+                    <p className="text-sm text-blue-700 dark:text-blue-300 mb-3">
+                      Welcome to the GLRS Token Airdrop! You can participate directly through Telegram.
+                    </p>
+                    <Button 
+                      onClick={handleTelegramEntry} 
+                      className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+                    >
+                      Continue in Telegram
+                    </Button>
+                  </div>
+                </div>
+              )}
+              
               {referralCode && (
                 <div className="mb-4 p-2 bg-primary-50 dark:bg-primary-900/20 border border-primary-100 dark:border-primary-900/30 rounded-md text-sm text-primary-700 dark:text-primary-300">
                   You were referred by a friend! You'll both earn bonus tokens.
                 </div>
               )}
               
-              <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                  <FormField
-                    control={form.control}
-                    name="username"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Username</FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder="Enter a username"
-                            {...field}
-                            disabled={submitting}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  {/* CAPTCHA Verification */}
-                  <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800/50">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-medium">CAPTCHA Verification</span>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="text-primary-600 dark:text-primary-400 text-sm hover:text-primary-700 dark:hover:text-primary-300 p-0 h-auto"
-                        onClick={refreshCaptcha}
-                        disabled={submitting}
-                      >
-                        <RefreshCw className="h-4 w-4 mr-1" />
-                        Refresh
-                      </Button>
-                    </div>
-                    <div className="h-16 bg-gray-200 dark:bg-gray-700 rounded flex items-center justify-center mb-3 font-mono text-lg">
-                      {captchaCode}
-                    </div>
+              {/* Only show the registration form for non-Telegram users */}
+              {(!isTelegram || !telegramUser) && (
+                <Form {...form}>
+                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                     <FormField
                       control={form.control}
-                      name="captchaValue"
+                      name="username"
                       render={({ field }) => (
                         <FormItem>
+                          <FormLabel>Username</FormLabel>
                           <FormControl>
                             <Input
-                              placeholder="Enter the code above"
+                              placeholder="Enter a username"
                               {...field}
                               disabled={submitting}
                             />
@@ -186,18 +190,55 @@ const Landing: React.FC = () => {
                         </FormItem>
                       )}
                     />
-                  </div>
 
-                  <Button 
-                    type="submit" 
-                    className="w-full bg-primary-600 hover:bg-primary-700 text-white py-3 px-4 rounded-lg font-medium flex items-center justify-center"
-                    disabled={submitting}
-                  >
-                    {submitting ? 'Registering...' : 'Start Earning GLRS'}
-                    {!submitting && <ArrowRight className="ml-2 h-4 w-4" />}
-                  </Button>
-                </form>
-              </Form>
+                    {/* CAPTCHA Verification */}
+                    <div className="p-4 border border-gray-200 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800/50">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm font-medium">CAPTCHA Verification</span>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          className="text-primary-600 dark:text-primary-400 text-sm hover:text-primary-700 dark:hover:text-primary-300 p-0 h-auto"
+                          onClick={refreshCaptcha}
+                          disabled={submitting}
+                        >
+                          <RefreshCw className="h-4 w-4 mr-1" />
+                          Refresh
+                        </Button>
+                      </div>
+                      <div className="h-16 bg-gray-200 dark:bg-gray-700 rounded flex items-center justify-center mb-3 font-mono text-lg">
+                        {captchaCode}
+                      </div>
+                      <FormField
+                        control={form.control}
+                        name="captchaValue"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormControl>
+                              <Input
+                                placeholder="Enter the code above"
+                                {...field}
+                                disabled={submitting}
+                              />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    <Button 
+                      type="submit" 
+                      className="w-full bg-primary-600 hover:bg-primary-700 text-white py-3 px-4 rounded-lg font-medium flex items-center justify-center"
+                      disabled={submitting}
+                    >
+                      {submitting ? 'Registering...' : 'Start Earning GLRS'}
+                      {!submitting && <ArrowRight className="ml-2 h-4 w-4" />}
+                    </Button>
+                  </form>
+                </Form>
+              )}
             </CardContent>
             
             <CardFooter className="flex flex-col text-center text-xs text-gray-500 dark:text-gray-400 pt-2">
