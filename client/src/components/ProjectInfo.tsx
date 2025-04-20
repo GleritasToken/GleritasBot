@@ -43,7 +43,7 @@ const ProjectInfo: React.FC = () => {
           <Button 
             variant="outline"
             className="flex-1 bg-[#243b5c] hover:bg-[#2d4a71] py-2 rounded flex items-center justify-center text-sm text-blue-200 border border-[#2a4365]"
-            onClick={() => window.open('https://gleritas.io/whitepaper.pdf', '_blank')}
+            onClick={() => window.open('https://drive.google.com/file/d/1d1e154XQTxAb-JRizElQgGpjMx8yJvmk/view?usp=drive_link', '_blank')}
           >
             <FileText className="h-4 w-4 mr-1" />
             Whitepaper
