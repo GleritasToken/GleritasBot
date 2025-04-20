@@ -24,8 +24,12 @@ const Header: React.FC = () => {
     <header className="bg-[#12243B] shadow-md">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
         <div className="flex items-center space-x-2">
-          <div className="rounded-full bg-white p-2 flex items-center justify-center">
-            <Logo />
+          <div className="h-10 w-10 flex items-center justify-center">
+            <img 
+              src="/images/gleritas-logo.jpg" 
+              alt="Gleritas Logo" 
+              className="h-10 w-10 rounded-full object-cover" 
+            />
           </div>
           <div>
             <h1 className="text-xl font-bold text-white">Gleritas</h1>

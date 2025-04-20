@@ -7,8 +7,12 @@ const Footer: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col md:flex-row justify-between items-center">
           <div className="flex items-center space-x-4 mb-4 md:mb-0">
-            <div className="rounded-full bg-blue-900/30 p-2 flex items-center justify-center">
-              <Logo />
+            <div className="h-8 w-8 flex items-center justify-center">
+              <img 
+                src="/images/gleritas-logo.jpg" 
+                alt="Gleritas Logo" 
+                className="h-8 w-8 rounded-full object-cover" 
+              />
             </div>
             <span className="text-white font-medium">Gleritas Token © {new Date().getFullYear()}</span>
           </div>
