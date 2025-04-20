@@ -14,12 +14,12 @@ import {
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { RefreshCw, CheckCircle } from 'lucide-react';
+import { RefreshCw, CheckCircle, Wallet, AlertCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
 import { useUser } from '@/providers/UserProvider';
 import { useQueryClient } from '@tanstack/react-query';
-import { validateWalletAddress } from '@/lib/wallet-utils';
+import { validateWalletAddress, connectWallet } from '@/lib/wallet-utils';
 
 // Create schema for wallet submission
 const walletSubmissionSchema = z.object({
@@ -27,10 +27,10 @@ const walletSubmissionSchema = z.object({
     .min(42, "Wallet address must be 42 characters.")
     .max(42, "Wallet address must be 42 characters.")
     .refine(val => val.startsWith('0x'), {
-      message: "Address must start with 0x",
+      message: "BSC address must start with 0x",
     })
     .refine(validateWalletAddress, {
-      message: "Invalid BEP-20 wallet address",
+      message: "Invalid BSC wallet address. Only Binance Smart Chain addresses are accepted.",
     }),
   captchaValue: z.string()
     .min(1, "Please complete the CAPTCHA")
@@ -42,6 +42,10 @@ const WalletSubmission: React.FC = () => {
   const queryClient = useQueryClient();
   const [submitting, setSubmitting] = useState(false);
   const [captchaCode, setCaptchaCode] = useState("ABC123"); // In a real app, this would be generated server-side
+
+  // State for wallet connection status
+  const [connecting, setConnecting] = useState(false);
+  const [connectionError, setConnectionError] = useState<string | null>(null);
 
   // Initialize form
   const form = useForm<z.infer<typeof walletSubmissionSchema>>({
@@ -58,6 +62,30 @@ const WalletSubmission: React.FC = () => {
       form.setValue('walletAddress', user.walletAddress);
     }
   }, [user, form]);
+  
+  // Handle wallet connection
+  const handleConnectWallet = async () => {
+    setConnecting(true);
+    setConnectionError(null);
+    
+    try {
+      const address = await connectWallet();
+      if (address) {
+        form.setValue('walletAddress', address);
+        toast({
+          title: "Wallet Connected",
+          description: "BSC wallet connected successfully!",
+        });
+      } else {
+        setConnectionError("Could not connect to your wallet. Please try again.");
+      }
+    } catch (error: any) {
+      console.error("Wallet connection error:", error);
+      setConnectionError(error.message || "Failed to connect to BSC wallet.");
+    } finally {
+      setConnecting(false);
+    }
+  };
 
   // Regenerate CAPTCHA
   const refreshCaptcha = () => {
@@ -158,16 +186,37 @@ const WalletSubmission: React.FC = () => {
               render={({ field }) => (
                 <FormItem>
                   <FormLabel className="text-white">Wallet Address</FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="0x..."
-                      {...field}
-                      disabled={isWalletTaskCompleted || submitting}
-                      className="bg-[#243b5c] border-[#2a4365] text-white"
-                    />
-                  </FormControl>
+                  <div className="flex space-x-2">
+                    <FormControl>
+                      <Input
+                        placeholder="0x..."
+                        {...field}
+                        disabled={isWalletTaskCompleted || submitting || connecting}
+                        className="bg-[#243b5c] border-[#2a4365] text-white"
+                      />
+                    </FormControl>
+                    <Button
+                      type="button"
+                      onClick={handleConnectWallet}
+                      disabled={isWalletTaskCompleted || submitting || connecting}
+                      className="bg-amber-500 hover:bg-amber-600 text-black font-medium"
+                    >
+                      <Wallet className="h-4 w-4 mr-2" />
+                      {connecting ? 'Connecting...' : 'Connect'}
+                    </Button>
+                  </div>
+                  
+                  {connectionError && (
+                    <Alert className="mt-2 bg-destructive/20 text-destructive border-destructive/50">
+                      <AlertCircle className="h-4 w-4 mr-2" />
+                      <AlertDescription>
+                        {connectionError}
+                      </AlertDescription>
+                    </Alert>
+                  )}
+                  
                   <p className="mt-1 text-xs text-blue-200">
-                    Must be a valid BEP-20 address. Tokens will be sent to this address after the airdrop ends.
+                    Must be a valid BSC (Binance Smart Chain) wallet address. Compatible with MetaMask, Trust Wallet, and Binance Chain Wallet.
                   </p>
                   <FormMessage className="text-red-300" />
                 </FormItem>
