@@ -1,5 +1,5 @@
 import { db } from './db';
-import { eq, and, or } from 'drizzle-orm';
+import { eq, and, or, not, isNull } from 'drizzle-orm';
 import session from 'express-session';
 import connectPg from 'connect-pg-simple';
 import crypto from 'crypto';
@@ -98,15 +98,34 @@ export class DatabaseStorage implements IStorage {
   }
   
   async checkDuplicateRegistration(ipAddress: string, fingerprint: string): Promise<boolean> {
+    // For Telegram users, we should never prevent registration
+    if (fingerprint && fingerprint.startsWith('telegram_')) {
+      return false; // Allow Telegram users to register
+    }
+    
+    // For fingerprints that are simple demo values, also allow registration
+    if (fingerprint === 'demo-fingerprint') {
+      return false;
+    }
+    
+    // Only check for true IP address and fingerprint duplicates
+    // (only for web users, not for Telegram users)
     const results = await db.select()
       .from(users)
       .where(
-        or(
-          eq(users.ipAddress, ipAddress),
-          eq(users.fingerprint, fingerprint)
+        and(
+          // Make sure we're only checking non-null values
+          not(isNull(users.ipAddress)),
+          not(isNull(users.fingerprint)),
+          // And that they match exactly
+          or(
+            eq(users.ipAddress, ipAddress),
+            eq(users.fingerprint, fingerprint)
+          )
         )
       );
     
+    // Only consider it a duplicate if we found an exact match
     return results.length > 0;
   }
   
