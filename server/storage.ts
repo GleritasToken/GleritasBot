@@ -7,6 +7,8 @@ import {
   type UserWithTasks, type TaskName
 } from "@shared/schema";
 import crypto from 'crypto';
+import session from "express-session";
+import createMemoryStore from "memorystore";
 
 // Storage interface for all CRUD operations
 export interface IStorage {
@@ -41,6 +43,9 @@ export interface IStorage {
   
   // Init data
   initializeDefaultTasks(): Promise<void>;
+  
+  // Session store
+  sessionStore: session.Store;
 }
 
 export class MemStorage implements IStorage {
@@ -55,6 +60,9 @@ export class MemStorage implements IStorage {
   private currentReferralId: number;
   private currentTaskId: number;
   private currentWithdrawalId: number;
+  
+  // Session store for Express
+  sessionStore: session.Store;
 
   constructor() {
     this.users = new Map();
@@ -68,6 +76,12 @@ export class MemStorage implements IStorage {
     this.currentReferralId = 1;
     this.currentTaskId = 1;
     this.currentWithdrawalId = 1;
+    
+    // Create memory store for sessions
+    const MemoryStore = createMemoryStore(session);
+    this.sessionStore = new MemoryStore({
+      checkPeriod: 86400000 // prune expired entries every 24h
+    });
   }
 
   // User Operations
@@ -98,10 +112,15 @@ export class MemStorage implements IStorage {
     // Generate a unique referral code if not provided
     const referralCode = insertUser.referralCode || this.generateReferralCode();
     
+    // Ensure proper null values for nullable fields
     const user: User = { 
-      ...insertUser, 
-      id, 
+      id,
+      username: insertUser.username,
+      walletAddress: insertUser.walletAddress || null,
       referralCode,
+      referredBy: insertUser.referredBy || null,
+      ipAddress: insertUser.ipAddress || null,
+      fingerprint: insertUser.fingerprint || null,
       totalTokens: 0,
       referralTokens: 0,
       referralCount: 0,
@@ -149,8 +168,12 @@ export class MemStorage implements IStorage {
   async createTask(insertTask: InsertTask): Promise<Task> {
     const id = this.currentTaskId++;
     const task: Task = { 
-      ...insertTask, 
       id,
+      name: insertTask.name,
+      description: insertTask.description,
+      tokenAmount: insertTask.tokenAmount,
+      isRequired: insertTask.isRequired ?? true, // Default to true if not specified
+      iconClass: insertTask.iconClass,
       createdAt: new Date()
     };
     
@@ -177,8 +200,10 @@ export class MemStorage implements IStorage {
     
     const id = this.currentUserTaskId++;
     const userTask: UserTask = { 
-      ...insertUserTask, 
       id,
+      userId: insertUserTask.userId,
+      taskName: insertUserTask.taskName,
+      verificationData: insertUserTask.verificationData || null,
       tokenAmount,
       completed: true,
       completedAt: new Date()
@@ -207,9 +232,14 @@ export class MemStorage implements IStorage {
   // Referral Operations
   async createReferral(insertReferral: InsertReferral): Promise<Referral> {
     const id = this.currentReferralId++;
+    // Default token amount is 5 if not provided
+    const tokenAmount = insertReferral.tokenAmount ?? 5;
+    
     const referral: Referral = { 
-      ...insertReferral, 
       id,
+      referrerUserId: insertReferral.referrerUserId,
+      referredUserId: insertReferral.referredUserId,
+      tokenAmount,
       createdAt: new Date()
     };
     
@@ -219,8 +249,8 @@ export class MemStorage implements IStorage {
     const referrer = await this.getUser(insertReferral.referrerUserId);
     if (referrer) {
       const newReferralCount = referrer.referralCount + 1;
-      const newReferralTokens = referrer.referralTokens + insertReferral.tokenAmount;
-      const newTotalTokens = referrer.totalTokens + insertReferral.tokenAmount;
+      const newReferralTokens = referrer.referralTokens + tokenAmount;
+      const newTotalTokens = referrer.totalTokens + tokenAmount;
       
       await this.updateUser(referrer.id, { 
         referralCount: newReferralCount,
