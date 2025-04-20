@@ -1,10 +1,8 @@
 import React, { useState } from 'react';
 import { useLocation } from 'wouter';
-import { Moon, Sun } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Logo from '@/components/logo';
 import { useUser } from '@/providers/UserProvider';
-import { useTheme } from '@/providers/ThemeProvider';
 
 const Header: React.FC = () => {
   const { user, connectWallet } = useUser();

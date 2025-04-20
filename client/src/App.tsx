@@ -7,7 +7,7 @@ import NotFound from "@/pages/not-found";
 import Dashboard from "@/pages/Dashboard";
 import Landing from "@/pages/Landing";
 import AuthPage from "@/pages/auth-page";
-import { ThemeProvider } from "@/providers/ThemeProvider";
+// Theme provider removed - using fixed dark theme
 import { UserProvider } from "@/providers/UserProvider";
 import { TelegramProvider } from "@/providers/TelegramProvider";
 import { ProtectedRoute } from "./lib/protected-route";
@@ -72,17 +72,15 @@ function Router() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider>
-        <TelegramProvider>
-          <UserProvider>
-            <TooltipProvider>
-              <TelegramAppInitializer />
-              <Toaster />
-              <Router />
-            </TooltipProvider>
-          </UserProvider>
-        </TelegramProvider>
-      </ThemeProvider>
+      <TelegramProvider>
+        <UserProvider>
+          <TooltipProvider>
+            <TelegramAppInitializer />
+            <Toaster />
+            <Router />
+          </TooltipProvider>
+        </UserProvider>
+      </TelegramProvider>
     </QueryClientProvider>
   );
 }
