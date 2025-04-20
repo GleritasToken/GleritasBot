@@ -4,6 +4,11 @@ import { setupVite, serveStatic, log } from "./vite";
 import { setupAuth } from "./auth";
 import { startBot, setupTelegramRoutes } from "./telegram";
 
+// Set NODE_ENV to production if not already set
+if (!process.env.NODE_ENV) {
+  process.env.NODE_ENV = "production";
+}
+
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
