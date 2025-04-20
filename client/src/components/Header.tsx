@@ -3,11 +3,13 @@ import { useLocation } from 'wouter';
 import { Button } from '@/components/ui/button';
 import Logo from '@/components/logo';
 import { useUser } from '@/providers/UserProvider';
+import { LogOut } from 'lucide-react';
 
 const Header: React.FC = () => {
-  const { user, connectWallet } = useUser();
+  const { user, connectWallet, logout } = useUser();
   const [location, navigate] = useLocation();
   const [connecting, setConnecting] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
 
   const handleConnectWallet = async () => {
     setConnecting(true);
@@ -17,6 +19,17 @@ const Header: React.FC = () => {
       console.error("Failed to connect wallet:", error);
     } finally {
       setConnecting(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    setLoggingOut(true);
+    try {
+      await logout();
+    } catch (error) {
+      console.error("Failed to logout:", error);
+    } finally {
+      setLoggingOut(false);
     }
   };
 
@@ -36,7 +49,7 @@ const Header: React.FC = () => {
             <p className="text-primary-100 text-xs">Token Airdrop</p>
           </div>
         </div>
-        <div className="flex items-center">
+        <div className="flex items-center gap-2">
           <Button 
             variant="secondary"
             size="sm"
@@ -67,6 +80,19 @@ const Header: React.FC = () => {
               }
             </span>
           </Button>
+          
+          {user && (
+            <Button
+              variant="ghost"
+              size="sm" 
+              className="text-white hover:bg-blue-800"
+              onClick={handleLogout}
+              disabled={loggingOut}
+            >
+              <LogOut className="h-4 w-4 mr-1" />
+              <span>{loggingOut ? 'Logging out...' : 'Logout'}</span>
+            </Button>
+          )}
         </div>
       </div>
     </header>

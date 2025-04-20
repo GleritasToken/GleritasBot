@@ -45,6 +45,7 @@ interface UserContextType {
   registerUser: (params: RegisterParams) => Promise<User>;
   refreshUser: () => Promise<void>;
   connectWallet: () => Promise<string | null>;
+  logout: () => Promise<void>;
 }
 
 const UserContext = createContext<UserContextType>({
@@ -53,6 +54,7 @@ const UserContext = createContext<UserContextType>({
   registerUser: async () => ({ id: 0 } as User),
   refreshUser: async () => {},
   connectWallet: async () => null,
+  logout: async () => {},
 });
 
 export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -164,12 +166,38 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  // Logout user
+  const logout = async (): Promise<void> => {
+    try {
+      await apiRequest('POST', '/api/logout');
+      
+      // Clear user data from cache
+      queryClient.setQueryData(['/api/user'], null);
+      
+      toast({
+        title: "Logged out",
+        description: "You have been successfully logged out.",
+      });
+      
+      // Redirect to auth page
+      window.location.href = '/auth';
+    } catch (error: any) {
+      console.error('Logout error:', error);
+      toast({
+        title: "Logout failed",
+        description: error.message || "Could not log out",
+        variant: "destructive",
+      });
+    }
+  };
+
   const value = {
     user: user || null,
     isLoading,
     registerUser,
     refreshUser,
     connectWallet,
+    logout,
   };
 
   return (
