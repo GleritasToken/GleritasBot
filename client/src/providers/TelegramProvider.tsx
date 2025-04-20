@@ -16,6 +16,15 @@ interface TelegramUser {
   totalTokens: number;
   referralTokens: number;
   referralCount: number;
+  tasks?: { 
+    id: number;
+    userId: number;
+    taskName: string;
+    completed: boolean;
+    tokenAmount: number;
+    verificationData: string | null;
+    completedAt: string;
+  }[];
 }
 
 interface TelegramContextType {

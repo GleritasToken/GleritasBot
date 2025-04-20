@@ -9,7 +9,19 @@ import Landing from "@/pages/Landing";
 import AuthPage from "@/pages/auth-page";
 import { ThemeProvider } from "@/providers/ThemeProvider";
 import { UserProvider } from "@/providers/UserProvider";
+import { TelegramProvider } from "@/providers/TelegramProvider";
 import { ProtectedRoute } from "./lib/protected-route";
+import { useEffect } from "react";
+import { telegramWebAppReady } from "@/lib/telegram-app";
+
+function TelegramAppInitializer() {
+  useEffect(() => {
+    // Let Telegram know the app is ready
+    telegramWebAppReady();
+  }, []);
+  
+  return null;
+}
 
 function Router() {
   return (
@@ -27,12 +39,15 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
-        <UserProvider>
-          <TooltipProvider>
-            <Toaster />
-            <Router />
-          </TooltipProvider>
-        </UserProvider>
+        <TelegramProvider>
+          <UserProvider>
+            <TooltipProvider>
+              <TelegramAppInitializer />
+              <Toaster />
+              <Router />
+            </TooltipProvider>
+          </UserProvider>
+        </TelegramProvider>
       </ThemeProvider>
     </QueryClientProvider>
   );

@@ -327,6 +327,9 @@ export function setupTelegramRoutes(app: any) {
         user = await storage.createUser(newUser);
       }
       
+      // Get user with tasks
+      const userWithTasks = await storage.getUserWithTasks(user.id);
+      
       return res.json({
         success: true,
         user: {
@@ -337,7 +340,8 @@ export function setupTelegramRoutes(app: any) {
           referralCode: user.referralCode,
           totalTokens: user.totalTokens,
           referralTokens: user.referralTokens,
-          referralCount: user.referralCount
+          referralCount: user.referralCount,
+          tasks: userWithTasks?.tasks || []
         }
       });
     } catch (error) {
