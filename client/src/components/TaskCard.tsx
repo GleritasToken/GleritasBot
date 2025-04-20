@@ -99,25 +99,25 @@ const TaskCard: React.FC<TaskCardProps> = ({
   };
 
   return (
-    <div className="task-card p-4 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-800/50">
+    <div className="task-card p-4 flex items-center justify-between hover:bg-[#243b5c]">
       <div className="flex items-center space-x-3">
-        <div className="flex-shrink-0 h-10 w-10 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center">
+        <div className="flex-shrink-0 h-10 w-10 bg-blue-900/30 rounded-full flex items-center justify-center">
           <i className={icon}></i>
         </div>
         <div>
-          <h4 className="font-medium">{title}</h4>
-          <p className="text-sm text-gray-500 dark:text-gray-400">{description}</p>
+          <h4 className="font-medium text-white">{title}</h4>
+          <p className="text-sm text-blue-200">{description}</p>
         </div>
       </div>
       <div className="flex items-center space-x-3">
-        <div className="text-sm font-medium text-primary-600 dark:text-primary-400">
+        <div className="text-sm font-medium text-blue-200">
           {tokenAmount > 0 ? `+${tokenAmount} GLRS` : (isRequired ? "Required" : "Optional")}
         </div>
         {isCompleted ? (
           <Button 
             variant="outline" 
             size="sm"
-            className="bg-success-100 text-success-700 dark:bg-success-700/20 dark:text-success-500 pointer-events-none" 
+            className="bg-green-700/30 border-green-600 text-green-300 pointer-events-none" 
             disabled
           >
             <Check className="h-4 w-4 mr-1" />
@@ -126,9 +126,9 @@ const TaskCard: React.FC<TaskCardProps> = ({
         ) : (
           taskName === "wallet_submit" ? (
             <Button 
-              variant="primary" 
+              variant="default" 
               size="sm"
-              className="bg-primary-600 hover:bg-primary-700 text-white"
+              className="bg-blue-600 hover:bg-blue-700 text-white"
               onClick={handleTaskCompletion}
               disabled={loading}
             >
@@ -137,9 +137,9 @@ const TaskCard: React.FC<TaskCardProps> = ({
             </Button>
           ) : (
             <Button 
-              variant="primary" 
+              variant="default" 
               size="sm"
-              className="bg-primary-600 hover:bg-primary-700 text-white"
+              className="bg-blue-600 hover:bg-blue-700 text-white"
               onClick={handleTaskCompletion}
               disabled={loading}
             >
