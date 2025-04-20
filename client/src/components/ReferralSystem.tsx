@@ -46,7 +46,7 @@ const ReferralSystem: React.FC = () => {
     
     switch (platform) {
       case 'telegram':
-        url = `https://t.me/share/url?url=${encodeURIComponent(referralLink)}&text=${encodeURIComponent(message)}`;
+        url = `https://t.me/share/url?url=${encodeURIComponent(referralLink)}&text=${encodeURIComponent(message)}&to=gleritaschat`;
         break;
       case 'twitter':
         url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(message + ' ' + referralLink)}`;

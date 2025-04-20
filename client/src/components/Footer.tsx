@@ -15,7 +15,7 @@ const Footer: React.FC = () => {
           
           <div className="flex space-x-5">
             <a 
-              href="https://t.me/gleritastoken" 
+              href="https://t.me/gleritaschat" 
               target="_blank" 
               rel="noopener noreferrer"
               className="text-blue-300 hover:text-blue-200"

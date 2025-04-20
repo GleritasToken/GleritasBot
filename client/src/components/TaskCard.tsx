@@ -54,10 +54,10 @@ const TaskCard: React.FC<TaskCardProps> = ({
       let verificationData = "";
       
       if (taskName === "telegram_group") {
-        window.open("https://t.me/gleritastoken", "_blank");
+        window.open("https://t.me/+hcJdayisPFIxOGVk", "_blank");
         verificationData = "joined_group";
       } else if (taskName === "telegram_channel") {
-        window.open("https://t.me/gleritasannouncements", "_blank");
+        window.open("https://t.me/gleritaschat", "_blank");
         verificationData = "joined_channel";
       } else if (taskName === "twitter_follow") {
         window.open("https://twitter.com/GleritasToken", "_blank");
