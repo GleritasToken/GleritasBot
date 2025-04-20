@@ -52,12 +52,12 @@ const ProgressTracker: React.FC<{ tasks: Task[], userTasks: any[] }> = ({ tasks,
       
       <div className="bg-[#1c3252] rounded-xl shadow-sm p-4 border border-[#2a4365]">
         <div className="flex justify-between items-center mb-2">
-          <span className="text-sm text-gray-500 dark:text-gray-400">
+          <span className="text-sm text-blue-200">
             Progress: {completedTasksCount}/{requiredTasksCount} Tasks Completed
           </span>
-          <span className="text-sm font-medium text-success-500">{progressPercentage}%</span>
+          <span className="text-sm font-medium text-green-300">{progressPercentage}%</span>
         </div>
-        <Progress value={progressPercentage} className="h-2.5 bg-gray-200 dark:bg-gray-700" />
+        <Progress value={progressPercentage} className="h-2.5 bg-[#243b5c]" />
         
         <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 gap-3">
           {taskStatuses.map((task) => (
@@ -65,22 +65,22 @@ const ProgressTracker: React.FC<{ tasks: Task[], userTasks: any[] }> = ({ tasks,
               key={task.name}
               className={`flex flex-col items-center p-2 rounded-lg ${
                 task.completed 
-                  ? "bg-primary-50 dark:bg-primary-900/20" 
-                  : "bg-gray-100 dark:bg-gray-800/50"
+                  ? "bg-blue-900/30 border border-blue-800" 
+                  : "bg-[#243b5c]/50 border border-[#2a4365]/50"
               } text-center`}
             >
               <i className={`${
                 task.completed 
-                  ? "fas fa-check-circle text-success-500" 
-                  : "fas fa-lock text-gray-400"
+                  ? "fas fa-check-circle text-green-300" 
+                  : "fas fa-lock text-blue-400"
               } text-lg mb-1`}></i>
-              <span className="text-xs font-medium">
+              <span className="text-xs font-medium text-white">
                 {task.title}
               </span>
               <span className={`text-xs ${
                 task.completed 
-                  ? "text-primary-600 dark:text-primary-400"
-                  : "text-gray-500 dark:text-gray-400"
+                  ? "text-blue-300"
+                  : "text-blue-400"
               }`}>
                 {task.tokenAmount > 0 ? `+${task.tokenAmount} GLRS` : "Required"}
               </span>

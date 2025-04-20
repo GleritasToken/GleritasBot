@@ -62,41 +62,41 @@ const ReferralSystem: React.FC = () => {
   };
 
   return (
-    <Card className="bg-white dark:bg-gray-800 rounded-xl shadow-sm overflow-hidden">
-      <CardHeader className="bg-gradient-to-r from-purple-500 to-primary-600 p-4 text-white">
+    <Card className="bg-[#1c3252] rounded-xl shadow-sm overflow-hidden border border-[#2a4365]">
+      <CardHeader className="bg-gradient-to-r from-blue-700 to-blue-900 p-4 text-white border-b border-[#2a4365]">
         <h3 className="font-semibold text-lg">Referral Program</h3>
         <p className="text-sm text-white/80">Earn +5 GLRS for each friend who completes tasks</p>
       </CardHeader>
       
       <CardContent className="p-4">
-        <div className="bg-primary-50 dark:bg-primary-900/20 rounded-lg p-4 mb-4">
+        <div className="bg-blue-900/30 rounded-lg p-4 mb-4 border border-blue-800">
           <div className="flex justify-between items-center mb-2">
-            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Your Referrals</span>
-            <span className="text-xl font-bold text-primary-600 dark:text-primary-400">
+            <span className="text-sm font-medium text-blue-200">Your Referrals</span>
+            <span className="text-xl font-bold text-blue-300">
               {user?.referralCount || 0}
             </span>
           </div>
           <div className="flex justify-between items-center">
-            <span className="text-sm text-gray-500 dark:text-gray-400">Earned from referrals</span>
-            <span className="text-lg font-semibold text-primary-600 dark:text-primary-400">
+            <span className="text-sm text-blue-300">Earned from referrals</span>
+            <span className="text-lg font-semibold text-blue-300">
               {user?.referralTokens || 0} GLRS
             </span>
           </div>
         </div>
         
-        <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">Share your unique referral link with friends:</p>
+        <p className="text-sm text-blue-200 mb-3">Share your unique referral link with friends:</p>
         
         <div className="relative mb-4">
           <Input
             type="text"
             value={referralLink}
             readOnly
-            className="block w-full px-4 py-3 bg-gray-100 dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-md font-mono text-sm pr-10"
+            className="block w-full px-4 py-3 bg-[#243b5c] border border-[#2a4365] rounded-md font-mono text-sm pr-10 text-white"
           />
           <Button
             variant="ghost"
             size="sm"
-            className="absolute right-2 top-1/2 transform -translate-y-1/2 text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 focus:outline-none h-auto p-1"
+            className="absolute right-2 top-1/2 transform -translate-y-1/2 text-blue-300 hover:text-blue-200 focus:outline-none h-auto p-1"
             onClick={copyReferralLink}
           >
             {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
