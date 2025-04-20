@@ -17,7 +17,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Helper middleware to check if a request is from a registered user
   const requireUser = async (req: Request, res: Response, next: Function) => {
-    const userId = req.session?.userId;
+    const userId = req.session.userId;
     if (!userId) {
       return res.status(401).json({ message: "Unauthorized. Please register first." });
     }
@@ -129,7 +129,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       const { taskName, verificationData } = validationResult.data;
-      const user = req.user;
+      const user = req.user!; // We can safely use non-null assertion because requireUser middleware guarantees user exists
       
       // Check if task exists
       const task = await storage.getTask(taskName);
@@ -190,7 +190,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       const { walletAddress, captchaToken } = validationResult.data;
-      const user = req.user;
+      const user = req.user!; // Non-null assertion is safe here due to requireUser middleware
       
       // CAPTCHA validation would go here
       if (!captchaToken) {
@@ -244,7 +244,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get current user with tasks
   app.get("/api/user", requireUser, async (req: Request, res: Response) => {
     try {
-      const user = req.user;
+      const user = req.user!; // Non-null assertion is safe here due to requireUser middleware
       const userWithTasks = await storage.getUserWithTasks(user.id);
       
       if (!userWithTasks) {
@@ -261,7 +261,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get referral stats
   app.get("/api/referrals", requireUser, async (req: Request, res: Response) => {
     try {
-      const user = req.user;
+      const user = req.user!; // Non-null assertion is safe here due to requireUser middleware
       const referrals = await storage.getReferralsByReferrer(user.id);
       
       res.json({

@@ -44,4 +44,49 @@ export function setupAuth(app: Express) {
       }
     })
   );
+  
+  // Add login endpoint
+  app.post("/api/login", async (req: Request, res) => {
+    try {
+      const { username } = req.body;
+      
+      if (!username) {
+        return res.status(400).json({ message: "Username is required" });
+      }
+      
+      const user = await storage.getUserByUsername(username);
+      
+      if (!user) {
+        return res.status(401).json({ message: "User not found" });
+      }
+      
+      // Store user ID in session
+      req.session.userId = user.id;
+      
+      return res.json({
+        message: "Login successful",
+        user: {
+          id: user.id,
+          username: user.username,
+          referralCode: user.referralCode,
+          totalTokens: user.totalTokens
+        }
+      });
+    } catch (error) {
+      console.error("Login error:", error);
+      return res.status(500).json({ message: "Login failed" });
+    }
+  });
+  
+  // Add logout endpoint
+  app.post("/api/logout", (req: Request, res) => {
+    req.session.destroy((err) => {
+      if (err) {
+        return res.status(500).json({ message: "Logout failed" });
+      }
+      
+      res.clearCookie("connect.sid");
+      return res.json({ message: "Logged out successfully" });
+    });
+  });
 }

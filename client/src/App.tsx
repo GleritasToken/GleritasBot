@@ -6,14 +6,17 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
 import Dashboard from "@/pages/Dashboard";
 import Landing from "@/pages/Landing";
+import AuthPage from "@/pages/auth-page";
 import { ThemeProvider } from "@/providers/ThemeProvider";
 import { UserProvider } from "@/providers/UserProvider";
+import { ProtectedRoute } from "./lib/protected-route";
 
 function Router() {
   return (
     <Switch>
-      <Route path="/" component={Landing} />
-      <Route path="/dashboard" component={Dashboard} />
+      <ProtectedRoute path="/" component={Dashboard} />
+      <Route path="/landing" component={Landing} />
+      <Route path="/auth" component={AuthPage} />
       {/* Fallback to 404 */}
       <Route component={NotFound} />
     </Switch>
