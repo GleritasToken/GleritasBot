@@ -12,7 +12,7 @@ export function ProtectedRoute({
   const { data: user, isLoading } = useQuery({
     queryKey: ['/api/user'],
     retry: false,
-    onError: () => {}  // Silently fail, we're checking authentication status
+    staleTime: 0
   });
 
   if (isLoading) {

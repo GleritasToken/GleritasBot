@@ -82,7 +82,7 @@ export default function AuthPage() {
         title: "Login successful",
         description: "Welcome back!",
       });
-      navigate("/");
+      setLocation("/");
     },
     onError: (error: Error) => {
       toast({
@@ -102,9 +102,11 @@ export default function AuthPage() {
         fingerprint: "demo-fingerprint",
         ipAddress: "127.0.0.1"
       };
-      delete formData.agreeTerms; // Remove UI-only field
+      
+      // Create a new object without the agreeTerms field
+      const { agreeTerms, ...submitData } = formData;
 
-      const response = await apiRequest("POST", "/api/register", formData);
+      const response = await apiRequest("POST", "/api/register", submitData);
       return await response.json();
     },
     onSuccess: () => {
@@ -112,7 +114,7 @@ export default function AuthPage() {
         title: "Registration successful",
         description: "Your account has been created!",
       });
-      navigate("/");
+      setLocation("/");
     },
     onError: (error: Error) => {
       toast({
