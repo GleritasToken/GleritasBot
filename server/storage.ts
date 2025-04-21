@@ -4,7 +4,6 @@ import {
   referrals, type Referral, type InsertReferral,
   tasks, type Task, type InsertTask,
   withdrawals, type Withdrawal, type InsertWithdrawal,
-  verificationAttempts, type VerificationAttempt, type InsertVerificationAttempt,
   type UserWithTasks, type TaskName
 } from "@shared/schema";
 import crypto from 'crypto';
@@ -48,13 +47,6 @@ export interface IStorage {
   getAllWithdrawals(): Promise<Withdrawal[]>;
   updateWithdrawalWithAdminAction(id: number, status: string, adminId: number, notes?: string, rejectionReason?: string, txHash?: string): Promise<Withdrawal | undefined>;
 
-  // Verification operations
-  storeVerificationAttempt(userId: number, taskName: string, verificationData: string): Promise<VerificationAttempt>;
-  getVerificationAttempt(userId: number, taskName: string): Promise<VerificationAttempt | undefined>;
-  approveVerificationAttempt(id: number, adminId?: number, notes?: string): Promise<VerificationAttempt | undefined>;
-  rejectVerificationAttempt(id: number, reason: string): Promise<VerificationAttempt | undefined>;
-  getPendingVerificationAttempts(): Promise<VerificationAttempt[]>;
-  
   // Admin operations
   banUser(userId: number, banReason: string): Promise<User | undefined>;
   unbanUser(userId: number): Promise<User | undefined>;
@@ -75,14 +67,12 @@ export class MemStorage implements IStorage {
   private referrals: Map<number, Referral>;
   private tasks: Map<number, Task>;
   private withdrawals: Map<number, Withdrawal>;
-  private verificationAttempts: Map<number, VerificationAttempt>;
   
   private currentUserId: number;
   private currentUserTaskId: number;
   private currentReferralId: number;
   private currentTaskId: number;
   private currentWithdrawalId: number;
-  private currentVerificationAttemptId: number;
   
   // Session store for Express
   sessionStore: session.Store;
@@ -93,14 +83,12 @@ export class MemStorage implements IStorage {
     this.referrals = new Map();
     this.tasks = new Map();
     this.withdrawals = new Map();
-    this.verificationAttempts = new Map();
     
     this.currentUserId = 1;
     this.currentUserTaskId = 1;
     this.currentReferralId = 1;
     this.currentTaskId = 1;
     this.currentWithdrawalId = 1;
-    this.currentVerificationAttemptId = 1;
     
     // Create memory store for sessions
     const MemoryStore = createMemoryStore(session);
@@ -204,7 +192,6 @@ export class MemStorage implements IStorage {
       description: insertTask.description,
       tokenAmount: insertTask.tokenAmount,
       isRequired: insertTask.isRequired ?? true, // Default to true if not specified
-      requiresVerification: insertTask.requiresVerification ?? false, // Default to false if not specified
       iconClass: insertTask.iconClass,
       link: insertTask.link || null,
       createdAt: new Date()
@@ -434,79 +421,6 @@ export class MemStorage implements IStorage {
     return updatedUser;
   }
   
-  // Verification Operations
-  async storeVerificationAttempt(userId: number, taskName: string, verificationData: string): Promise<VerificationAttempt> {
-    const id = this.currentVerificationAttemptId++;
-    const attempt: VerificationAttempt = {
-      id,
-      userId,
-      taskName,
-      verificationData,
-      status: "pending",
-      adminNotes: null,
-      createdAt: new Date(),
-      updatedAt: null
-    };
-    
-    this.verificationAttempts.set(id, attempt);
-    return attempt;
-  }
-  
-  async getVerificationAttempt(userId: number, taskName: string): Promise<VerificationAttempt | undefined> {
-    return Array.from(this.verificationAttempts.values()).find(
-      (attempt) => attempt.userId === userId && attempt.taskName === taskName
-    );
-  }
-  
-  async approveVerificationAttempt(id: number, adminId?: number, notes?: string): Promise<VerificationAttempt | undefined> {
-    const attempt = this.verificationAttempts.get(id);
-    if (!attempt) return undefined;
-    
-    const updatedAttempt: VerificationAttempt = {
-      ...attempt,
-      status: "approved",
-      adminNotes: notes || null,
-      updatedAt: new Date()
-    };
-    
-    this.verificationAttempts.set(id, updatedAttempt);
-    
-    // Automatically complete the task for the user
-    const task = await this.getTask(updatedAttempt.taskName);
-    if (task) {
-      await this.completeUserTask({
-        userId: updatedAttempt.userId,
-        taskName: updatedAttempt.taskName,
-        tokenAmount: task.tokenAmount,
-        completed: true,
-        verificationData: updatedAttempt.verificationData
-      });
-    }
-    
-    return updatedAttempt;
-  }
-  
-  async rejectVerificationAttempt(id: number, reason: string): Promise<VerificationAttempt | undefined> {
-    const attempt = this.verificationAttempts.get(id);
-    if (!attempt) return undefined;
-    
-    const updatedAttempt: VerificationAttempt = {
-      ...attempt,
-      status: "rejected",
-      adminNotes: reason,
-      updatedAt: new Date()
-    };
-    
-    this.verificationAttempts.set(id, updatedAttempt);
-    return updatedAttempt;
-  }
-  
-  async getPendingVerificationAttempts(): Promise<VerificationAttempt[]> {
-    return Array.from(this.verificationAttempts.values()).filter(
-      (attempt) => attempt.status === "pending"
-    );
-  }
-  
   async getTaskCompletionStats(): Promise<any> {
     const allTasks = await this.getAllTasks();
     const allUserTasks = await this.getAllUserTasks();
@@ -610,7 +524,6 @@ export class MemStorage implements IStorage {
         description: "Join our official Telegram group",
         tokenAmount: 10,
         isRequired: true,
-        requiresVerification: true,
         iconClass: "fab fa-telegram-plane text-blue-500",
         link: "https://t.me/+hcJdayisPFIxOGVk"
       },
@@ -619,7 +532,6 @@ export class MemStorage implements IStorage {
         description: "Subscribe to our announcement channel",
         tokenAmount: 5,
         isRequired: true,
-        requiresVerification: true,
         iconClass: "fab fa-telegram-plane text-blue-500",
         link: "https://t.me/gleritaschat"
       },
@@ -628,7 +540,6 @@ export class MemStorage implements IStorage {
         description: "Follow @GleritasToken on Twitter",
         tokenAmount: 10,
         isRequired: true,
-        requiresVerification: true,
         iconClass: "fab fa-twitter text-blue-500",
         link: "https://twitter.com/GleritasToken"
       },
@@ -637,7 +548,6 @@ export class MemStorage implements IStorage {
         description: "Like, retweet, and comment on our pinned tweet",
         tokenAmount: 10,
         isRequired: true,
-        requiresVerification: true,
         iconClass: "fab fa-twitter text-blue-500",
         link: "https://twitter.com/GleritasToken"
       },
@@ -646,7 +556,6 @@ export class MemStorage implements IStorage {
         description: "Watch and like our intro video (Optional)",
         tokenAmount: 10,
         isRequired: false,
-        requiresVerification: false,
         iconClass: "fab fa-youtube text-red-500",
         link: "https://www.youtube.com"
       },
@@ -655,7 +564,6 @@ export class MemStorage implements IStorage {
         description: "Provide a valid wallet address for token distribution",
         tokenAmount: 0,
         isRequired: true,
-        requiresVerification: true,
         iconClass: "fas fa-wallet text-yellow-500",
         link: null
       }

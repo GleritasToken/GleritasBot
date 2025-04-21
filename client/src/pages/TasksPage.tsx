@@ -42,43 +42,6 @@ const TasksPage: React.FC = () => {
     }
   });
   
-  // Check verification status for a task
-  const checkVerificationStatus = async (taskName: string) => {
-    try {
-      const response = await apiRequest('GET', `/api/verifications/${taskName}/status`);
-      const data = await response.json();
-      
-      // Handle different status cases
-      if (data.status === 'completed') {
-        // Task is already completed, refresh user data
-        refreshUser();
-        toast({
-          title: "Task already completed!",
-          description: data.message,
-        });
-      } else if (data.status === 'pending') {
-        // Task is pending verification
-        toast({
-          title: "Verification in progress",
-          description: data.message,
-          variant: "default",
-        });
-      } else if (data.status === 'rejected') {
-        // Task verification was rejected
-        toast({
-          title: "Verification rejected",
-          description: data.message,
-          variant: "destructive",
-        });
-      }
-      
-      return data.status;
-    } catch (error) {
-      console.error("Verification status check error:", error);
-      return 'error';
-    }
-  };
-
   // Complete task mutation
   const completeMutation = useMutation({
     mutationFn: async (data: {taskName: string; verificationData?: string}) => {
@@ -87,22 +50,10 @@ const TasksPage: React.FC = () => {
       // If response is 202 (Accepted), it means additional verification is required
       if (response.status === 202) {
         const data = await response.json();
-        
-        // If status is verification_pending, show a message that verification is in progress
-        if (data.status === "verification_pending") {
-          toast({
-            title: "Verification in progress",
-            description: data.message || "Your task is being verified. Please check back later.",
-            variant: "default",
-          });
-          throw new Error(data.message || "Your task is being verified. Please check back later.");
-        }
-        
-        // If there's a redirectUrl, we need to redirect the user to complete the task
+        // If there's a redirectUrl, we need to redirect the user
         if (data.redirectUrl) {
           window.open(data.redirectUrl, '_blank', 'noopener,noreferrer');
         }
-        
         throw new Error(data.message || "Please complete the task via the provided link.");
       }
       
@@ -186,24 +137,8 @@ const TasksPage: React.FC = () => {
   };
   
   // Handle task action (start or verify)
-  const handleTaskAction = async (task: Task) => {
-    // For all tasks, first check if there's an existing verification status
-    if (task.requiresVerification) {
-      const status = await checkVerificationStatus(task.name);
-      
-      if (status === 'pending') {
-        // If task is pending verification, just show a toast and don't proceed further
-        return;
-      } else if (status === 'rejected') {
-        // If task verification was rejected, allow the user to try again
-        // Continue with the process below
-      } else if (status === 'completed') {
-        // If task is already completed, refresh the UI
-        return;
-      }
-    }
-    
-    // For tasks that require verification input, open the verification dialog
+  const handleTaskAction = (task: Task) => {
+    // For tasks that require verification, open the verification dialog
     if (needsVerification(task)) {
       openVerificationDialog(task);
       return;

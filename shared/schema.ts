@@ -78,7 +78,6 @@ export const tasks = pgTable("tasks", {
   description: text("description").notNull(),
   tokenAmount: integer("token_amount").notNull(),
   isRequired: boolean("is_required").notNull().default(true),
-  requiresVerification: boolean("requires_verification").notNull().default(false),
   iconClass: text("icon_class").notNull(),
   link: text("link"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
@@ -87,26 +86,6 @@ export const tasks = pgTable("tasks", {
 export const insertTaskSchema = createInsertSchema(tasks).omit({
   id: true,
   createdAt: true
-});
-
-// Verification attempts for tasks
-export const verificationAttempts = pgTable("verification_attempts", {
-  id: serial("id").primaryKey(),
-  userId: integer("user_id").notNull(),
-  taskName: text("task_name").notNull(),
-  verificationData: text("verification_data").notNull(),
-  status: text("status").notNull().default("pending"), // pending, approved, rejected
-  adminNotes: text("admin_notes"),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-  updatedAt: timestamp("updated_at"),
-});
-
-export const insertVerificationAttemptSchema = createInsertSchema(verificationAttempts).omit({
-  id: true,
-  createdAt: true,
-  updatedAt: true,
-  status: true,
-  adminNotes: true
 });
 
 // Withdrawals
@@ -143,9 +122,6 @@ export type Referral = typeof referrals.$inferSelect;
 
 export type InsertTask = z.infer<typeof insertTaskSchema>;
 export type Task = typeof tasks.$inferSelect;
-
-export type InsertVerificationAttempt = z.infer<typeof insertVerificationAttemptSchema>;
-export type VerificationAttempt = typeof verificationAttempts.$inferSelect;
 
 export type InsertWithdrawal = z.infer<typeof insertWithdrawalSchema>;
 export type Withdrawal = typeof withdrawals.$inferSelect;
@@ -211,7 +187,6 @@ export const createTaskSchema = z.object({
   description: z.string().min(3),
   tokenAmount: z.number().min(1),
   isRequired: z.boolean().default(false),
-  requiresVerification: z.boolean().default(true),
   iconClass: z.string(),
   link: z.string().url("Please enter a valid URL").optional()
 });

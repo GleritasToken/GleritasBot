@@ -22,7 +22,6 @@ interface TaskWithStats {
   description: string;
   tokenAmount: number;
   isRequired: boolean;
-  requiresVerification: boolean;
   iconClass: string;
   link?: string;
   createdAt: string;
@@ -35,7 +34,6 @@ interface TaskFormData {
   description: string;
   tokenAmount: number;
   isRequired: boolean;
-  requiresVerification: boolean;
   iconClass: string;
   link?: string;
 }
@@ -48,7 +46,6 @@ const AdminTasksTab: React.FC = () => {
     description: '',
     tokenAmount: 5,
     isRequired: false,
-    requiresVerification: false,
     iconClass: 'fa fa-check'
   });
   

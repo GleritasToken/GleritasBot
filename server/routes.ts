@@ -179,214 +179,85 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Implement proper verification of tasks based on taskName
       let isVerified = false;
       let verificationMessage = "";
-      let asyncVerificationInProgress = false;
       
       try {
         // For wallet submission, we need to verify a valid BSC address
         if (taskName === "wallet_submit" && verificationData) {
-          // Strict validation for BSC wallet address
+          // Simple validation for BSC wallet address
           const isValidBscAddress = /^0x[a-fA-F0-9]{40}$/.test(verificationData);
           if (isValidBscAddress) {
-            // Check if this is a real BSC address with balance
-            try {
-              // In a production environment, we'd call the BSC API to verify the address exists
-              // For example, using ethers.js:
-              // const provider = new ethers.providers.JsonRpcProvider('https://bsc-dataseed.binance.org/');
-              // const balance = await provider.getBalance(verificationData);
-              // isVerified = balance.gte(0); // Address exists on BSC
-
-              // For now, we'll do a stricter regex check until real API integration
-              isVerified = /^0x[1-9a-fA-F][0-9a-fA-F]{39}$/.test(verificationData);
-              
-              if (isVerified) {
-                await storage.updateUser(user.id, { walletAddress: verificationData });
-              } else {
-                verificationMessage = "The BSC address appears to be invalid. Please ensure it's a valid BSC wallet address.";
-              }
-            } catch (error) {
-              console.error("BSC verification error:", error);
-              verificationMessage = "Could not verify BSC address. Please try again later.";
-            }
+            await storage.updateUser(user.id, { walletAddress: verificationData });
+            isVerified = true;
           } else {
-            verificationMessage = "Invalid BSC wallet address format. Please enter a valid address starting with 0x followed by 40 hexadecimal characters.";
+            verificationMessage = "Invalid BSC wallet address format. Please enter a valid address.";
           }
         }
-        // For telegram_group task
+        // For telegram_group task, verify the user has joined the group
         else if (taskName === "telegram_group") {
-          if (!process.env.TELEGRAM_BOT_TOKEN) {
-            verificationMessage = "Telegram verification is not properly configured. Please contact support.";
+          // Here we'd use Telegram Bot API to check membership
+          // For now, we'll require proof of membership via screenshot or verification code
+          if (verificationData) {
+            // In a real implementation, we'd verify this with Telegram Bot API
+            isVerified = true;
           } else {
-            // Get the username or user ID from verification data
-            const telegramIdentifier = verificationData?.trim();
-            
-            if (!telegramIdentifier) {
-              verificationMessage = "Please provide your Telegram username or ID.";
-            } else {
-              try {
-                // In a production environment, we'd make an API call to Telegram Bot API
-                // Example: checking if user is a member of the group
-                // const response = await axios.get(
-                //   `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/getChatMember`,
-                //   { params: { chat_id: '@gleritaschat', user_id: telegramIdentifier } }
-                // );
-                // isVerified = response.data.ok && response.data.result.status !== 'left';
-                
-                // For now, we'll treat this as async verification that's pending
-                asyncVerificationInProgress = true;
-                
-                // Store the verification attempt for later processing
-                await storage.storeVerificationAttempt(user.id, taskName, telegramIdentifier);
-                
-                // Return pending verification status
-                return res.status(202).json({
-                  message: "Your Telegram membership is being verified. Please check back in a few minutes.",
-                  status: "verification_pending"
-                });
-              } catch (error) {
-                console.error("Telegram verification error:", error);
-                verificationMessage = "Could not verify Telegram membership. Please ensure you've joined the group and try again.";
-              }
-            }
+            verificationMessage = "Please join our Telegram group and provide verification.";
           }
         }
         // For telegram_channel task
         else if (taskName === "telegram_channel") {
-          if (!process.env.TELEGRAM_BOT_TOKEN) {
-            verificationMessage = "Telegram verification is not properly configured. Please contact support.";
+          if (verificationData) {
+            // In a real implementation, we'd verify this with Telegram Bot API
+            isVerified = true;
           } else {
-            // Similar implementation to telegram_group
-            const telegramIdentifier = verificationData?.trim();
-            
-            if (!telegramIdentifier) {
-              verificationMessage = "Please provide your Telegram username or ID.";
-            } else {
-              try {
-                // For now, we'll treat this as async verification that's pending
-                asyncVerificationInProgress = true;
-                
-                // Store the verification attempt for later processing
-                await storage.storeVerificationAttempt(user.id, taskName, telegramIdentifier);
-                
-                // Return pending verification status
-                return res.status(202).json({
-                  message: "Your Telegram channel subscription is being verified. Please check back in a few minutes.",
-                  status: "verification_pending"
-                });
-              } catch (error) {
-                console.error("Telegram verification error:", error);
-                verificationMessage = "Could not verify Telegram subscription. Please ensure you've subscribed to the channel and try again.";
-              }
-            }
+            verificationMessage = "Please subscribe to our Telegram channel and provide verification.";
           }
         }
         // For twitter_follow task
         else if (taskName === "twitter_follow") {
-          const twitterHandle = verificationData?.trim();
-          
-          if (!twitterHandle) {
-            verificationMessage = "Please provide your Twitter username.";
+          if (verificationData) {
+            // In a real implementation, we'd verify this with Twitter API
+            isVerified = true;
           } else {
-            try {
-              // In a production environment, we'd make an API call to Twitter API
-              // Example: checking if user follows the specified Twitter account
-              // const response = await axios.get(
-              //   `https://api.twitter.com/2/users/${twitterHandle}/following`,
-              //   { headers: { Authorization: `Bearer ${process.env.TWITTER_BEARER_TOKEN}` } }
-              // );
-              // isVerified = response.data.data.some(u => u.username === 'GleritasToken');
-              
-              // For now, we'll treat this as async verification that's pending
-              asyncVerificationInProgress = true;
-              
-              // Store the verification attempt for later processing
-              await storage.storeVerificationAttempt(user.id, taskName, twitterHandle);
-              
-              // Return pending verification status
-              return res.status(202).json({
-                message: "Your Twitter follow is being verified. Please check back in a few minutes.",
-                status: "verification_pending"
-              });
-            } catch (error) {
-              console.error("Twitter verification error:", error);
-              verificationMessage = "Could not verify Twitter follow. Please ensure you've followed @GleritasToken and try again.";
-            }
+            verificationMessage = "Please follow our Twitter account and provide your Twitter username.";
           }
         }
         // For twitter_retweet task
         else if (taskName === "twitter_retweet") {
-          const retweetUrl = verificationData?.trim();
-          
-          if (!retweetUrl || !retweetUrl.includes('twitter.com')) {
-            verificationMessage = "Please provide a valid Twitter retweet URL.";
+          if (verificationData) {
+            // In a real implementation, we'd verify this with Twitter API
+            isVerified = true;
           } else {
-            try {
-              // Extract tweet ID from URL
-              const tweetIdMatch = retweetUrl.match(/status\/(\d+)/);
-              const tweetId = tweetIdMatch ? tweetIdMatch[1] : null;
-              
-              if (!tweetId) {
-                verificationMessage = "Invalid Twitter URL format. Please provide a valid retweet link.";
-              } else {
-                // In a production environment, we'd make an API call to Twitter API to verify the retweet
-                // For now, we'll treat this as async verification that's pending
-                asyncVerificationInProgress = true;
-                
-                // Store the verification attempt for later processing
-                await storage.storeVerificationAttempt(user.id, taskName, retweetUrl);
-                
-                // Return pending verification status
-                return res.status(202).json({
-                  message: "Your retweet is being verified. Please check back in a few minutes.",
-                  status: "verification_pending"
-                });
-              }
-            } catch (error) {
-              console.error("Twitter verification error:", error);
-              verificationMessage = "Could not verify retweet. Please ensure you've retweeted the correct post and try again.";
-            }
+            verificationMessage = "Please retweet our post and provide the retweet link.";
           }
         }
-        // For website_visit task - we can track this via special parameters in the URL
+        // For website_visit task
         else if (taskName === "website_visit") {
-          // We'll verify this by checking if the user has a special cookie or session marker
-          // For this prototype, we'll set it to true for now
-          // In a production environment, you would verify that the user actually visited the site
-          // by setting a cookie when they visit and checking for it here
+          // We could track this via a special URL parameter or session
           isVerified = true;
         }
         // For other tasks where task link is provided but no verification data
         else if (task.link && !verificationData) {
           // When task has a link but user hasn't provided verification data
-          // We'll consider this as "pending verification" - direct user to the link
-          return res.status(202).json({ 
-            message: "Please complete this task by visiting the link. You'll need to provide proof of completion afterward.", 
+          // We'll consider this as "pending verification"
+          res.status(202).json({ 
+            message: "Please visit the task link and complete the required action to earn tokens.", 
             status: "pending_verification",
             redirectUrl: task.link
           });
+          return;
         }
-        // For any other tasks - use default strict verification
+        // For any other tasks - default verification
         else {
-          if (verificationData && verificationData.trim().length > 3) {
-            // Store it for manual review
-            asyncVerificationInProgress = true;
-            await storage.storeVerificationAttempt(user.id, taskName, verificationData);
-            
-            return res.status(202).json({
-              message: "Your task completion is pending verification. Please check back later.",
-              status: "verification_pending"
-            });
+          // Fallback - require verification data for unknown task types
+          if (verificationData) {
+            isVerified = true;
           } else {
-            verificationMessage = "Please provide detailed verification data to complete this task.";
+            verificationMessage = "Please provide verification data to complete this task.";
           }
         }
       } catch (error) {
         console.error("Task verification error:", error);
-        verificationMessage = "Error during task verification. Please try again later.";
-      }
-      
-      // For async verification processes, we exit early with a 202 status
-      if (asyncVerificationInProgress) {
-        return;
+        verificationMessage = "Error during task verification.";
       }
       
       if (isVerified) {
@@ -861,117 +732,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("User activity stats error:", error);
       res.status(500).json({ message: "Failed to fetch user activity statistics." });
-    }
-  });
-  
-  // Get all pending verification attempts for admin review
-  app.get("/api/admin/verifications", requireAdmin, async (req: Request, res: Response) => {
-    try {
-      const verifications = await storage.getPendingVerificationAttempts();
-      res.json(verifications);
-    } catch (error) {
-      console.error("Error getting verification attempts:", error);
-      res.status(500).json({ message: "Failed to retrieve verification attempts." });
-    }
-  });
-  
-  // Approve a verification attempt
-  app.post("/api/admin/verifications/:id/approve", requireAdmin, async (req: Request, res: Response) => {
-    try {
-      const id = parseInt(req.params.id);
-      const notes = req.body.notes || 'Approved by admin';
-      const adminId = req.user?.id;
-      
-      const attempt = await storage.approveVerificationAttempt(id, adminId, notes);
-      
-      if (!attempt) {
-        return res.status(404).json({ message: "Verification attempt not found." });
-      }
-      
-      res.json({
-        message: "Verification attempt approved successfully.",
-        attempt
-      });
-    } catch (error) {
-      console.error("Error approving verification:", error);
-      res.status(500).json({ message: "Failed to approve verification attempt." });
-    }
-  });
-  
-  // Reject a verification attempt
-  app.post("/api/admin/verifications/:id/reject", requireAdmin, async (req: Request, res: Response) => {
-    try {
-      const id = parseInt(req.params.id);
-      const reason = req.body.reason || 'Rejected by admin';
-      
-      const attempt = await storage.rejectVerificationAttempt(id, reason);
-      
-      if (!attempt) {
-        return res.status(404).json({ message: "Verification attempt not found." });
-      }
-      
-      res.json({
-        message: "Verification attempt rejected successfully.",
-        attempt
-      });
-    } catch (error) {
-      console.error("Error rejecting verification:", error);
-      res.status(500).json({ message: "Failed to reject verification attempt." });
-    }
-  });
-  
-  // Check verification status for a specific task
-  app.get("/api/verifications/:taskName/status", requireUser, async (req: Request, res: Response) => {
-    try {
-      const userId = req.user!.id;
-      const taskName = req.params.taskName;
-      
-      // First check if the task is already completed
-      const isCompleted = await storage.checkTaskCompletion(userId, taskName);
-      
-      if (isCompleted) {
-        return res.json({
-          status: "completed",
-          message: "Task already completed successfully."
-        });
-      }
-      
-      // Check for pending verification attempts
-      const attempt = await storage.getVerificationAttempt(userId, taskName);
-      
-      if (!attempt) {
-        return res.json({
-          status: "not_started",
-          message: "No verification attempt found. Please complete the task."
-        });
-      }
-      
-      // Return the appropriate status message based on verification status
-      if (attempt.status === "pending") {
-        return res.json({
-          status: "pending",
-          message: "Your verification is being processed. Please check back later."
-        });
-      } else if (attempt.status === "approved") {
-        return res.json({
-          status: "approved",
-          message: "Your verification has been approved. The task is now complete."
-        });
-      } else if (attempt.status === "rejected") {
-        return res.json({
-          status: "rejected",
-          message: `Your verification was rejected: ${attempt.adminNotes || 'No reason provided.'}. Please try again.`
-        });
-      }
-      
-      // Fallback
-      return res.json({
-        status: attempt.status,
-        message: "Verification status is being tracked."
-      });
-    } catch (error) {
-      console.error("Error checking verification status:", error);
-      res.status(500).json({ message: "Failed to check verification status." });
     }
   });
   
