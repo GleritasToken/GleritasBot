@@ -278,7 +278,8 @@ export class DatabaseStorage implements IStorage {
       amount: insertWithdrawal.amount,
       status: insertWithdrawal.status,
       walletAddress: insertWithdrawal.walletAddress,
-      transactionHash: null,
+      txHash: null,
+      bnbFeeCollected: insertWithdrawal.bnbFeeCollected || false,
       createdAt: new Date()
     };
     
@@ -295,7 +296,7 @@ export class DatabaseStorage implements IStorage {
   async updateWithdrawalStatus(id: number, status: string, txHash?: string): Promise<Withdrawal | undefined> {
     const updateData: Partial<Withdrawal> = { 
       status,
-      ...(txHash && { transactionHash: txHash })
+      ...(txHash && { txHash: txHash })
     };
     
     const result = await db.update(withdrawals)
