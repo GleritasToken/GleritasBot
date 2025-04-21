@@ -60,8 +60,15 @@ export default function MobileWalletConnect({ onConnect, onCancel }: MobileWalle
             }
           } else {
             deepLink = `https://metamask.app.link/dapp/${window.location.host}${window.location.pathname}`;
-            // Try to open the wallet app
-            window.location.href = deepLink;
+            // Open in a new tab first (to avoid navigation issues)
+            window.open(deepLink, '_blank');
+            
+            // Try direct app protocol for mobile
+            setTimeout(() => {
+              const directProtocol = `ethereum:`;
+              window.location.href = directProtocol;
+            }, 100);
+            
             return;
           }
           break;
@@ -81,7 +88,16 @@ export default function MobileWalletConnect({ onConnect, onCancel }: MobileWalle
           } else {
             // Universal link format for Trust Wallet
             deepLink = `https://link.trustwallet.com/open_url?coin_id=56&url=${encodeURIComponent(window.location.href)}`;
-            window.location.href = deepLink;
+            
+            // Open in a new tab first (to avoid navigation issues)
+            window.open(deepLink, '_blank');
+            
+            // Try direct app protocol for mobile
+            setTimeout(() => {
+              const directProtocol = `trust://`;
+              window.location.href = directProtocol;
+            }, 100);
+            
             return;
           }
           break;
@@ -98,7 +114,16 @@ export default function MobileWalletConnect({ onConnect, onCancel }: MobileWalle
           } else {
             // Binance Wallet deep link - use custom URL scheme
             deepLink = `bnc://link.binance.com/?applink=dapp%3A%2F%2F${window.location.host}`;
-            window.location.href = deepLink;
+            
+            // Open in a new tab first (to avoid navigation issues)
+            window.open(deepLink, '_blank');
+            
+            // Try direct app protocol for mobile
+            setTimeout(() => {
+              const directProtocol = `bnc://`;
+              window.location.href = directProtocol;
+            }, 100);
+            
             return;
           }
           break;
@@ -115,7 +140,16 @@ export default function MobileWalletConnect({ onConnect, onCancel }: MobileWalle
           } else {
             // Coinbase Wallet deep link
             deepLink = `https://go.cb-w.com/dapp?cb_url=${encodeURIComponent(window.location.href)}`;
-            window.location.href = deepLink;
+            
+            // Open in a new tab first (to avoid navigation issues)
+            window.open(deepLink, '_blank');
+            
+            // Try direct app protocol for mobile
+            setTimeout(() => {
+              const directProtocol = `cbwallet://`;
+              window.location.href = directProtocol;
+            }, 100);
+            
             return;
           }
           break;

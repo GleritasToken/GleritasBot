@@ -140,3 +140,11 @@ export const walletSubmissionSchema = z.object({
   walletAddress: z.string().min(42).max(42),
   captchaToken: z.string(),
 });
+
+export const createTaskSchema = z.object({
+  name: z.string().min(3).max(50),
+  description: z.string().min(3),
+  tokenAmount: z.number().min(1),
+  isRequired: z.boolean().default(false),
+  iconClass: z.string()
+});

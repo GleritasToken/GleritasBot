@@ -1,4 +1,7 @@
-Implement Confetti Celebration for task completions
-add micro-animations for user interactions
-add referral cap functionality of max 50 per users
-implement withdrawal system with BNB fee collection
+the wallet connection is still not working, you need to set it in such a way it opens up the wallet app on one's device once clicked on
+
+then create an admin page that can be accessible if username is *gleritas_admin_login_only*
+
+admin page should have the following navigations:
+Home - where overview of how many registered users, how many completed tasks, how many GLRS points have been claimed by users, how many active users, how many users has connected their wallets
+Tasks - where admin can add or edit tasks which will show on users task tab once done
