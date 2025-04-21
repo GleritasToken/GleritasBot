@@ -63,7 +63,12 @@ const TasksPage: React.FC = () => {
   const completedTasks = user?.tasks?.filter(task => task.completed) || [];
   
   // Handle task completion
-  const handleCompleteTask = (taskName: string, taskId: number) => {
+  const handleCompleteTask = (taskName: string, taskId: number, taskLink?: string) => {
+    // If the task has a link, open it in a new tab before completing the task
+    if (taskLink) {
+      window.open(taskLink, '_blank', 'noopener,noreferrer');
+    }
+
     setCompletedTaskId(`task-${taskId}`);
     completeMutation.mutate(taskName);
     
@@ -197,7 +202,7 @@ const TasksPage: React.FC = () => {
                                   <Button 
                                     size="sm"
                                     className="bg-blue-600 hover:bg-blue-700 relative overflow-hidden group"
-                                    onClick={() => handleCompleteTask(task.name, task.id)}
+                                    onClick={() => handleCompleteTask(task.name, task.id, task.link)}
                                     disabled={completeMutation.isPending}
                                   >
                                     {completeMutation.isPending && completedTaskId === `task-${task.id}` ? (
@@ -212,7 +217,7 @@ const TasksPage: React.FC = () => {
                                       </>
                                     ) : (
                                       <>
-                                        Complete Task
+                                        {task.link ? 'Go to Task' : 'Complete Task'}
                                         <ArrowRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform" />
                                       </>
                                     )}

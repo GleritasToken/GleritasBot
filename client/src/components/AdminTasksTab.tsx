@@ -23,6 +23,7 @@ interface TaskWithStats {
   tokenAmount: number;
   isRequired: boolean;
   iconClass: string;
+  link?: string;
   createdAt: string;
   completionCount: number;
   totalTokensAwarded: number;
@@ -142,7 +143,8 @@ const AdminTasksTab: React.FC = () => {
       description: task.description,
       tokenAmount: task.tokenAmount,
       isRequired: task.isRequired,
-      iconClass: task.iconClass
+      iconClass: task.iconClass,
+      link: task.link
     });
     setIsTaskDialogOpen(true);
   };
@@ -244,6 +246,20 @@ const AdminTasksTab: React.FC = () => {
                   </span>
                 </div>
                 
+                {task.link && (
+                  <div className="flex justify-between items-center mb-2 text-sm">
+                    <span className="text-gray-400">Link:</span>
+                    <a 
+                      href={task.link} 
+                      target="_blank" 
+                      rel="noopener noreferrer" 
+                      className="font-medium text-blue-400 hover:text-blue-300 truncate max-w-[150px]"
+                    >
+                      {task.link}
+                    </a>
+                  </div>
+                )}
+                
                 <div className="flex justify-between items-center mb-2 text-sm">
                   <span className="text-gray-400">Completions:</span>
                   <span className="font-medium">{task.completionCount}</span>
@@ -325,6 +341,18 @@ const AdminTasksTab: React.FC = () => {
                   value={formData.iconClass}
                   onChange={handleInputChange}
                   placeholder="fa fa-check"
+                  className="col-span-3 bg-[#172a41] border-[#2a4365]"
+                />
+              </div>
+              
+              <div className="grid grid-cols-4 items-center gap-4">
+                <label htmlFor="link" className="text-right text-sm">Link URL:</label>
+                <Input
+                  id="link"
+                  name="link"
+                  value={formData.link || ''}
+                  onChange={handleInputChange}
+                  placeholder="https://example.com/task-link"
                   className="col-span-3 bg-[#172a41] border-[#2a4365]"
                 />
               </div>
