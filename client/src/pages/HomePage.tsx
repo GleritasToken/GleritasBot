@@ -127,7 +127,7 @@ const HomePage: React.FC = () => {
               {completedTasks.length === 0 ? (
                 <div className="text-center py-8">
                   <p className="text-gray-300 mb-4">You haven't completed any tasks yet.</p>
-                  <Button href="/tasks" as="a">
+                  <Button onClick={() => window.location.href = '/tasks'}>
                     View Available Tasks
                   </Button>
                 </div>
