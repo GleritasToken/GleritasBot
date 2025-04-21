@@ -43,6 +43,16 @@ export interface IStorage {
   createWithdrawal(withdrawal: InsertWithdrawal): Promise<Withdrawal>;
   getWithdrawalsByUser(userId: number): Promise<Withdrawal[]>;
   updateWithdrawalStatus(id: number, status: string, txHash?: string): Promise<Withdrawal | undefined>;
+  getWithdrawalById(id: number): Promise<Withdrawal | undefined>;
+  getAllWithdrawals(): Promise<Withdrawal[]>;
+  updateWithdrawalWithAdminAction(id: number, status: string, adminId: number, notes?: string, rejectionReason?: string, txHash?: string): Promise<Withdrawal | undefined>;
+
+  // Admin operations
+  banUser(userId: number, banReason: string): Promise<User | undefined>;
+  unbanUser(userId: number): Promise<User | undefined>;
+  resetUserTokens(userId: number): Promise<User | undefined>;
+  getTaskCompletionStats(): Promise<any>;
+  getUserActivityStats(): Promise<any>;
   
   // Init data
   initializeDefaultTasks(): Promise<void>;
@@ -127,6 +137,8 @@ export class MemStorage implements IStorage {
       totalTokens: 0,
       referralTokens: 0,
       referralCount: 0,
+      isBanned: false,
+      banReason: null,
       createdAt: new Date()
     };
     
@@ -301,7 +313,11 @@ export class MemStorage implements IStorage {
       id,
       txHash: null,
       createdAt: new Date(),
-      bnbFeeCollected: insertWithdrawal.bnbFeeCollected || false
+      bnbFeeCollected: insertWithdrawal.bnbFeeCollected || false,
+      adminNotes: null,
+      rejectionReason: null,
+      approvedBy: null,
+      approvedAt: null
     };
     
     this.withdrawals.set(id, withdrawal);
@@ -326,6 +342,175 @@ export class MemStorage implements IStorage {
     
     this.withdrawals.set(id, updatedWithdrawal);
     return updatedWithdrawal;
+  }
+  
+  async getWithdrawalById(id: number): Promise<Withdrawal | undefined> {
+    return this.withdrawals.get(id);
+  }
+  
+  async getAllWithdrawals(): Promise<Withdrawal[]> {
+    return Array.from(this.withdrawals.values());
+  }
+  
+  async updateWithdrawalWithAdminAction(
+    id: number, 
+    status: string, 
+    adminId: number, 
+    notes?: string, 
+    rejectionReason?: string,
+    txHash?: string
+  ): Promise<Withdrawal | undefined> {
+    const withdrawal = this.withdrawals.get(id);
+    if (!withdrawal) return undefined;
+
+    const updatedWithdrawal: Withdrawal = { 
+      ...withdrawal, 
+      status,
+      adminNotes: notes || null,
+      rejectionReason: status === 'rejected' ? (rejectionReason || 'Rejected by admin') : null,
+      approvedBy: ['completed', 'processing'].includes(status) ? adminId : null,
+      approvedAt: ['completed', 'processing'].includes(status) ? new Date() : null,
+      ...(txHash && { txHash })
+    };
+    
+    this.withdrawals.set(id, updatedWithdrawal);
+    return updatedWithdrawal;
+  }
+  
+  // Admin Operations
+  async banUser(userId: number, banReason: string): Promise<User | undefined> {
+    const user = this.users.get(userId);
+    if (!user) return undefined;
+    
+    const updatedUser = { 
+      ...user,
+      isBanned: true,
+      banReason
+    };
+    
+    this.users.set(userId, updatedUser);
+    return updatedUser;
+  }
+  
+  async unbanUser(userId: number): Promise<User | undefined> {
+    const user = this.users.get(userId);
+    if (!user) return undefined;
+    
+    const updatedUser = { 
+      ...user,
+      isBanned: false,
+      banReason: null
+    };
+    
+    this.users.set(userId, updatedUser);
+    return updatedUser;
+  }
+  
+  async resetUserTokens(userId: number): Promise<User | undefined> {
+    const user = this.users.get(userId);
+    if (!user) return undefined;
+    
+    const updatedUser = { 
+      ...user,
+      totalTokens: 0,
+      referralTokens: 0
+    };
+    
+    this.users.set(userId, updatedUser);
+    return updatedUser;
+  }
+  
+  async getTaskCompletionStats(): Promise<any> {
+    const allTasks = await this.getAllTasks();
+    const allUserTasks = await this.getAllUserTasks();
+    
+    const stats = allTasks.map(task => {
+      const completions = allUserTasks.filter(ut => ut.taskName === task.name && ut.completed);
+      const completionCount = completions.length;
+      const totalTokensAwarded = completions.reduce((sum, ut) => sum + ut.tokenAmount, 0);
+      
+      return {
+        id: task.id,
+        name: task.name,
+        description: task.description,
+        tokenAmount: task.tokenAmount,
+        isRequired: task.isRequired,
+        iconClass: task.iconClass,
+        createdAt: task.createdAt,
+        completionCount,
+        totalTokensAwarded
+      };
+    });
+    
+    return stats;
+  }
+  
+  async getUserActivityStats(): Promise<any> {
+    const users = await this.getAllUsers();
+    const userTasks = await this.getAllUserTasks();
+    const withdrawals = await this.getAllWithdrawals();
+    
+    const totalUsers = users.length;
+    const activeUsers = users.filter(user => {
+      return userTasks.some(task => task.userId === user.id && task.completed);
+    }).length;
+    
+    const totalCompletedTasks = userTasks.filter(task => task.completed).length;
+    const totalTokensClaimed = withdrawals
+      .filter(w => w.status === 'completed')
+      .reduce((sum, w) => sum + w.amount, 0);
+    
+    const dailyStats = this._calculateDailyStats(users, userTasks);
+    const taskTypeBreakdown = this._calculateTaskTypeBreakdown(userTasks);
+    
+    return {
+      totalUsers,
+      activeUsers,
+      totalCompletedTasks,
+      totalTokensClaimed,
+      dailyStats,
+      taskTypeBreakdown
+    };
+  }
+  
+  // Helper methods for statistics
+  private _calculateDailyStats(users: User[], userTasks: UserTask[]): any {
+    const now = new Date();
+    const last30Days = Array.from({ length: 30 }, (_, i) => {
+      const date = new Date(now);
+      date.setDate(date.getDate() - (29 - i));
+      return date.toISOString().split('T')[0]; // Format: YYYY-MM-DD
+    });
+    
+    const registrations = last30Days.map(date => {
+      const count = users.filter(user => {
+        const userDate = user.createdAt.toISOString().split('T')[0];
+        return userDate === date;
+      }).length;
+      
+      return { date, count };
+    });
+    
+    const taskCompletions = last30Days.map(date => {
+      const count = userTasks.filter(task => {
+        if (!task.completedAt) return false;
+        const taskDate = task.completedAt.toISOString().split('T')[0];
+        return taskDate === date;
+      }).length;
+      
+      return { date, count };
+    });
+    
+    return { registrations, taskCompletions };
+  }
+  
+  private _calculateTaskTypeBreakdown(userTasks: UserTask[]): any {
+    const taskNames = [...new Set(userTasks.map(task => task.taskName))];
+    
+    return taskNames.map(name => {
+      const count = userTasks.filter(task => task.taskName === name && task.completed).length;
+      return { name, count };
+    });
   }
 
   // No longer needed as we use the username directly as the referral code

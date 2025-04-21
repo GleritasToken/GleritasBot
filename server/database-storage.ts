@@ -306,6 +306,180 @@ export class DatabaseStorage implements IStorage {
     
     return result[0];
   }
+
+  async getWithdrawalById(id: number): Promise<Withdrawal | undefined> {
+    const results = await db.select().from(withdrawals).where(eq(withdrawals.id, id));
+    return results[0];
+  }
+  
+  async getAllWithdrawals(): Promise<Withdrawal[]> {
+    return await db.select().from(withdrawals);
+  }
+  
+  async updateWithdrawalWithAdminAction(
+    id: number, 
+    status: string, 
+    adminId: number, 
+    notes?: string, 
+    rejectionReason?: string,
+    txHash?: string
+  ): Promise<Withdrawal | undefined> {
+    const updateData: Partial<Withdrawal> = { 
+      status,
+      adminNotes: notes || null,
+      rejectionReason: status === 'rejected' ? (rejectionReason || 'Rejected by admin') : null,
+      approvedBy: ['completed', 'processing'].includes(status) ? adminId : null,
+      approvedAt: ['completed', 'processing'].includes(status) ? new Date() : null,
+      ...(txHash && { txHash })
+    };
+    
+    const result = await db.update(withdrawals)
+      .set(updateData)
+      .where(eq(withdrawals.id, id))
+      .returning();
+    
+    return result[0];
+  }
+  
+  // Admin Operations
+  async banUser(userId: number, banReason: string): Promise<User | undefined> {
+    const result = await db.update(users)
+      .set({
+        isBanned: true,
+        banReason
+      })
+      .where(eq(users.id, userId))
+      .returning();
+    
+    return result[0];
+  }
+  
+  async unbanUser(userId: number): Promise<User | undefined> {
+    const result = await db.update(users)
+      .set({
+        isBanned: false,
+        banReason: null
+      })
+      .where(eq(users.id, userId))
+      .returning();
+    
+    return result[0];
+  }
+  
+  async resetUserTokens(userId: number): Promise<User | undefined> {
+    const result = await db.update(users)
+      .set({
+        totalTokens: 0,
+        referralTokens: 0
+      })
+      .where(eq(users.id, userId))
+      .returning();
+    
+    return result[0];
+  }
+  
+  async getTaskCompletionStats(): Promise<any> {
+    const allTasks = await this.getAllTasks();
+    const allUserTasks = await this.getAllUserTasks();
+    
+    return allTasks.map(task => {
+      const completions = allUserTasks.filter(ut => 
+        ut.taskName === task.name && ut.completed);
+      const completionCount = completions.length;
+      const totalTokensAwarded = completions.reduce((sum, ut) => 
+        sum + ut.tokenAmount, 0);
+      
+      return {
+        id: task.id,
+        name: task.name,
+        description: task.description,
+        tokenAmount: task.tokenAmount,
+        isRequired: task.isRequired,
+        iconClass: task.iconClass,
+        createdAt: task.createdAt,
+        completionCount,
+        totalTokensAwarded
+      };
+    });
+  }
+  
+  async getUserActivityStats(): Promise<any> {
+    const [allUsers, allUserTasks, allWithdrawals] = await Promise.all([
+      this.getAllUsers(),
+      this.getAllUserTasks(),
+      this.getAllWithdrawals()
+    ]);
+    
+    // Basic metrics
+    const totalUsers = allUsers.length;
+    const activeUsers = allUsers.filter(user => 
+      allUserTasks.some(task => task.userId === user.id && task.completed)
+    ).length;
+    
+    const totalCompletedTasks = allUserTasks.filter(task => task.completed).length;
+    const totalTokensClaimed = allWithdrawals
+      .filter(w => w.status === 'completed')
+      .reduce((sum, w) => sum + w.amount, 0);
+    
+    // Calculate daily activity
+    const now = new Date();
+    const thirtyDaysAgo = new Date(now);
+    thirtyDaysAgo.setDate(now.getDate() - 30);
+    
+    // Daily registrations
+    const dailyRegistrations = allUsers
+      .filter(user => user.createdAt >= thirtyDaysAgo)
+      .reduce((acc, user) => {
+        const dateStr = user.createdAt.toISOString().split('T')[0];
+        acc[dateStr] = (acc[dateStr] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>);
+    
+    // Daily task completions
+    const dailyTaskCompletions = allUserTasks
+      .filter(task => task.completedAt && task.completedAt >= thirtyDaysAgo)
+      .reduce((acc, task) => {
+        const dateStr = task.completedAt!.toISOString().split('T')[0];
+        acc[dateStr] = (acc[dateStr] || 0) + 1;
+        return acc; 
+      }, {} as Record<string, number>);
+    
+    // Task type breakdown
+    const taskCounts: Record<string, number> = {};
+    allUserTasks
+      .filter(task => task.completed)
+      .forEach(task => {
+        taskCounts[task.taskName] = (taskCounts[task.taskName] || 0) + 1;
+      });
+    
+    // Format the data
+    const taskTypeBreakdown = Object.entries(taskCounts).map(([name, count]) => ({
+      name,
+      count
+    }));
+    
+    // Format daily stats for charts
+    const days = [];
+    for (let i = 0; i < 30; i++) {
+      const date = new Date(now);
+      date.setDate(date.getDate() - (29 - i));
+      const dateStr = date.toISOString().split('T')[0];
+      days.push({
+        date: dateStr,
+        registrations: dailyRegistrations[dateStr] || 0,
+        taskCompletions: dailyTaskCompletions[dateStr] || 0
+      });
+    }
+    
+    return {
+      totalUsers,
+      activeUsers,
+      totalCompletedTasks,
+      totalTokensClaimed,
+      dailyStats: days,
+      taskTypeBreakdown
+    };
+  }
   
   // No longer needed as we use the username directly as the referral code
   
