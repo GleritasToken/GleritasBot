@@ -9,7 +9,8 @@ import {
   InsertReferral, Referral,
   InsertTask, Task,
   InsertWithdrawal, Withdrawal,
-  users, userTasks, referrals, tasks, withdrawals,
+  InsertVerificationAttempt, VerificationAttempt,
+  users, userTasks, referrals, tasks, withdrawals, verificationAttempts,
   UserWithTasks
 } from "@shared/schema";
 import pg from 'pg';
@@ -376,6 +377,88 @@ export class DatabaseStorage implements IStorage {
       .returning();
     
     return result[0];
+  }
+  
+  // Verification Operations
+  async storeVerificationAttempt(userId: number, taskName: string, verificationData: string): Promise<VerificationAttempt> {
+    const verificationAttemptData = {
+      userId,
+      taskName,
+      verificationData,
+      status: "pending",
+      createdAt: new Date()
+    };
+    
+    const result = await db.insert(verificationAttempts)
+      .values(verificationAttemptData)
+      .returning();
+    
+    return result[0];
+  }
+  
+  async getVerificationAttempt(userId: number, taskName: string): Promise<VerificationAttempt | undefined> {
+    const results = await db.select()
+      .from(verificationAttempts)
+      .where(
+        and(
+          eq(verificationAttempts.userId, userId),
+          eq(verificationAttempts.taskName, taskName)
+        )
+      );
+    
+    return results[0];
+  }
+  
+  async approveVerificationAttempt(id: number, adminId?: number, notes?: string): Promise<VerificationAttempt | undefined> {
+    const updateData = {
+      status: "approved",
+      adminNotes: notes || null,
+      updatedAt: new Date()
+    };
+    
+    const result = await db.update(verificationAttempts)
+      .set(updateData)
+      .where(eq(verificationAttempts.id, id))
+      .returning();
+    
+    if (result.length === 0) return undefined;
+    
+    // Automatically complete the task for the user
+    const attempt = result[0];
+    const task = await this.getTask(attempt.taskName);
+    
+    if (task) {
+      await this.completeUserTask({
+        userId: attempt.userId,
+        taskName: attempt.taskName,
+        tokenAmount: task.tokenAmount,
+        completed: true,
+        verificationData: attempt.verificationData
+      });
+    }
+    
+    return result[0];
+  }
+  
+  async rejectVerificationAttempt(id: number, reason: string): Promise<VerificationAttempt | undefined> {
+    const updateData = {
+      status: "rejected",
+      adminNotes: reason,
+      updatedAt: new Date()
+    };
+    
+    const result = await db.update(verificationAttempts)
+      .set(updateData)
+      .where(eq(verificationAttempts.id, id))
+      .returning();
+    
+    return result[0];
+  }
+  
+  async getPendingVerificationAttempts(): Promise<VerificationAttempt[]> {
+    return await db.select()
+      .from(verificationAttempts)
+      .where(eq(verificationAttempts.status, "pending"));
   }
   
   async getTaskCompletionStats(): Promise<any> {

@@ -433,6 +433,79 @@ export class MemStorage implements IStorage {
     return updatedUser;
   }
   
+  // Verification Operations
+  async storeVerificationAttempt(userId: number, taskName: string, verificationData: string): Promise<VerificationAttempt> {
+    const id = this.currentVerificationAttemptId++;
+    const attempt: VerificationAttempt = {
+      id,
+      userId,
+      taskName,
+      verificationData,
+      status: "pending",
+      adminNotes: null,
+      createdAt: new Date(),
+      updatedAt: null
+    };
+    
+    this.verificationAttempts.set(id, attempt);
+    return attempt;
+  }
+  
+  async getVerificationAttempt(userId: number, taskName: string): Promise<VerificationAttempt | undefined> {
+    return Array.from(this.verificationAttempts.values()).find(
+      (attempt) => attempt.userId === userId && attempt.taskName === taskName
+    );
+  }
+  
+  async approveVerificationAttempt(id: number, adminId?: number, notes?: string): Promise<VerificationAttempt | undefined> {
+    const attempt = this.verificationAttempts.get(id);
+    if (!attempt) return undefined;
+    
+    const updatedAttempt: VerificationAttempt = {
+      ...attempt,
+      status: "approved",
+      adminNotes: notes || null,
+      updatedAt: new Date()
+    };
+    
+    this.verificationAttempts.set(id, updatedAttempt);
+    
+    // Automatically complete the task for the user
+    const task = await this.getTask(updatedAttempt.taskName);
+    if (task) {
+      await this.completeUserTask({
+        userId: updatedAttempt.userId,
+        taskName: updatedAttempt.taskName,
+        tokenAmount: task.tokenAmount,
+        completed: true,
+        verificationData: updatedAttempt.verificationData
+      });
+    }
+    
+    return updatedAttempt;
+  }
+  
+  async rejectVerificationAttempt(id: number, reason: string): Promise<VerificationAttempt | undefined> {
+    const attempt = this.verificationAttempts.get(id);
+    if (!attempt) return undefined;
+    
+    const updatedAttempt: VerificationAttempt = {
+      ...attempt,
+      status: "rejected",
+      adminNotes: reason,
+      updatedAt: new Date()
+    };
+    
+    this.verificationAttempts.set(id, updatedAttempt);
+    return updatedAttempt;
+  }
+  
+  async getPendingVerificationAttempts(): Promise<VerificationAttempt[]> {
+    return Array.from(this.verificationAttempts.values()).filter(
+      (attempt) => attempt.status === "pending"
+    );
+  }
+  
   async getTaskCompletionStats(): Promise<any> {
     const allTasks = await this.getAllTasks();
     const allUserTasks = await this.getAllUserTasks();
