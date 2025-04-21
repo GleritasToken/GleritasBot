@@ -25,6 +25,8 @@ export const users = pgTable("users", {
   referralCount: integer("referral_count").notNull().default(0),
   ipAddress: text("ip_address"),
   fingerprint: text("fingerprint"),
+  isBanned: boolean("is_banned").notNull().default(false),
+  banReason: text("ban_reason"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
@@ -89,8 +91,12 @@ export const withdrawals = pgTable("withdrawals", {
   amount: integer("amount").notNull(),
   walletAddress: text("wallet_address").notNull(),
   txHash: text("tx_hash"), // Transaction hash for BNB fee payment
-  status: text("status").notNull(), // pending, processing, completed, failed
+  status: text("status").notNull(), // pending, processing, completed, failed, rejected
   bnbFeeCollected: boolean("bnb_fee_collected").notNull().default(false),
+  adminNotes: text("admin_notes"),
+  rejectionReason: text("rejection_reason"),
+  approvedBy: integer("approved_by"),
+  approvedAt: timestamp("approved_at"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
@@ -147,4 +153,30 @@ export const createTaskSchema = z.object({
   tokenAmount: z.number().min(1),
   isRequired: z.boolean().default(false),
   iconClass: z.string()
+});
+
+// Admin action schemas
+export const banUserSchema = z.object({
+  userId: z.number().positive(),
+  banReason: z.string().min(3).max(255)
+});
+
+export const resetTokensSchema = z.object({
+  userId: z.number().positive(),
+  reason: z.string().min(3).max(255).optional()
+});
+
+export const withdrawalActionSchema = z.object({
+  withdrawalId: z.number().positive(),
+  action: z.enum(['approve', 'reject']),
+  notes: z.string().optional(),
+  rejectionReason: z.string().optional()
+});
+
+export const withdrawalStatusUpdateSchema = z.object({
+  id: z.number().positive(),
+  status: z.enum(['pending', 'processing', 'completed', 'failed', 'rejected']),
+  adminNotes: z.string().optional(),
+  rejectionReason: z.string().optional(),
+  txHash: z.string().optional()
 });
