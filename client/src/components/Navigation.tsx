@@ -5,7 +5,7 @@ import { Home, CheckSquare, Users, Info, LogOut } from 'lucide-react';
 import { useUser } from '@/providers/UserProvider';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
-import Logo from '@/components/Logo';
+import GleritasLogo from '@/components/GleritasLogo';
 
 export default function Navigation() {
   const [location] = useLocation();
@@ -42,7 +42,7 @@ export default function Navigation() {
       {/* Top header with logo and user info */}
       <div className="bg-[#0d1b2a] text-white p-4 flex items-center justify-between">
         <div className="flex items-center space-x-2">
-          <Logo size="medium" />
+          <GleritasLogo width={50} height={50} />
           <div>
             <span className="font-bold text-lg block">GLRS</span>
             <span className="text-xs text-gray-400">Airdrop</span>

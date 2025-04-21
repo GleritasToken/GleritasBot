@@ -7,7 +7,7 @@ import { useToast } from '@/hooks/use-toast';
 import { validateWalletAddress, connectWallet } from '@/lib/wallet-utils';
 import { useUser } from '@/providers/UserProvider';
 import { apiRequest } from '@/lib/queryClient';
-import Logo from '@/components/Logo';
+import GleritasLogo from '@/components/GleritasLogo';
 import { useIsMobile } from '@/hooks/use-mobile';
 import MobileWalletConnect from '@/components/MobileWalletConnect';
 
@@ -192,7 +192,7 @@ const WalletSubmission: React.FC = () => {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-center mb-4">
-        <Logo size="large" />
+        <GleritasLogo width={80} height={80} />
       </div>
       
       <div className="space-y-2 mb-4">

@@ -1,7 +1,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { ArrowRight, CheckCircle } from 'lucide-react';
+import { ArrowRight, CheckCircle, MessageCircle, Twitter, Globe, Wallet } from 'lucide-react';
 
 interface TaskCardProps {
   taskName: string;
@@ -49,11 +49,11 @@ const TaskCard: React.FC<TaskCardProps> = ({
               <CheckCircle className="h-5 w-5 text-white" />
             ) : (
               <span className="h-5 w-5 flex items-center justify-center text-white">
-                {icon === 'telegram' && 'T'}
-                {icon === 'twitter' && 'X'}
-                {icon === 'discord' && 'D'}
-                {icon === 'wallet' && 'W'}
-                {icon === 'website' && 'S'}
+                {icon === 'telegram' && <MessageCircle className="h-5 w-5" />}
+                {icon === 'twitter' && <Twitter className="h-5 w-5" />}
+                {icon === 'discord' && <MessageCircle className="h-5 w-5" />}
+                {icon === 'wallet' && <Wallet className="h-5 w-5" />}
+                {icon === 'website' && <Globe className="h-5 w-5" />}
               </span>
             )}
           </div>
