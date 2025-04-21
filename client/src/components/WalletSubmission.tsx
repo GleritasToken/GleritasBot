@@ -9,6 +9,7 @@ import { useUser } from '@/providers/UserProvider';
 import { apiRequest } from '@/lib/queryClient';
 import Logo from '@/components/Logo';
 import { useIsMobile } from '@/hooks/use-mobile';
+import MobileWalletConnect from '@/components/MobileWalletConnect';
 
 const WalletSubmission: React.FC = () => {
   const { user, refreshUser } = useUser();

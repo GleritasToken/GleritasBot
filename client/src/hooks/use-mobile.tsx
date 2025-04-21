@@ -23,3 +23,10 @@ export function useIsMobile() {
 
   return isMobile;
 }
+
+// Default export
+const useMobile = {
+  useIsMobile
+};
+
+export default useMobile;
