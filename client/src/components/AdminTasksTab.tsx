@@ -34,6 +34,7 @@ interface TaskFormData {
   tokenAmount: number;
   isRequired: boolean;
   iconClass: string;
+  link?: string;
 }
 
 const AdminTasksTab: React.FC = () => {
