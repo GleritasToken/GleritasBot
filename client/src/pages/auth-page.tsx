@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -43,16 +43,18 @@ export default function AuthPage() {
     queryKey: ['/api/user'],
     retry: false,
     staleTime: 0,
-    refetchOnWindowFocus: false,
-    onSuccess: (userData) => {
-      console.log('Auth page detected logged in user:', userData?.username);
-      if (userData && userData.id) {
-        console.log('Redirecting to dashboard');
-        // Use window.location for a full page reload to ensure clean state
-        window.location.href = '/';
-      }
-    }
+    refetchOnWindowFocus: false
   });
+  
+  // Handle logged in user redirect
+  useEffect(() => {
+    if (user && typeof user === 'object' && 'id' in user) {
+      console.log('Auth page detected logged in user:', (user as any).username);
+      console.log('Redirecting to dashboard');
+      // Use window.location for a full page reload to ensure clean state
+      window.location.href = '/';
+    }
+  }, [user]);
   
   // Log auth state for debugging
   console.log('Auth page state:', { isLoggedIn: !!user, isLoading, isError });

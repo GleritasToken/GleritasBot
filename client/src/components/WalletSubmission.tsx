@@ -20,6 +20,8 @@ import { apiRequest } from '@/lib/queryClient';
 import { useUser } from '@/providers/UserProvider';
 import { useQueryClient } from '@tanstack/react-query';
 import { validateWalletAddress, connectWallet } from '@/lib/wallet-utils';
+import MobileWalletConnect from '@/components/MobileWalletConnect';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 // Create schema for wallet submission
 const walletSubmissionSchema = z.object({
@@ -46,6 +48,8 @@ const WalletSubmission: React.FC = () => {
   // State for wallet connection status
   const [connecting, setConnecting] = useState(false);
   const [connectionError, setConnectionError] = useState<string | null>(null);
+  const [showMobileWalletConnect, setShowMobileWalletConnect] = useState(false);
+  const isMobile = useIsMobile();
 
   // Initialize form
   const form = useForm<z.infer<typeof walletSubmissionSchema>>({
@@ -68,6 +72,13 @@ const WalletSubmission: React.FC = () => {
     setConnecting(true);
     setConnectionError(null);
     
+    // For mobile devices, show the mobile wallet connect UI
+    if (isMobile) {
+      setShowMobileWalletConnect(true);
+      setConnecting(false);
+      return;
+    }
+    
     try {
       const address = await connectWallet();
       if (address) {
@@ -85,6 +96,21 @@ const WalletSubmission: React.FC = () => {
     } finally {
       setConnecting(false);
     }
+  };
+  
+  // Handle mobile wallet connect success
+  const handleMobileWalletConnect = (address: string) => {
+    form.setValue('walletAddress', address);
+    setShowMobileWalletConnect(false);
+    toast({
+      title: "Wallet Connected",
+      description: "BSC wallet connected successfully!",
+    });
+  };
+  
+  // Close mobile wallet connect modal
+  const handleMobileWalletCancel = () => {
+    setShowMobileWalletConnect(false);
   };
 
   // Regenerate CAPTCHA
@@ -176,6 +202,18 @@ const WalletSubmission: React.FC = () => {
               Wallet submission complete! Your tokens will be sent to {user?.walletAddress}.
             </AlertDescription>
           </Alert>
+        )}
+        
+        {/* Mobile Wallet Connect Modal */}
+        {showMobileWalletConnect && (
+          <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+            <div className="max-w-md w-full">
+              <MobileWalletConnect 
+                onConnect={handleMobileWalletConnect} 
+                onCancel={handleMobileWalletCancel} 
+              />
+            </div>
+          </div>
         )}
         
         <Form {...form}>
