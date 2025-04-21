@@ -88,15 +88,16 @@ export const withdrawals = pgTable("withdrawals", {
   userId: integer("user_id").notNull(),
   amount: integer("amount").notNull(),
   walletAddress: text("wallet_address").notNull(),
-  transactionHash: text("transaction_hash"),
-  status: text("status").notNull(), // pending, processed, failed
+  txHash: text("tx_hash"), // Transaction hash for BNB fee payment
+  status: text("status").notNull(), // pending, processing, completed, failed
+  bnbFeeCollected: boolean("bnb_fee_collected").notNull().default(false),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
 export const insertWithdrawalSchema = createInsertSchema(withdrawals).omit({
   id: true,
   createdAt: true,
-  transactionHash: true,
+  txHash: true,
 });
 
 // Export types

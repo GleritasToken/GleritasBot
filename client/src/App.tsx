@@ -7,6 +7,7 @@ import NotFound from "@/pages/not-found";
 import HomePage from "@/pages/HomePage";
 import TasksPage from "@/pages/TasksPage";
 import ReferralsPage from "@/pages/ReferralsPage";
+import WithdrawalPage from "@/pages/WithdrawalPage";
 import AboutPage from "@/pages/AboutPage";
 import AuthPage from "@/pages/auth-page";
 // Theme provider removed - using fixed dark theme
@@ -187,6 +188,7 @@ function Router() {
         <ProtectedRoute path="/" component={HomePage} />
         <ProtectedRoute path="/tasks" component={TasksPage} />
         <ProtectedRoute path="/referrals" component={ReferralsPage} />
+        <ProtectedRoute path="/withdrawals" component={WithdrawalPage} />
         <ProtectedRoute path="/about" component={AboutPage} />
         <Route path="/auth" component={AuthPage} />
         {/* Fallback to 404 */}
