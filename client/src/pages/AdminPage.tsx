@@ -12,13 +12,15 @@ import {
   BarChart,
   ListTodo,
   UserCog,
-  CreditCard
+  CreditCard,
+  ClipboardCheck
 } from 'lucide-react';
 import AdminTasksTab from '@/components/AdminTasksTab';
 import AdminHomeTab from '@/components/AdminHomeTab';
 import AdminUserManagementTab from '@/components/AdminUserManagementTab';
 import AdminWithdrawalsTab from '@/components/AdminWithdrawalsTab';
 import AdminAnalyticsTab from '@/components/AdminAnalyticsTab';
+import AdminVerificationsTab from '@/components/AdminVerificationsTab';
 
 const AdminPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState('home');
@@ -41,7 +43,7 @@ const AdminPage: React.FC = () => {
       <h1 className="text-3xl font-bold mb-8 text-white">Admin Dashboard</h1>
       
       <Tabs defaultValue="home" onValueChange={setActiveTab} value={activeTab}>
-        <TabsList className="grid w-full grid-cols-5 mb-8">
+        <TabsList className="grid w-full grid-cols-6 mb-8">
           <TabsTrigger value="home" className="flex items-center">
             <LayoutDashboard className="h-4 w-4 mr-2" />
             Overview
@@ -53,6 +55,10 @@ const AdminPage: React.FC = () => {
           <TabsTrigger value="tasks" className="flex items-center">
             <ListTodo className="h-4 w-4 mr-2" />
             Tasks
+          </TabsTrigger>
+          <TabsTrigger value="verifications" className="flex items-center">
+            <ClipboardCheck className="h-4 w-4 mr-2" />
+            Verifications
           </TabsTrigger>
           <TabsTrigger value="withdrawals" className="flex items-center">
             <CreditCard className="h-4 w-4 mr-2" />
@@ -74,6 +80,10 @@ const AdminPage: React.FC = () => {
         
         <TabsContent value="tasks">
           <AdminTasksTab />
+        </TabsContent>
+        
+        <TabsContent value="verifications">
+          <AdminVerificationsTab />
         </TabsContent>
         
         <TabsContent value="withdrawals">

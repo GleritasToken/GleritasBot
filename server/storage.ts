@@ -609,6 +609,7 @@ export class MemStorage implements IStorage {
         description: "Join our official Telegram group",
         tokenAmount: 10,
         isRequired: true,
+        requiresVerification: true,
         iconClass: "fab fa-telegram-plane text-blue-500",
         link: "https://t.me/+hcJdayisPFIxOGVk"
       },
@@ -617,6 +618,7 @@ export class MemStorage implements IStorage {
         description: "Subscribe to our announcement channel",
         tokenAmount: 5,
         isRequired: true,
+        requiresVerification: true,
         iconClass: "fab fa-telegram-plane text-blue-500",
         link: "https://t.me/gleritaschat"
       },
