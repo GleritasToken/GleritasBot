@@ -204,6 +204,7 @@ export class MemStorage implements IStorage {
       description: insertTask.description,
       tokenAmount: insertTask.tokenAmount,
       isRequired: insertTask.isRequired ?? true, // Default to true if not specified
+      requiresVerification: insertTask.requiresVerification ?? false, // Default to false if not specified
       iconClass: insertTask.iconClass,
       link: insertTask.link || null,
       createdAt: new Date()
@@ -627,6 +628,7 @@ export class MemStorage implements IStorage {
         description: "Follow @GleritasToken on Twitter",
         tokenAmount: 10,
         isRequired: true,
+        requiresVerification: true,
         iconClass: "fab fa-twitter text-blue-500",
         link: "https://twitter.com/GleritasToken"
       },
@@ -635,6 +637,7 @@ export class MemStorage implements IStorage {
         description: "Like, retweet, and comment on our pinned tweet",
         tokenAmount: 10,
         isRequired: true,
+        requiresVerification: true,
         iconClass: "fab fa-twitter text-blue-500",
         link: "https://twitter.com/GleritasToken"
       },
@@ -643,6 +646,7 @@ export class MemStorage implements IStorage {
         description: "Watch and like our intro video (Optional)",
         tokenAmount: 10,
         isRequired: false,
+        requiresVerification: false,
         iconClass: "fab fa-youtube text-red-500",
         link: "https://www.youtube.com"
       },
@@ -651,6 +655,7 @@ export class MemStorage implements IStorage {
         description: "Provide a valid wallet address for token distribution",
         tokenAmount: 0,
         isRequired: true,
+        requiresVerification: true,
         iconClass: "fas fa-wallet text-yellow-500",
         link: null
       }
