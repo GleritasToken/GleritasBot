@@ -186,8 +186,24 @@ const TasksPage: React.FC = () => {
   };
   
   // Handle task action (start or verify)
-  const handleTaskAction = (task: Task) => {
-    // For tasks that require verification, open the verification dialog
+  const handleTaskAction = async (task: Task) => {
+    // For all tasks, first check if there's an existing verification status
+    if (task.requiresVerification) {
+      const status = await checkVerificationStatus(task.name);
+      
+      if (status === 'pending') {
+        // If task is pending verification, just show a toast and don't proceed further
+        return;
+      } else if (status === 'rejected') {
+        // If task verification was rejected, allow the user to try again
+        // Continue with the process below
+      } else if (status === 'completed') {
+        // If task is already completed, refresh the UI
+        return;
+      }
+    }
+    
+    // For tasks that require verification input, open the verification dialog
     if (needsVerification(task)) {
       openVerificationDialog(task);
       return;

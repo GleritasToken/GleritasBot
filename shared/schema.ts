@@ -78,6 +78,7 @@ export const tasks = pgTable("tasks", {
   description: text("description").notNull(),
   tokenAmount: integer("token_amount").notNull(),
   isRequired: boolean("is_required").notNull().default(true),
+  requiresVerification: boolean("requires_verification").notNull().default(false),
   iconClass: text("icon_class").notNull(),
   link: text("link"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
@@ -210,6 +211,7 @@ export const createTaskSchema = z.object({
   description: z.string().min(3),
   tokenAmount: z.number().min(1),
   isRequired: z.boolean().default(false),
+  requiresVerification: z.boolean().default(true),
   iconClass: z.string(),
   link: z.string().url("Please enter a valid URL").optional()
 });
