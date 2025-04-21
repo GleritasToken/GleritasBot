@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Edit, Plus, CheckCircle, Clock } from 'lucide-react';
+import { Loader2, Edit, Plus, CheckCircle, Clock, Trash2 } from 'lucide-react';
 import { 
   Dialog, 
   DialogContent, 
@@ -14,6 +14,16 @@ import {
   DialogFooter, 
   DialogTrigger 
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 interface TaskWithStats {
@@ -40,6 +50,8 @@ interface TaskFormData {
 
 const AdminTasksTab: React.FC = () => {
   const [isTaskDialogOpen, setIsTaskDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [taskToDelete, setTaskToDelete] = useState<TaskWithStats | null>(null);
   const [currentTask, setCurrentTask] = useState<TaskWithStats | null>(null);
   const [formData, setFormData] = useState<TaskFormData>({
     name: '',
@@ -119,6 +131,38 @@ const AdminTasksTab: React.FC = () => {
       toast({
         title: "Failed to update task",
         description: error.message || "An error occurred while updating the task",
+        variant: "destructive"
+      });
+    }
+  });
+  
+  const deleteTaskMutation = useMutation({
+    mutationFn: async (id: number) => {
+      const res = await fetch(`/api/admin/tasks/${id}`, {
+        method: 'DELETE',
+      });
+      
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message || 'Failed to delete task');
+      }
+      
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/tasks'] });
+      setIsDeleteDialogOpen(false);
+      setTaskToDelete(null);
+      toast({
+        title: "Task deleted",
+        description: "The task has been deleted successfully",
+        variant: "default"
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Failed to delete task",
+        description: error.message || "An error occurred while deleting the task",
         variant: "destructive"
       });
     }
@@ -209,6 +253,17 @@ const AdminTasksTab: React.FC = () => {
 
   const handleCheckboxChange = (checked: boolean) => {
     setFormData(prev => ({ ...prev, isRequired: checked }));
+  };
+  
+  const handleOpenDeleteDialog = (task: TaskWithStats) => {
+    setTaskToDelete(task);
+    setIsDeleteDialogOpen(true);
+  };
+  
+  const handleDeleteTask = () => {
+    if (taskToDelete) {
+      deleteTaskMutation.mutate(taskToDelete.id);
+    }
   };
 
   return (

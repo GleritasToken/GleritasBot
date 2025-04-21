@@ -28,6 +28,7 @@ export interface IStorage {
   getTask(name: string): Promise<Task | undefined>;
   createTask(task: InsertTask): Promise<Task>;
   updateTask(id: number, taskData: Partial<Task>): Promise<Task | undefined>;
+  deleteTask(id: number): Promise<boolean>;
   getUserTasks(userId: number): Promise<UserTask[]>;
   getCompletedTasks(userId: number): Promise<UserTask[]>;
   completeUserTask(userTask: InsertUserTask): Promise<UserTask>;
@@ -208,6 +209,25 @@ export class MemStorage implements IStorage {
     const updatedTask = { ...task, ...taskData };
     this.tasks.set(id, updatedTask);
     return updatedTask;
+  }
+  
+  async deleteTask(id: number): Promise<boolean> {
+    const task = this.tasks.get(id);
+    if (!task) return false;
+    
+    // Delete the task
+    this.tasks.delete(id);
+    
+    // Also find and delete any user completions of this task
+    const taskName = task.name;
+    const userTasksToDelete = Array.from(this.userTasks.entries())
+      .filter(([_, userTask]) => userTask.taskName === taskName);
+      
+    for (const [userTaskId, _] of userTasksToDelete) {
+      this.userTasks.delete(userTaskId);
+    }
+    
+    return true;
   }
 
   async getUserTasks(userId: number): Promise<UserTask[]> {
@@ -506,7 +526,10 @@ export class MemStorage implements IStorage {
   }
   
   private _calculateTaskTypeBreakdown(userTasks: UserTask[]): any {
-    const taskNames = [...new Set(userTasks.map(task => task.taskName))];
+    // Get unique task names without using Set spread
+    const taskNamesSet = new Set<string>();
+    userTasks.forEach(task => taskNamesSet.add(task.taskName));
+    const taskNames = Array.from(taskNamesSet);
     
     return taskNames.map(name => {
       const count = userTasks.filter(task => task.taskName === name && task.completed).length;

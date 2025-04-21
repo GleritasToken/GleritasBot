@@ -641,6 +641,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to update task." });
     }
   });
+  
+  // Delete a task
+  app.delete("/api/admin/tasks/:id", requireAdmin, async (req: Request, res: Response) => {
+    try {
+      const taskId = parseInt(req.params.id);
+      
+      const success = await storage.deleteTask(taskId);
+      
+      if (!success) {
+        return res.status(404).json({ message: "Task not found." });
+      }
+      
+      res.json({
+        message: "Task deleted successfully"
+      });
+    } catch (error) {
+      console.error("Delete task error:", error);
+      res.status(500).json({ message: "Failed to delete task." });
+    }
+  });
 
   // Ban a user (admin only)
   app.post("/api/admin/users/:userId/ban", requireAdmin, async (req: Request, res: Response) => {
