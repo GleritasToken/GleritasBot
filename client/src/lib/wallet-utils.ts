@@ -58,12 +58,112 @@ export function shortenAddress(address: string): string {
  * Connect to BSC wallet and ensure compatibility with all crypto apps
  * Supports MetaMask, Trust Wallet, Binance Chain Wallet, and other WalletConnect-compatible wallets
  */
-export async function connectWallet(): Promise<string | null> {
-  console.log("Attempting to connect wallet...");
+export async function connectWallet(walletType?: string): Promise<string | null> {
+  console.log("Attempting to connect wallet...", walletType ? `Type: ${walletType}` : "Auto-detect");
   
   // Check if running on mobile
   const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
   console.log("Is mobile device:", isMobileDevice);
+  
+  // BSC Network ID
+  const bscNetworkId = '0x38'; // BSC Mainnet chainId in hex
+
+  // If specific wallet type is provided
+  if (walletType) {
+    switch (walletType) {
+      case 'metamask':
+        console.log("Attempting to connect to MetaMask...");
+        if (window.ethereum?.isMetaMask) {
+          try {
+            const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+            console.log("Connected MetaMask accounts:", accounts);
+            if (accounts && accounts.length > 0) {
+              return accounts[0];
+            }
+          } catch (error) {
+            console.error('MetaMask connection error:', error);
+          }
+        } else if (isMobileDevice) {
+          // Open MetaMask deep link on mobile
+          const deepLink = `https://metamask.app.link/dapp/${window.location.host}`;
+          console.log("Opening MetaMask deep link:", deepLink);
+          window.open(deepLink, '_blank');
+          return null;
+        }
+        break;
+      
+      case 'trustwallet':
+        console.log("Attempting to connect to Trust Wallet...");
+        const trustProvider = window.trustwallet?.ethereum || (window.ethereum?.isTrust ? window.ethereum : null);
+        if (trustProvider) {
+          try {
+            const accounts = await trustProvider.request({ method: 'eth_requestAccounts' });
+            console.log("Connected Trust Wallet accounts:", accounts);
+            if (accounts && accounts.length > 0) {
+              return accounts[0];
+            }
+          } catch (error) {
+            console.error('Trust Wallet connection error:', error);
+          }
+        } else if (isMobileDevice) {
+          // Open Trust Wallet deep link on mobile
+          const deepLink = `https://link.trustwallet.com/open_url?url=${encodeURIComponent(window.location.href)}`;
+          console.log("Opening Trust Wallet deep link:", deepLink);
+          window.open(deepLink, '_blank');
+          return null;
+        }
+        break;
+      
+      case 'binance':
+        console.log("Attempting to connect to Binance Wallet...");
+        if (window.BinanceChain) {
+          try {
+            const accounts = await window.BinanceChain.request({ method: 'eth_requestAccounts' });
+            console.log("Connected Binance Wallet accounts:", accounts);
+            if (accounts && accounts.length > 0) {
+              return accounts[0];
+            }
+          } catch (error) {
+            console.error('Binance Wallet connection error:', error);
+          }
+        } else if (isMobileDevice) {
+          // Open Binance Wallet deep link
+          const deepLink = `https://link.binance.wallet/dapp/${window.location.host}`;
+          console.log("Opening Binance Wallet deep link:", deepLink);
+          window.open(deepLink, '_blank');
+          return null;
+        }
+        break;
+        
+      case 'coinbase':
+        console.log("Attempting to connect to Coinbase Wallet...");
+        if (window.ethereum?.isCoinbaseWallet) {
+          try {
+            const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+            console.log("Connected Coinbase Wallet accounts:", accounts);
+            if (accounts && accounts.length > 0) {
+              return accounts[0];
+            }
+          } catch (error) {
+            console.error('Coinbase Wallet connection error:', error);
+          }
+        } else if (isMobileDevice) {
+          // Open Coinbase Wallet deep link
+          const deepLink = `https://go.cb-w.com/dapp?cb_url=${encodeURIComponent(window.location.href)}`;
+          console.log("Opening Coinbase Wallet deep link:", deepLink);
+          window.open(deepLink, '_blank');
+          return null;
+        }
+        break;
+      
+      default:
+        console.log("Unknown wallet type:", walletType);
+        break;
+    }
+  }
+  
+  // If we didn't return yet (either no wallet type specified or connection failed)
+  // Use the auto-detect approach
   
   // Enhanced provider detection
   const provider = detectEthereumProvider();
@@ -75,8 +175,6 @@ export async function connectWallet(): Promise<string | null> {
       console.log("Ethereum provider detected:", window.ethereum);
       
       try {
-        let networkId: string | number = '0x38'; // BSC Mainnet chainId in hex
-        
         // Request account access - this will trigger the wallet app
         console.log("Requesting accounts...");
         const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
@@ -89,12 +187,12 @@ export async function connectWallet(): Promise<string | null> {
             console.log("Current chain ID:", currentChainId);
             
             // If not on BSC, try to switch
-            if (currentChainId !== networkId) {
+            if (currentChainId !== bscNetworkId) {
               try {
                 console.log("Attempting to switch to BSC network");
                 await window.ethereum.request({
                   method: 'wallet_switchEthereumChain',
-                  params: [{ chainId: networkId }],
+                  params: [{ chainId: bscNetworkId }],
                 });
                 console.log('Successfully switched to BSC network');
               } catch (switchError: any) {
@@ -108,7 +206,7 @@ export async function connectWallet(): Promise<string | null> {
                       method: 'wallet_addEthereumChain',
                       params: [
                         {
-                          chainId: networkId,
+                          chainId: bscNetworkId,
                           chainName: 'Binance Smart Chain',
                           nativeCurrency: {
                             name: 'BNB',
@@ -170,32 +268,17 @@ export async function connectWallet(): Promise<string | null> {
       console.log("Attempting to detect mobile wallet browser...");
       
       // Try to open wallet directly for mobile - this is a common approach for mobile wallets
-      // These URLs may redirect to respective wallet apps if installed
-      if (confirm("No wallet detected in browser. Would you like to open a supported wallet app?")) {
-        // If on mobile, provide links to download wallet apps or open if installed
-        let walletDeepLink = '';
-        
-        if (/iPhone|iPad|iPod/i.test(navigator.userAgent)) {
-          // iOS devices
-          walletDeepLink = 'https://metamask.app.link/dapp/bbe92531-36d8-4fb6-ab6a-d12773afc49c-00-28q7lltfv2is4.worf.repl.co/';
-        } else {
-          // Android devices
-          walletDeepLink = 'https://metamask.app.link/dapp/bbe92531-36d8-4fb6-ab6a-d12773afc49c-00-28q7lltfv2is4.worf.repl.co/';
-        }
-        
-        // Open the deep link
-        window.location.href = walletDeepLink;
-        return "REDIRECTING";
-      }
+      const hostUrl = window.location.host;
+      const currentUrl = window.location.href;
       
+      // If on mobile, provide links to download wallet apps or open if installed
+      let walletDeepLink = `https://metamask.app.link/dapp/${hostUrl}`;
+      
+      console.log("Opening wallet deep link:", walletDeepLink);
+      window.open(walletDeepLink, '_blank');
       return null;
     } else {
       // No supported wallet found
-      if (isMobileDevice) {
-        alert('No wallet detected. Please install Trust Wallet, MetaMask, or another BSC-compatible wallet app.');
-      } else {
-        alert('No compatible wallet detected. Please install MetaMask, Trust Wallet, or Binance Chain Wallet for BSC.');
-      }
       console.error('No compatible BSC wallet detected');
       return null;
     }
