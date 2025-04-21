@@ -42,6 +42,43 @@ const TasksPage: React.FC = () => {
     }
   });
   
+  // Check verification status for a task
+  const checkVerificationStatus = async (taskName: string) => {
+    try {
+      const response = await apiRequest('GET', `/api/verifications/${taskName}/status`);
+      const data = await response.json();
+      
+      // Handle different status cases
+      if (data.status === 'completed') {
+        // Task is already completed, refresh user data
+        refreshUser();
+        toast({
+          title: "Task already completed!",
+          description: data.message,
+        });
+      } else if (data.status === 'pending') {
+        // Task is pending verification
+        toast({
+          title: "Verification in progress",
+          description: data.message,
+          variant: "default",
+        });
+      } else if (data.status === 'rejected') {
+        // Task verification was rejected
+        toast({
+          title: "Verification rejected",
+          description: data.message,
+          variant: "destructive",
+        });
+      }
+      
+      return data.status;
+    } catch (error) {
+      console.error("Verification status check error:", error);
+      return 'error';
+    }
+  };
+
   // Complete task mutation
   const completeMutation = useMutation({
     mutationFn: async (data: {taskName: string; verificationData?: string}) => {
@@ -50,10 +87,22 @@ const TasksPage: React.FC = () => {
       // If response is 202 (Accepted), it means additional verification is required
       if (response.status === 202) {
         const data = await response.json();
-        // If there's a redirectUrl, we need to redirect the user
+        
+        // If status is verification_pending, show a message that verification is in progress
+        if (data.status === "verification_pending") {
+          toast({
+            title: "Verification in progress",
+            description: data.message || "Your task is being verified. Please check back later.",
+            variant: "default",
+          });
+          throw new Error(data.message || "Your task is being verified. Please check back later.");
+        }
+        
+        // If there's a redirectUrl, we need to redirect the user to complete the task
         if (data.redirectUrl) {
           window.open(data.redirectUrl, '_blank', 'noopener,noreferrer');
         }
+        
         throw new Error(data.message || "Please complete the task via the provided link.");
       }
       

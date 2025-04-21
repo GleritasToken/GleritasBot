@@ -864,6 +864,117 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Get all pending verification attempts for admin review
+  app.get("/api/admin/verifications", requireAdmin, async (req: Request, res: Response) => {
+    try {
+      const verifications = await storage.getPendingVerificationAttempts();
+      res.json(verifications);
+    } catch (error) {
+      console.error("Error getting verification attempts:", error);
+      res.status(500).json({ message: "Failed to retrieve verification attempts." });
+    }
+  });
+  
+  // Approve a verification attempt
+  app.post("/api/admin/verifications/:id/approve", requireAdmin, async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const notes = req.body.notes || 'Approved by admin';
+      const adminId = req.user?.id;
+      
+      const attempt = await storage.approveVerificationAttempt(id, adminId, notes);
+      
+      if (!attempt) {
+        return res.status(404).json({ message: "Verification attempt not found." });
+      }
+      
+      res.json({
+        message: "Verification attempt approved successfully.",
+        attempt
+      });
+    } catch (error) {
+      console.error("Error approving verification:", error);
+      res.status(500).json({ message: "Failed to approve verification attempt." });
+    }
+  });
+  
+  // Reject a verification attempt
+  app.post("/api/admin/verifications/:id/reject", requireAdmin, async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const reason = req.body.reason || 'Rejected by admin';
+      
+      const attempt = await storage.rejectVerificationAttempt(id, reason);
+      
+      if (!attempt) {
+        return res.status(404).json({ message: "Verification attempt not found." });
+      }
+      
+      res.json({
+        message: "Verification attempt rejected successfully.",
+        attempt
+      });
+    } catch (error) {
+      console.error("Error rejecting verification:", error);
+      res.status(500).json({ message: "Failed to reject verification attempt." });
+    }
+  });
+  
+  // Check verification status for a specific task
+  app.get("/api/verifications/:taskName/status", requireUser, async (req: Request, res: Response) => {
+    try {
+      const userId = req.user!.id;
+      const taskName = req.params.taskName;
+      
+      // First check if the task is already completed
+      const isCompleted = await storage.checkTaskCompletion(userId, taskName);
+      
+      if (isCompleted) {
+        return res.json({
+          status: "completed",
+          message: "Task already completed successfully."
+        });
+      }
+      
+      // Check for pending verification attempts
+      const attempt = await storage.getVerificationAttempt(userId, taskName);
+      
+      if (!attempt) {
+        return res.json({
+          status: "not_started",
+          message: "No verification attempt found. Please complete the task."
+        });
+      }
+      
+      // Return the appropriate status message based on verification status
+      if (attempt.status === "pending") {
+        return res.json({
+          status: "pending",
+          message: "Your verification is being processed. Please check back later."
+        });
+      } else if (attempt.status === "approved") {
+        return res.json({
+          status: "approved",
+          message: "Your verification has been approved. The task is now complete."
+        });
+      } else if (attempt.status === "rejected") {
+        return res.json({
+          status: "rejected",
+          message: `Your verification was rejected: ${attempt.adminNotes || 'No reason provided.'}. Please try again.`
+        });
+      }
+      
+      // Fallback
+      return res.json({
+        status: attempt.status,
+        message: "Verification status is being tracked."
+      });
+    } catch (error) {
+      console.error("Error checking verification status:", error);
+      res.status(500).json({ message: "Failed to check verification status." });
+    }
+  });
+  
   // Get all withdrawals (admin only)
   app.get("/api/admin/withdrawals", requireAdmin, async (req: Request, res: Response) => {
     try {
