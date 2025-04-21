@@ -188,7 +188,12 @@ export const createTaskSchema = z.object({
   tokenAmount: z.number().min(1),
   isRequired: z.boolean().default(false),
   iconClass: z.string(),
-  link: z.string().url("Please enter a valid URL").optional()
+  link: z.union([
+    z.string().url("Please enter a valid URL"),
+    z.string().length(0),
+    z.null(),
+    z.undefined()
+  ]).optional()
 });
 
 // Admin action schemas

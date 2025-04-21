@@ -161,10 +161,39 @@ const AdminTasksTab: React.FC = () => {
       return;
     }
     
+    // Make sure link is valid or empty
+    const formDataToSubmit = { ...formData };
+    if (formDataToSubmit.link && formDataToSubmit.link.trim() === '') {
+      formDataToSubmit.link = undefined; // Remove empty link
+    } else if (formDataToSubmit.link && !formDataToSubmit.link.startsWith('http')) {
+      // Make sure link has protocol
+      formDataToSubmit.link = 'https://' + formDataToSubmit.link;
+    }
+    
+    // Validate link URL format if provided
+    if (formDataToSubmit.link && !isValidUrl(formDataToSubmit.link)) {
+      toast({
+        title: "Invalid URL",
+        description: "Please enter a valid URL for the link (e.g., https://example.com)",
+        variant: "destructive"
+      });
+      return;
+    }
+    
     if (currentTask) {
-      updateTaskMutation.mutate({ id: currentTask.id, data: formData });
+      updateTaskMutation.mutate({ id: currentTask.id, data: formDataToSubmit });
     } else {
-      createTaskMutation.mutate(formData);
+      createTaskMutation.mutate(formDataToSubmit);
+    }
+  };
+  
+  // Helper function to validate URL format
+  const isValidUrl = (url: string): boolean => {
+    try {
+      new URL(url);
+      return true;
+    } catch {
+      return false;
     }
   };
 

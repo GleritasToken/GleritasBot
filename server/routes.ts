@@ -577,14 +577,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Create a new task
   app.post("/api/admin/tasks", requireAdmin, async (req: Request, res: Response) => {
     try {
-      const validationResult = createTaskSchema.safeParse(req.body);
+      // Pre-process the request data to handle empty link
+      const requestData = { ...req.body };
+      if (requestData.link === '') {
+        requestData.link = undefined;
+      }
+      
+      const validationResult = createTaskSchema.safeParse(requestData);
       if (!validationResult.success) {
+        console.error("Task validation error:", validationResult.error);
         return res.status(400).json({ 
           message: "Invalid task data", 
           errors: validationResult.error.format() 
         });
       }
       
+      // Create the task with validated data
       const newTask = await storage.createTask(validationResult.data);
       
       res.status(201).json({
@@ -601,9 +609,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/admin/tasks/:id", requireAdmin, async (req: Request, res: Response) => {
     try {
       const taskId = parseInt(req.params.id);
-      const validationResult = createTaskSchema.safeParse(req.body);
+      
+      // Pre-process the request data to handle empty link
+      const requestData = { ...req.body };
+      if (requestData.link === '') {
+        requestData.link = undefined;
+      }
+      
+      const validationResult = createTaskSchema.safeParse(requestData);
       
       if (!validationResult.success) {
+        console.error("Task update validation error:", validationResult.error);
         return res.status(400).json({ 
           message: "Invalid task data", 
           errors: validationResult.error.format() 
