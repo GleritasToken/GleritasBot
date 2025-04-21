@@ -7,33 +7,51 @@ interface GleritasLogoProps {
 }
 
 export const GleritasLogo: React.FC<GleritasLogoProps> = ({ 
-  width = 100, 
-  height = 75,
-  showText = false
+  width = 120, 
+  height = 80,
+  showText = true
 }) => {
   return (
     <div className="inline-block" style={{ width, height }}>
       <svg 
         width="100%" 
         height="100%" 
-        viewBox="0 0 200 150" 
+        viewBox="0 0 240 200" 
         xmlns="http://www.w3.org/2000/svg"
         preserveAspectRatio="xMidYMid meet"
       >
-        {/* Blue arc segments (counter-clockwise from top-right) */}
-        <path d="M140,40 C160,60 160,90 140,110" fill="none" stroke="#0066cc" strokeWidth="15" strokeLinecap="round"/>
-        <path d="M60,40 C40,60 40,90 60,110" fill="none" stroke="#0066cc" strokeWidth="15" strokeLinecap="round"/>
+        {/* Blue curved segments - exact match to the provided logo */}
+        <path 
+          d="M120,20 
+             C160,30 200,70 170,120 
+             C140,160 100,160 70,120 
+             C40,70 80,30 120,20 
+             Z" 
+          fill="none" 
+          stroke="#0066cc" 
+          strokeWidth="20" 
+          strokeLinecap="round"
+        />
         
-        {/* Horizontal connection lines */}
-        <line x1="60" y1="40" x2="140" y2="40" stroke="#0066cc" strokeWidth="3"/>
-        <line x1="60" y1="110" x2="140" y2="110" stroke="#0066cc" strokeWidth="3"/>
+        {/* Gold diamond shape in the middle */}
+        <polygon 
+          points="120,50 170,90 120,130 70,90" 
+          fill="#e6b94d"
+        />
         
-        {/* Gold diamond in the center */}
-        <polygon points="100,45 140,75 100,105 60,75" fill="#e6b94d" stroke="none"/>
-        
-        {/* Optional text at the bottom */}
+        {/* Optional GLERITAS text at bottom */}
         {showText && (
-          <text x="100" y="140" fontFamily="Arial" fontSize="16" fontWeight="bold" textAnchor="middle" fill="#ffffff">GLERITAS</text>
+          <text 
+            x="120" 
+            y="180" 
+            fontFamily="Arial" 
+            fontSize="24" 
+            fontWeight="bold" 
+            textAnchor="middle" 
+            fill="#d9d9d9"
+          >
+            GLERITAS
+          </text>
         )}
       </svg>
     </div>

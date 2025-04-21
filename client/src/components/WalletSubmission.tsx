@@ -192,7 +192,7 @@ const WalletSubmission: React.FC = () => {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-center mb-4">
-        <GleritasLogo width={80} height={80} />
+        <GleritasLogo width={120} height={100} showText={true} />
       </div>
       
       <div className="space-y-2 mb-4">

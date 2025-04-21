@@ -42,7 +42,7 @@ export default function Navigation() {
       {/* Top header with logo and user info */}
       <div className="bg-[#0d1b2a] text-white p-4 flex items-center justify-between">
         <div className="flex items-center space-x-2">
-          <GleritasLogo width={50} height={50} />
+          <GleritasLogo width={50} height={40} showText={false} />
           <div>
             <span className="font-bold text-lg block">GLRS</span>
             <span className="text-xs text-gray-400">Airdrop</span>
