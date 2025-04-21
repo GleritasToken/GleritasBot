@@ -295,14 +295,24 @@ const AdminTasksTab: React.FC = () => {
                     </div>
                     {task.name}
                   </div>
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    onClick={() => handleOpenEditTaskDialog(task)}
-                    className="h-8 w-8 p-0"
-                  >
-                    <Edit className="h-4 w-4" />
-                  </Button>
+                  <div className="flex space-x-1">
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={() => handleOpenDeleteDialog(task)}
+                      className="h-8 w-8 p-0 text-red-500 hover:text-red-600 hover:bg-red-100/10"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={() => handleOpenEditTaskDialog(task)}
+                      className="h-8 w-8 p-0"
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </CardTitle>
               </CardHeader>
               <CardContent className="pt-4">
@@ -456,29 +466,72 @@ const AdminTasksTab: React.FC = () => {
               </div>
             </div>
             
-            <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setIsTaskDialogOpen(false)}
-                className="border-gray-500 text-gray-300 hover:bg-gray-700 hover:text-white"
-              >
-                Cancel
-              </Button>
-              <Button 
-                type="submit"
-                disabled={createTaskMutation.isPending || updateTaskMutation.isPending}
-                className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700"
-              >
-                {(createTaskMutation.isPending || updateTaskMutation.isPending) && (
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                )}
-                {currentTask ? 'Update Task' : 'Create Task'}
-              </Button>
+            <DialogFooter className="flex justify-between">
+              {currentTask && (
+                <Button
+                  type="button"
+                  variant="destructive"
+                  onClick={() => {
+                    setIsTaskDialogOpen(false);
+                    handleOpenDeleteDialog(currentTask);
+                  }}
+                  className="bg-red-600 hover:bg-red-700"
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete Task
+                </Button>
+              )}
+              <div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsTaskDialogOpen(false)}
+                  className="border-gray-500 text-gray-300 hover:bg-gray-700 hover:text-white mr-2"
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  type="submit"
+                  disabled={createTaskMutation.isPending || updateTaskMutation.isPending}
+                  className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700"
+                >
+                  {(createTaskMutation.isPending || updateTaskMutation.isPending) && (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  )}
+                  {currentTask ? 'Update Task' : 'Create Task'}
+                </Button>
+              </div>
             </DialogFooter>
           </form>
         </DialogContent>
       </Dialog>
+      
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent className="bg-[#1c3252] border-[#2a4365] text-white">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure you want to delete this task?</AlertDialogTitle>
+            <AlertDialogDescription className="text-gray-300">
+              This action cannot be undone. This will permanently delete the task
+              "{taskToDelete?.name}" and remove all associated user completions.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="bg-transparent border-gray-600 text-gray-300 hover:bg-gray-800 hover:text-white">
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDeleteTask}
+              className="bg-red-600 hover:bg-red-700 text-white border-none"
+              disabled={deleteTaskMutation.isPending}
+            >
+              {deleteTaskMutation.isPending && (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              )}
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

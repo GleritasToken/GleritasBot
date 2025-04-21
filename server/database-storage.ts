@@ -170,6 +170,35 @@ export class DatabaseStorage implements IStorage {
     return result[0];
   }
   
+  async deleteTask(id: number): Promise<boolean> {
+    try {
+      // First, get the task to get its name
+      const taskResult = await db.select()
+        .from(tasks)
+        .where(eq(tasks.id, id));
+      
+      if (taskResult.length === 0) {
+        return false; // Task not found
+      }
+      
+      const taskName = taskResult[0].name;
+      
+      // Delete associated user task completions
+      await db.delete(userTasks)
+        .where(eq(userTasks.taskName, taskName));
+      
+      // Delete the task itself
+      const deleteResult = await db.delete(tasks)
+        .where(eq(tasks.id, id))
+        .returning();
+      
+      return deleteResult.length > 0;
+    } catch (error) {
+      console.error("Error deleting task:", error);
+      return false;
+    }
+  }
+  
   async getUserTasks(userId: number): Promise<UserTask[]> {
     return await db.select()
       .from(userTasks)
