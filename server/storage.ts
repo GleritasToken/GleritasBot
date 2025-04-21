@@ -21,15 +21,18 @@ export interface IStorage {
   updateUser(id: number, userData: Partial<User>): Promise<User | undefined>;
   getUserWithTasks(userId: number): Promise<UserWithTasks | undefined>;
   checkDuplicateRegistration(ipAddress: string, fingerprint: string): Promise<boolean>;
+  getAllUsers(): Promise<User[]>;
   
   // Task operations
   getAllTasks(): Promise<Task[]>;
   getTask(name: string): Promise<Task | undefined>;
   createTask(task: InsertTask): Promise<Task>;
+  updateTask(id: number, taskData: Partial<Task>): Promise<Task | undefined>;
   getUserTasks(userId: number): Promise<UserTask[]>;
   getCompletedTasks(userId: number): Promise<UserTask[]>;
   completeUserTask(userTask: InsertUserTask): Promise<UserTask>;
   checkTaskCompletion(userId: number, taskName: string): Promise<boolean>;
+  getAllUserTasks(): Promise<UserTask[]>;
   
   // Referral operations
   createReferral(referral: InsertReferral): Promise<Referral>;
@@ -153,6 +156,10 @@ export class MemStorage implements IStorage {
       (user) => user.ipAddress === ipAddress || user.fingerprint === fingerprint
     );
   }
+  
+  async getAllUsers(): Promise<User[]> {
+    return Array.from(this.users.values());
+  }
 
   // Task Operations
   async getAllTasks(): Promise<Task[]> {
@@ -179,6 +186,15 @@ export class MemStorage implements IStorage {
     
     this.tasks.set(id, task);
     return task;
+  }
+  
+  async updateTask(id: number, taskData: Partial<Task>): Promise<Task | undefined> {
+    const task = this.tasks.get(id);
+    if (!task) return undefined;
+    
+    const updatedTask = { ...task, ...taskData };
+    this.tasks.set(id, updatedTask);
+    return updatedTask;
   }
 
   async getUserTasks(userId: number): Promise<UserTask[]> {
@@ -227,6 +243,10 @@ export class MemStorage implements IStorage {
                     userTask.taskName === taskName && 
                     userTask.completed
     );
+  }
+  
+  async getAllUserTasks(): Promise<UserTask[]> {
+    return Array.from(this.userTasks.values());
   }
 
   // Referral Operations

@@ -5,6 +5,7 @@ import {
   registerUserSchema, 
   completeTaskSchema, 
   walletSubmissionSchema,
+  createTaskSchema,
   taskNames,
   type TaskName
 } from "@shared/schema";
@@ -25,6 +26,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const user = await storage.getUser(userId);
     if (!user) {
       return res.status(401).json({ message: "User not found." });
+    }
+    
+    req.user = user;
+    next();
+  };
+  
+  // Admin authentication check middleware
+  const requireAdmin = async (req: Request, res: Response, next: Function) => {
+    const userId = req.session.userId;
+    if (!userId) {
+      return res.status(401).json({ message: "Unauthorized. Please login first." });
+    }
+    
+    const user = await storage.getUser(userId);
+    if (!user) {
+      return res.status(401).json({ message: "User not found." });
+    }
+    
+    // Check if user has admin username
+    if (user.username !== 'gleritas_admin_login_only') {
+      return res.status(403).json({ message: "Admin access required." });
     }
     
     req.user = user;
@@ -405,6 +427,121 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("BNB fee submission error:", error);
       res.status(500).json({ message: "Failed to verify BNB fee payment." });
+    }
+  });
+  
+  // Admin routes
+  
+  // Get admin dashboard stats
+  app.get("/api/admin/stats", requireAdmin, async (req: Request, res: Response) => {
+    try {
+      // Count all users
+      const allUsers = await storage.getAllUsers();
+      
+      // Count users with connected wallets
+      const usersWithWallets = allUsers.filter(user => user.walletAddress !== null);
+      
+      // Count completed tasks
+      const completedTasks = await storage.getAllUserTasks();
+      
+      // Count total claimed tokens
+      const totalTokensClaimed = allUsers.reduce((sum, user) => sum + user.totalTokens, 0);
+      
+      res.json({
+        totalUsers: allUsers.length,
+        activeUsers: usersWithWallets.length,
+        totalCompletedTasks: completedTasks.length,
+        totalTokensClaimed
+      });
+    } catch (error) {
+      console.error("Admin stats error:", error);
+      res.status(500).json({ message: "Failed to fetch admin stats." });
+    }
+  });
+  
+  // Get all users for admin
+  app.get("/api/admin/users", requireAdmin, async (req: Request, res: Response) => {
+    try {
+      const users = await storage.getAllUsers();
+      res.json(users);
+    } catch (error) {
+      console.error("Admin users error:", error);
+      res.status(500).json({ message: "Failed to fetch users." });
+    }
+  });
+  
+  // Get all tasks and their completion stats
+  app.get("/api/admin/tasks", requireAdmin, async (req: Request, res: Response) => {
+    try {
+      const tasks = await storage.getAllTasks();
+      const userTasks = await storage.getAllUserTasks();
+      
+      // Calculate completion stats for each task
+      const tasksWithStats = tasks.map(task => {
+        const completions = userTasks.filter(ut => ut.taskName === task.name);
+        return {
+          ...task,
+          completionCount: completions.length,
+          totalTokensAwarded: completions.reduce((sum, ut) => sum + ut.tokenAmount, 0)
+        };
+      });
+      
+      res.json(tasksWithStats);
+    } catch (error) {
+      console.error("Admin tasks error:", error);
+      res.status(500).json({ message: "Failed to fetch tasks with stats." });
+    }
+  });
+  
+  // Create a new task
+  app.post("/api/admin/tasks", requireAdmin, async (req: Request, res: Response) => {
+    try {
+      const validationResult = createTaskSchema.safeParse(req.body);
+      if (!validationResult.success) {
+        return res.status(400).json({ 
+          message: "Invalid task data", 
+          errors: validationResult.error.format() 
+        });
+      }
+      
+      const newTask = await storage.createTask(validationResult.data);
+      
+      res.status(201).json({
+        message: "Task created successfully",
+        task: newTask
+      });
+    } catch (error) {
+      console.error("Create task error:", error);
+      res.status(500).json({ message: "Failed to create task." });
+    }
+  });
+  
+  // Update an existing task
+  app.put("/api/admin/tasks/:id", requireAdmin, async (req: Request, res: Response) => {
+    try {
+      const taskId = parseInt(req.params.id);
+      const validationResult = createTaskSchema.safeParse(req.body);
+      
+      if (!validationResult.success) {
+        return res.status(400).json({ 
+          message: "Invalid task data", 
+          errors: validationResult.error.format() 
+        });
+      }
+      
+      const updatedTask = await storage.updateTask(taskId, validationResult.data);
+      
+      if (!updatedTask) {
+        return res.status(404).json({ message: "Task not found." });
+      }
+      
+      res.json({
+        message: "Task updated successfully",
+        task: updatedTask
+      });
+    } catch (error) {
+      console.error("Update task error:", error);
+      res.status(500).json({ message: "Failed to update task." });
     }
   });
 
