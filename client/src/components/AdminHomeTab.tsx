@@ -111,7 +111,7 @@ const AdminHomeTab: React.FC<AdminHomeTabProps> = ({ adminStats, isLoadingStats 
             <div className="flex justify-center p-4">
               <Loader2 className="h-8 w-8 animate-spin text-blue-400" />
             </div>
-          ) : users && users.length > 0 ? (
+          ) : users && Array.isArray(users) && users.length > 0 ? (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
@@ -124,7 +124,7 @@ const AdminHomeTab: React.FC<AdminHomeTabProps> = ({ adminStats, isLoadingStats 
                   </tr>
                 </thead>
                 <tbody>
-                  {users.slice(0, 10).map((user: any) => (
+                  {Array.isArray(users) && users.slice(0, 10).map((user: any) => (
                     <tr key={user.id} className="border-b border-[#2a4365] hover:bg-[#172a41]">
                       <td className="py-3 px-4">{user.username}</td>
                       <td className="py-3 px-4">

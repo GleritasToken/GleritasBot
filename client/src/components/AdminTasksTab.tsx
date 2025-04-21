@@ -53,14 +53,7 @@ const AdminTasksTab: React.FC = () => {
   const { data: tasks = [], isLoading } = useQuery<TaskWithStats[]>({
     queryKey: ['/api/admin/tasks'],
     retry: false,
-    gcTime: 0,
-    onError: (error: Error) => {
-      toast({
-        title: "Error loading tasks",
-        description: error.message || "Could not load tasks. You may not have admin permissions.",
-        variant: "destructive"
-      });
-    }
+    gcTime: 0
   });
 
   const createTaskMutation = useMutation({
@@ -203,9 +196,9 @@ const AdminTasksTab: React.FC = () => {
         <div className="flex justify-center p-12">
           <Loader2 className="h-12 w-12 animate-spin text-blue-400" />
         </div>
-      ) : tasks && tasks.length > 0 ? (
+      ) : tasks && Array.isArray(tasks) && tasks.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {tasks.map(task => (
+          {Array.isArray(tasks) && tasks.map((task: TaskWithStats) => (
             <Card key={task.id} className="bg-[#1c3252] border-[#2a4365] shadow-lg overflow-hidden">
               <CardHeader className="pb-2 bg-[#172a41]">
                 <CardTitle className="text-lg font-medium flex items-center justify-between">

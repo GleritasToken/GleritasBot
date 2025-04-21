@@ -3,19 +3,23 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useQuery } from '@tanstack/react-query';
 import { Loader2, Users, WalletIcon, Award, CheckCircle } from 'lucide-react';
-import AdminTasksTab from '../components/AdminTasksTab';
-import AdminHomeTab from '../components/AdminHomeTab';
+import AdminTasksTab from '@/components/AdminTasksTab';
+import AdminHomeTab from '@/components/AdminHomeTab';
 
 const AdminPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState('home');
   
-  const { data: adminStats, isLoading: isLoadingStats } = useQuery({
+  interface AdminStats {
+    totalUsers: number;
+    activeUsers: number;
+    totalCompletedTasks: number;
+    totalTokensClaimed: number;
+  }
+
+  const { data: adminStats, isLoading: isLoadingStats } = useQuery<AdminStats>({
     queryKey: ['/api/admin/stats'],
     gcTime: 0,
-    retry: false,
-    onError: (error) => {
-      console.error("Failed to load admin stats:", error);
-    }
+    retry: false
   });
 
   return (
