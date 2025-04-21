@@ -193,6 +193,7 @@ export class MemStorage implements IStorage {
       tokenAmount: insertTask.tokenAmount,
       isRequired: insertTask.isRequired ?? true, // Default to true if not specified
       iconClass: insertTask.iconClass,
+      link: insertTask.link || null,
       createdAt: new Date()
     };
     
@@ -523,42 +524,48 @@ export class MemStorage implements IStorage {
         description: "Join our official Telegram group",
         tokenAmount: 10,
         isRequired: true,
-        iconClass: "fab fa-telegram-plane text-blue-500"
+        iconClass: "fab fa-telegram-plane text-blue-500",
+        link: "https://t.me/+hcJdayisPFIxOGVk"
       },
       {
         name: "telegram_channel",
         description: "Subscribe to our announcement channel",
         tokenAmount: 5,
         isRequired: true,
-        iconClass: "fab fa-telegram-plane text-blue-500"
+        iconClass: "fab fa-telegram-plane text-blue-500",
+        link: "https://t.me/gleritaschat"
       },
       {
         name: "twitter_follow",
         description: "Follow @GleritasToken on Twitter",
         tokenAmount: 10,
         isRequired: true,
-        iconClass: "fab fa-twitter text-blue-500"
+        iconClass: "fab fa-twitter text-blue-500",
+        link: "https://twitter.com/GleritasToken"
       },
       {
         name: "twitter_engage",
         description: "Like, retweet, and comment on our pinned tweet",
         tokenAmount: 10,
         isRequired: true,
-        iconClass: "fab fa-twitter text-blue-500"
+        iconClass: "fab fa-twitter text-blue-500",
+        link: "https://twitter.com/GleritasToken"
       },
       {
         name: "youtube",
         description: "Watch and like our intro video (Optional)",
         tokenAmount: 10,
         isRequired: false,
-        iconClass: "fab fa-youtube text-red-500"
+        iconClass: "fab fa-youtube text-red-500",
+        link: "https://www.youtube.com"
       },
       {
         name: "wallet_submit",
         description: "Provide a valid wallet address for token distribution",
         tokenAmount: 0,
         isRequired: true,
-        iconClass: "fas fa-wallet text-yellow-500"
+        iconClass: "fas fa-wallet text-yellow-500",
+        link: null
       }
     ];
 

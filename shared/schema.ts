@@ -76,6 +76,7 @@ export const tasks = pgTable("tasks", {
   tokenAmount: integer("token_amount").notNull(),
   isRequired: boolean("is_required").notNull().default(true),
   iconClass: text("icon_class").notNull(),
+  link: text("link"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
@@ -152,7 +153,8 @@ export const createTaskSchema = z.object({
   description: z.string().min(3),
   tokenAmount: z.number().min(1),
   isRequired: z.boolean().default(false),
-  iconClass: z.string()
+  iconClass: z.string(),
+  link: z.string().url("Please enter a valid URL").optional()
 });
 
 // Admin action schemas
