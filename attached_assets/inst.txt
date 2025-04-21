@@ -1,0 +1,4 @@
+Implement Confetti Celebration for task completions
+add micro-animations for user interactions
+add referral cap functionality of max 50 per users
+implement withdrawal system with BNB fee collection
