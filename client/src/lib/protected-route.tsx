@@ -45,6 +45,14 @@ export function ProtectedRoute({
   // Redirect to auth page if not authenticated
   if (!user || redirecting) {
     console.log("Redirecting to /auth page");
+    
+    // Use direct window.location for more reliable redirects
+    if (!redirecting) {
+      console.log("Using direct window location redirect");
+      window.location.href = "/auth";
+      return null;
+    }
+    
     return (
       <Route path={path}>
         <Redirect to="/auth" />

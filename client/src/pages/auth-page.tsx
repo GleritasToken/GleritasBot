@@ -39,17 +39,23 @@ export default function AuthPage() {
   const [_, setLocation] = useLocation();
   
   // Check if user is already logged in
-  const { data: user, isLoading } = useQuery({
+  const { data: user, isLoading, isError } = useQuery({
     queryKey: ['/api/user'],
     retry: false,
-    staleTime: 0
+    staleTime: 0,
+    refetchOnWindowFocus: false,
+    onSuccess: (userData) => {
+      console.log('Auth page detected logged in user:', userData?.username);
+      if (userData && userData.id) {
+        console.log('Redirecting to dashboard');
+        // Use window.location for a full page reload to ensure clean state
+        window.location.href = '/';
+      }
+    }
   });
   
-  // Redirect to home if already logged in
-  if (user && !isLoading) {
-    setLocation('/');
-    return null;
-  }
+  // Log auth state for debugging
+  console.log('Auth page state:', { isLoggedIn: !!user, isLoading, isError });
 
   // Login form setup
   const loginForm = useForm<LoginFormValues>({
