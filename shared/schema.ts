@@ -88,6 +88,26 @@ export const insertTaskSchema = createInsertSchema(tasks).omit({
   createdAt: true
 });
 
+// Verification attempts for tasks
+export const verificationAttempts = pgTable("verification_attempts", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull(),
+  taskName: text("task_name").notNull(),
+  verificationData: text("verification_data").notNull(),
+  status: text("status").notNull().default("pending"), // pending, approved, rejected
+  adminNotes: text("admin_notes"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at"),
+});
+
+export const insertVerificationAttemptSchema = createInsertSchema(verificationAttempts).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  status: true,
+  adminNotes: true
+});
+
 // Withdrawals
 export const withdrawals = pgTable("withdrawals", {
   id: serial("id").primaryKey(),
@@ -122,6 +142,9 @@ export type Referral = typeof referrals.$inferSelect;
 
 export type InsertTask = z.infer<typeof insertTaskSchema>;
 export type Task = typeof tasks.$inferSelect;
+
+export type InsertVerificationAttempt = z.infer<typeof insertVerificationAttemptSchema>;
+export type VerificationAttempt = typeof verificationAttempts.$inferSelect;
 
 export type InsertWithdrawal = z.infer<typeof insertWithdrawalSchema>;
 export type Withdrawal = typeof withdrawals.$inferSelect;
