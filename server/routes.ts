@@ -6,6 +6,10 @@ import {
   completeTaskSchema, 
   walletSubmissionSchema,
   createTaskSchema,
+  banUserSchema,
+  resetTokensSchema,
+  withdrawalActionSchema,
+  withdrawalStatusUpdateSchema,
   taskNames,
   type TaskName
 } from "@shared/schema";
@@ -545,6 +549,183 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Ban a user (admin only)
+  app.post("/api/admin/users/:userId/ban", requireAdmin, async (req: Request, res: Response) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      const validationResult = banUserSchema.safeParse({
+        userId,
+        ...req.body
+      });
+      
+      if (!validationResult.success) {
+        return res.status(400).json({ 
+          message: "Invalid ban request", 
+          errors: validationResult.error.format() 
+        });
+      }
+      
+      const { banReason } = validationResult.data;
+      
+      const updatedUser = await storage.banUser(userId, banReason);
+      
+      if (!updatedUser) {
+        return res.status(404).json({ message: "User not found." });
+      }
+      
+      res.json({
+        message: "User banned successfully",
+        user: updatedUser
+      });
+    } catch (error) {
+      console.error("Ban user error:", error);
+      res.status(500).json({ message: "Failed to ban user." });
+    }
+  });
+  
+  // Unban a user (admin only)
+  app.post("/api/admin/users/:userId/unban", requireAdmin, async (req: Request, res: Response) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      
+      const updatedUser = await storage.unbanUser(userId);
+      
+      if (!updatedUser) {
+        return res.status(404).json({ message: "User not found." });
+      }
+      
+      res.json({
+        message: "User unbanned successfully",
+        user: updatedUser
+      });
+    } catch (error) {
+      console.error("Unban user error:", error);
+      res.status(500).json({ message: "Failed to unban user." });
+    }
+  });
+  
+  // Reset a user's tokens (admin only)
+  app.post("/api/admin/users/:userId/reset-tokens", requireAdmin, async (req: Request, res: Response) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      const validationResult = resetTokensSchema.safeParse({
+        userId,
+        ...req.body
+      });
+      
+      if (!validationResult.success) {
+        return res.status(400).json({ 
+          message: "Invalid reset tokens request", 
+          errors: validationResult.error.format() 
+        });
+      }
+      
+      const updatedUser = await storage.resetUserTokens(userId);
+      
+      if (!updatedUser) {
+        return res.status(404).json({ message: "User not found." });
+      }
+      
+      res.json({
+        message: "User tokens reset successfully",
+        user: updatedUser
+      });
+    } catch (error) {
+      console.error("Reset tokens error:", error);
+      res.status(500).json({ message: "Failed to reset user tokens." });
+    }
+  });
+  
+  // Get enhanced task completion stats (admin only)
+  app.get("/api/admin/task-stats", requireAdmin, async (req: Request, res: Response) => {
+    try {
+      const stats = await storage.getTaskCompletionStats();
+      res.json(stats);
+    } catch (error) {
+      console.error("Task stats error:", error);
+      res.status(500).json({ message: "Failed to fetch task statistics." });
+    }
+  });
+  
+  // Get detailed user activity stats (admin only)
+  app.get("/api/admin/user-activity", requireAdmin, async (req: Request, res: Response) => {
+    try {
+      const stats = await storage.getUserActivityStats();
+      res.json(stats);
+    } catch (error) {
+      console.error("User activity stats error:", error);
+      res.status(500).json({ message: "Failed to fetch user activity statistics." });
+    }
+  });
+  
+  // Get all withdrawals (admin only)
+  app.get("/api/admin/withdrawals", requireAdmin, async (req: Request, res: Response) => {
+    try {
+      const allWithdrawals = await storage.getAllWithdrawals();
+      
+      // Enrich with user data
+      const withdrawalDetails = await Promise.all(
+        allWithdrawals.map(async (withdrawal) => {
+          const user = await storage.getUser(withdrawal.userId);
+          return {
+            ...withdrawal,
+            username: user?.username || 'Unknown'
+          };
+        })
+      );
+      
+      res.json(withdrawalDetails);
+    } catch (error) {
+      console.error("Admin withdrawals error:", error);
+      res.status(500).json({ message: "Failed to fetch withdrawals." });
+    }
+  });
+  
+  // Update withdrawal status (admin only)
+  app.put("/api/admin/withdrawals/:id", requireAdmin, async (req: Request, res: Response) => {
+    try {
+      const id = parseInt(req.params.id);
+      const admin = req.user!;
+      
+      const validationResult = withdrawalActionSchema.safeParse({
+        withdrawalId: id,
+        ...req.body
+      });
+      
+      if (!validationResult.success) {
+        return res.status(400).json({ 
+          message: "Invalid withdrawal action data", 
+          errors: validationResult.error.format() 
+        });
+      }
+      
+      const { action, notes, rejectionReason } = validationResult.data;
+      
+      // Map action to status
+      const status = action === 'approve' ? 'processing' : 'rejected';
+      
+      const updatedWithdrawal = await storage.updateWithdrawalWithAdminAction(
+        id,
+        status,
+        admin.id,
+        notes,
+        rejectionReason
+      );
+      
+      if (!updatedWithdrawal) {
+        return res.status(404).json({ message: "Withdrawal not found." });
+      }
+      
+      res.json({
+        message: `Withdrawal ${action === 'approve' ? 'approved' : 'rejected'} successfully`,
+        withdrawal: updatedWithdrawal
+      });
+    } catch (error) {
+      console.error("Update withdrawal error:", error);
+      res.status(500).json({ message: "Failed to update withdrawal." });
+    }
+  });
+  
   // Create HTTP server
   const httpServer = createServer(app);
 
