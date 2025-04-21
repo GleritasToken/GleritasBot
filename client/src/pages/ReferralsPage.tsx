@@ -118,7 +118,7 @@ const ReferralsPage: React.FC = () => {
             <div>
               <h3 className="font-medium mb-3">Your Referrals</h3>
               
-              {!referrals || referrals.length === 0 ? (
+              {!referrals || !referrals.referrals || referrals.referrals.length === 0 ? (
                 <div className="bg-[#243b5c] border border-[#2a4365] rounded-lg p-6 text-center">
                   <Users className="h-12 w-12 mx-auto mb-3 text-gray-500" />
                   <h4 className="text-lg font-medium mb-2">No Referrals Yet</h4>
@@ -143,7 +143,7 @@ const ReferralsPage: React.FC = () => {
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-[#2a4365]">
-                        {referrals.map((referral: any) => (
+                        {referrals.referrals && referrals.referrals.map((referral: any) => (
                           <tr key={referral.id}>
                             <td className="px-6 py-4 whitespace-nowrap text-sm">{referral.username}</td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">{formatDate(referral.createdAt)}</td>

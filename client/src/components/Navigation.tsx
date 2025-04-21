@@ -38,17 +38,20 @@ export default function Navigation() {
 
   return (
     <div className="flex flex-col h-full">
-      {/* Top navigation */}
+      {/* Top header with logo and user info */}
       <div className="bg-[#0d1b2a] text-white p-4 flex items-center justify-between">
         <div className="flex items-center space-x-2">
-          <div className="bg-primary rounded-full w-8 h-8 flex items-center justify-center">
-            <span className="font-bold text-primary-foreground">G</span>
+          <div className="bg-amber-500 rounded-full w-8 h-8 flex items-center justify-center">
+            <span className="font-bold text-black">G</span>
           </div>
           <span className="font-bold text-lg">GLRS Airdrop</span>
         </div>
         
         <div className="flex items-center space-x-2">
-          <span className="text-sm text-gray-300">Welcome, {user?.username}</span>
+          <div className="flex items-center bg-[#1c3252] rounded-full px-3 py-1 text-white font-medium">
+            <span className="text-amber-400 mr-1">{user?.totalTokens || 0}</span>
+            <span className="text-sm">GLRS</span>
+          </div>
           <Button 
             variant="ghost" 
             size="sm" 
@@ -56,67 +59,13 @@ export default function Navigation() {
             onClick={handleLogout}
           >
             <LogOut className="h-4 w-4 mr-1" />
-            Logout
+            <span className="hidden md:inline">Logout</span>
           </Button>
         </div>
       </div>
       
-      {/* Main navigation buttons */}
-      <div className="bg-[#12243B] border-b border-[#2a4365] p-4 flex items-center justify-between overflow-x-auto">
-        <div className="flex space-x-2">
-          <Link href="/">
-            <Button 
-              variant="ghost" 
-              size="sm"
-              className={`${isActive('/')} flex items-center space-x-1`}
-            >
-              <Home className="h-4 w-4" />
-              <span>Home</span>
-            </Button>
-          </Link>
-          
-          <Link href="/tasks">
-            <Button 
-              variant="ghost" 
-              size="sm"
-              className={`${isActive('/tasks')} flex items-center space-x-1`}
-            >
-              <CheckSquare className="h-4 w-4" />
-              <span>Tasks</span>
-            </Button>
-          </Link>
-          
-          <Link href="/referrals">
-            <Button 
-              variant="ghost" 
-              size="sm"
-              className={`${isActive('/referrals')} flex items-center space-x-1`}
-            >
-              <Users className="h-4 w-4" />
-              <span>Referrals</span>
-            </Button>
-          </Link>
-          
-          <Link href="/about">
-            <Button 
-              variant="ghost" 
-              size="sm"
-              className={`${isActive('/about')} flex items-center space-x-1`}
-            >
-              <Info className="h-4 w-4" />
-              <span>About</span>
-            </Button>
-          </Link>
-        </div>
-        
-        <div className="flex items-center bg-[#1c3252] rounded-full px-3 py-1 text-white font-medium">
-          <span className="text-amber-400 mr-1">{user?.totalTokens || 0}</span>
-          <span className="text-sm">GLRS</span>
-        </div>
-      </div>
-      
-      {/* Mobile bottom navigation */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-[#12243B] border-t border-[#2a4365] p-2 flex justify-around items-center">
+      {/* Mobile bottom navigation - Only navigation that should be visible */}
+      <div className="fixed bottom-0 left-0 right-0 bg-[#12243B] border-t border-[#2a4365] p-2 flex justify-around items-center z-50">
         <Link href="/">
           <Button 
             variant="ghost" 

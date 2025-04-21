@@ -2,7 +2,6 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { X, Wallet, ExternalLink } from 'lucide-react';
-import { SiCoinbase, SiBinance } from 'react-icons/si';
 import { Wallet as WalletIcon } from 'lucide-react';
 
 interface MobileWalletConnectProps {
@@ -116,7 +115,7 @@ export default function MobileWalletConnect({ onConnect, onCancel }: MobileWalle
             variant="outline"
             className="flex flex-col items-center justify-center h-24 border-[#2a4365] hover:border-blue-500 bg-[#243b5c] hover:bg-[#243b5c]"
           >
-            <SiBinance className="h-8 w-8 mb-2 text-yellow-500" />
+            <WalletIcon className="h-8 w-8 mb-2 text-yellow-500" />
             <span className="text-sm font-medium">Binance Wallet</span>
           </Button>
           
@@ -125,7 +124,7 @@ export default function MobileWalletConnect({ onConnect, onCancel }: MobileWalle
             variant="outline"
             className="flex flex-col items-center justify-center h-24 border-[#2a4365] hover:border-blue-500 bg-[#243b5c] hover:bg-[#243b5c]"
           >
-            <SiCoinbase className="h-8 w-8 mb-2 text-blue-600" />
+            <WalletIcon className="h-8 w-8 mb-2 text-blue-600" />
             <span className="text-sm font-medium">Coinbase Wallet</span>
           </Button>
         </div>
