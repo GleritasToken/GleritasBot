@@ -91,11 +91,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (referredBy) {
         const referrer = await storage.getUserByReferralCode(referredBy);
         if (referrer) {
-          await storage.createReferral({
-            referrerUserId: referrer.id,
-            referredUserId: newUser.id,
-            tokenAmount: 5 // 5 GLRS tokens per referral
-          });
+          // Check if referrer has reached the maximum 50 referrals limit
+          const referralCount = await storage.countReferrals(referrer.id);
+          
+          if (referralCount < 50) {
+            await storage.createReferral({
+              referrerUserId: referrer.id,
+              referredUserId: newUser.id,
+              tokenAmount: 5 // 5 GLRS tokens per referral
+            });
+          } else {
+            console.log(`Referral not processed: User ${referrer.id} has reached the 50 referrals limit`);
+          }
         }
       }
       
@@ -273,6 +280,131 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Referral stats error:", error);
       res.status(500).json({ message: "Failed to fetch referral stats." });
+    }
+  });
+  
+  // Create withdrawal request
+  app.post("/api/withdrawals", requireUser, async (req: Request, res: Response) => {
+    try {
+      const user = req.user!;
+      const withdrawalSchema = z.object({
+        amount: z.number().positive().min(10), // Minimum 10 GLRS for withdrawal
+        captchaToken: z.string().min(1)
+      });
+      
+      const validationResult = withdrawalSchema.safeParse(req.body);
+      if (!validationResult.success) {
+        return res.status(400).json({ 
+          message: "Invalid withdrawal data", 
+          errors: validationResult.error.format() 
+        });
+      }
+      
+      const { amount, captchaToken } = validationResult.data;
+      
+      // CAPTCHA validation would go here
+      if (!captchaToken) {
+        return res.status(400).json({ message: "CAPTCHA verification failed" });
+      }
+      
+      // Check if user has a wallet address
+      if (!user.walletAddress) {
+        return res.status(400).json({ message: "You must connect a wallet address before withdrawing tokens." });
+      }
+      
+      // Check if user has enough tokens
+      if (user.totalTokens < amount) {
+        return res.status(400).json({ message: "Insufficient token balance for withdrawal." });
+      }
+      
+      // Create withdrawal
+      const withdrawal = await storage.createWithdrawal({
+        userId: user.id,
+        amount,
+        status: "pending", // pending, processing, completed, failed
+        bnbFeeCollected: false, // BNB fee collection status
+        walletAddress: user.walletAddress
+      });
+      
+      // Update user's token balance
+      await storage.updateUser(user.id, { 
+        totalTokens: user.totalTokens - amount 
+      });
+      
+      // Get updated user data
+      const updatedUser = await storage.getUser(user.id);
+      
+      res.status(201).json({
+        message: "Withdrawal request created successfully. Please submit the BNB fee to process your withdrawal.",
+        withdrawal,
+        user: updatedUser
+      });
+    } catch (error) {
+      console.error("Withdrawal request error:", error);
+      res.status(500).json({ message: "Failed to create withdrawal request." });
+    }
+  });
+  
+  // Get user withdrawals
+  app.get("/api/withdrawals", requireUser, async (req: Request, res: Response) => {
+    try {
+      const user = req.user!;
+      const withdrawals = await storage.getWithdrawalsByUser(user.id);
+      
+      res.json(withdrawals);
+    } catch (error) {
+      console.error("Withdrawals fetch error:", error);
+      res.status(500).json({ message: "Failed to fetch withdrawal history." });
+    }
+  });
+  
+  // Submit BNB fee for withdrawal
+  app.post("/api/withdrawals/:id/fee", requireUser, async (req: Request, res: Response) => {
+    try {
+      const user = req.user!;
+      const withdrawalId = parseInt(req.params.id);
+      
+      const feeSchema = z.object({
+        txHash: z.string().min(1),
+        captchaToken: z.string().min(1)
+      });
+      
+      const validationResult = feeSchema.safeParse(req.body);
+      if (!validationResult.success) {
+        return res.status(400).json({ 
+          message: "Invalid transaction data", 
+          errors: validationResult.error.format() 
+        });
+      }
+      
+      const { txHash, captchaToken } = validationResult.data;
+      
+      // CAPTCHA validation would go here
+      if (!captchaToken) {
+        return res.status(400).json({ message: "CAPTCHA verification failed" });
+      }
+      
+      // In a real app, we would verify the transaction on the blockchain
+      // For this prototype, we'll simulate successful verification
+      
+      // Update withdrawal status
+      const withdrawal = await storage.updateWithdrawalStatus(
+        withdrawalId, 
+        "processing", 
+        txHash
+      );
+      
+      if (!withdrawal) {
+        return res.status(404).json({ message: "Withdrawal not found." });
+      }
+      
+      res.json({
+        message: "BNB fee payment verified. Your withdrawal is now processing.",
+        withdrawal
+      });
+    } catch (error) {
+      console.error("BNB fee submission error:", error);
+      res.status(500).json({ message: "Failed to verify BNB fee payment." });
     }
   });
 
