@@ -129,6 +129,14 @@ export class DatabaseStorage implements IStorage {
     return results.length > 0;
   }
   
+  async getAllUsers(): Promise<User[]> {
+    return await db.select().from(users);
+  }
+  
+  async getAllUserTasks(): Promise<UserTask[]> {
+    return await db.select().from(userTasks);
+  }
+  
   // Task operations
   async getAllTasks(): Promise<Task[]> {
     return await db.select().from(tasks);
@@ -150,6 +158,15 @@ export class DatabaseStorage implements IStorage {
     };
     
     const result = await db.insert(tasks).values(taskData).returning();
+    return result[0];
+  }
+  
+  async updateTask(id: number, taskData: Partial<Task>): Promise<Task | undefined> {
+    const result = await db.update(tasks)
+      .set(taskData)
+      .where(eq(tasks.id, id))
+      .returning();
+      
     return result[0];
   }
   

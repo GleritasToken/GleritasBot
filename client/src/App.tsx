@@ -9,6 +9,7 @@ import TasksPage from "@/pages/TasksPage";
 import ReferralsPage from "@/pages/ReferralsPage";
 import WithdrawalPage from "@/pages/WithdrawalPage";
 import AboutPage from "@/pages/AboutPage";
+import AdminPage from "@/pages/AdminPage";
 import AuthPage from "@/pages/auth-page";
 // Theme provider removed - using fixed dark theme
 import { UserProvider } from "@/providers/UserProvider";
@@ -190,6 +191,7 @@ function Router() {
         <ProtectedRoute path="/referrals" component={ReferralsPage} />
         <ProtectedRoute path="/withdrawals" component={WithdrawalPage} />
         <ProtectedRoute path="/about" component={AboutPage} />
+        <ProtectedRoute path="/admin" component={AdminPage} />
         <Route path="/auth" component={AuthPage} />
         {/* Fallback to 404 */}
         <Route component={NotFound} />
