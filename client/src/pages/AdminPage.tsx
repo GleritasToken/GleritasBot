@@ -11,8 +11,10 @@ const AdminPage: React.FC = () => {
   
   const { data: adminStats, isLoading: isLoadingStats } = useQuery({
     queryKey: ['/api/admin/stats'],
-    onError: () => {
-      // Handle unauthorized access, etc.
+    gcTime: 0,
+    retry: false,
+    onError: (error) => {
+      console.error("Failed to load admin stats:", error);
     }
   });
 

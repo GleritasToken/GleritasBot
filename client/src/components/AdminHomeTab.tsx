@@ -16,11 +16,10 @@ interface AdminHomeTabProps {
 }
 
 const AdminHomeTab: React.FC<AdminHomeTabProps> = ({ adminStats, isLoadingStats }) => {
-  const { data: users, isLoading: isLoadingUsers } = useQuery({
+  const { data: users = [], isLoading: isLoadingUsers } = useQuery({
     queryKey: ['/api/admin/users'],
-    onError: () => {
-      // Handle unauthorized access, etc.
-    }
+    retry: false,
+    gcTime: 0
   });
 
   return (

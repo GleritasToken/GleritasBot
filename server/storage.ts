@@ -299,8 +299,9 @@ export class MemStorage implements IStorage {
     const withdrawal: Withdrawal = { 
       ...insertWithdrawal, 
       id,
-      transactionHash: null,
-      createdAt: new Date()
+      txHash: null,
+      createdAt: new Date(),
+      bnbFeeCollected: insertWithdrawal.bnbFeeCollected || false
     };
     
     this.withdrawals.set(id, withdrawal);
@@ -320,7 +321,7 @@ export class MemStorage implements IStorage {
     const updatedWithdrawal: Withdrawal = { 
       ...withdrawal, 
       status,
-      ...(txHash && { transactionHash: txHash })
+      ...(txHash && { txHash: txHash })
     };
     
     this.withdrawals.set(id, updatedWithdrawal);

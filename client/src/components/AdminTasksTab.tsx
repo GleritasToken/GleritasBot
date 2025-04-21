@@ -50,12 +50,14 @@ const AdminTasksTab: React.FC = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: tasks, isLoading } = useQuery<TaskWithStats[]>({
+  const { data: tasks = [], isLoading } = useQuery<TaskWithStats[]>({
     queryKey: ['/api/admin/tasks'],
-    onError: (error) => {
+    retry: false,
+    gcTime: 0,
+    onError: (error: Error) => {
       toast({
         title: "Error loading tasks",
-        description: "Could not load tasks. You may not have admin permissions.",
+        description: error.message || "Could not load tasks. You may not have admin permissions.",
         variant: "destructive"
       });
     }
