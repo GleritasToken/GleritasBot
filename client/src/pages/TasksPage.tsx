@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useUser } from '@/providers/UserProvider';
-import { CheckCircle, CircleDashed, ArrowRight } from 'lucide-react';
+import { CheckCircle, CircleDashed, ArrowRight, AlertTriangle, ExternalLink } from 'lucide-react';
 import Navigation from '@/components/Navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Task } from '@shared/schema';
@@ -11,12 +11,25 @@ import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 import ConfettiEffect from '@/components/ConfettiEffect';
 import { motion } from 'framer-motion';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+
+interface VerificationData {
+  taskName: string;
+  taskId: number;
+  verificationData: string;
+}
 
 const TasksPage: React.FC = () => {
   const { user, refreshUser } = useUser();
   const [activeTab, setActiveTab] = useState<string>("available");
   const [showConfetti, setShowConfetti] = useState(false);
   const [completedTaskId, setCompletedTaskId] = useState<string | null>(null);
+  const [verificationDialogOpen, setVerificationDialogOpen] = useState(false);
+  const [currentTask, setCurrentTask] = useState<Task | null>(null);
+  const [verificationData, setVerificationData] = useState("");
+  const [verificationError, setVerificationError] = useState("");
   const queryClient = useQueryClient();
   const { toast } = useToast();
   
@@ -31,25 +44,60 @@ const TasksPage: React.FC = () => {
   
   // Complete task mutation
   const completeMutation = useMutation({
-    mutationFn: async (taskName: string) => {
-      const response = await apiRequest('POST', '/api/tasks/complete', { taskName });
+    mutationFn: async (data: {taskName: string; verificationData?: string}) => {
+      const response = await apiRequest('POST', '/api/tasks/complete', data);
+      
+      // If response is 202 (Accepted), it means additional verification is required
+      if (response.status === 202) {
+        const data = await response.json();
+        // If there's a redirectUrl, we need to redirect the user
+        if (data.redirectUrl) {
+          window.open(data.redirectUrl, '_blank', 'noopener,noreferrer');
+        }
+        throw new Error(data.message || "Please complete the task via the provided link.");
+      }
+      
       return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/user'] });
       refreshUser();
       setShowConfetti(true);
+      setVerificationDialogOpen(false);
+      setVerificationData("");
+      setVerificationError("");
+      
       toast({
         title: "Task Completed!",
         description: "You've earned GLRS tokens for completing this task!",
       });
+      
+      // Auto-switch to completed tab after a delay
+      setTimeout(() => {
+        setActiveTab('completed');
+        setCompletedTaskId(null);
+      }, 3000);
     },
     onError: (error: Error) => {
-      toast({
-        title: "Failed to complete task",
-        description: error.message,
-        variant: "destructive",
-      });
+      // Don't show error toast for pending verification tasks that have been redirected
+      if (error.message.includes("Please complete the task via the provided link")) {
+        toast({
+          title: "Task Started",
+          description: "Please complete the task via the provided link and then verify completion.",
+        });
+        return;
+      }
+      
+      setVerificationError(error.message || "Failed to complete task. Please try again.");
+      
+      // Only show toast for non-verification dialog errors
+      if (!verificationDialogOpen) {
+        toast({
+          title: "Task Verification Failed",
+          description: error.message,
+          variant: "destructive",
+        });
+      }
     }
   });
   
@@ -62,21 +110,93 @@ const TasksPage: React.FC = () => {
   
   const completedTasks = user?.tasks?.filter(task => task.completed) || [];
   
-  // Handle task completion
-  const handleCompleteTask = (taskName: string, taskId: number, taskLink?: string) => {
-    // If the task has a link, open it in a new tab before completing the task
-    if (taskLink) {
-      window.open(taskLink, '_blank', 'noopener,noreferrer');
-    }
-
-    setCompletedTaskId(`task-${taskId}`);
-    completeMutation.mutate(taskName);
+  // Open verification dialog for tasks that need verification
+  const openVerificationDialog = (task: Task) => {
+    setCurrentTask(task);
+    setVerificationData("");
+    setVerificationError("");
+    setVerificationDialogOpen(true);
+  };
+  
+  // Handle task verification submission
+  const handleVerificationSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
     
-    // Auto-switch to completed tab after a delay
-    setTimeout(() => {
-      setActiveTab('completed');
-      setCompletedTaskId(null);
-    }, 3000);
+    if (!currentTask) return;
+    
+    if (!verificationData.trim()) {
+      setVerificationError("Please provide verification data to complete this task.");
+      return;
+    }
+    
+    setCompletedTaskId(`task-${currentTask.id}`);
+    completeMutation.mutate({ 
+      taskName: currentTask.name, 
+      verificationData: verificationData.trim() 
+    });
+  };
+  
+  // Handle task action (start or verify)
+  const handleTaskAction = (task: Task) => {
+    // For tasks that require verification, open the verification dialog
+    if (needsVerification(task)) {
+      openVerificationDialog(task);
+      return;
+    }
+    
+    // For simple tasks or tasks with links only
+    setCompletedTaskId(`task-${task.id}`);
+    
+    // If the task has a link, just open the link and don't auto-complete
+    if (task.link) {
+      window.open(task.link, '_blank', 'noopener,noreferrer');
+      // Request completion but with notification that verification will be needed
+      completeMutation.mutate({ taskName: task.name });
+    } else {
+      // For tasks without links, try to complete directly
+      completeMutation.mutate({ taskName: task.name });
+    }
+  };
+  
+  // Determine if a task needs verification input
+  const needsVerification = (task: Task): boolean => {
+    return ['wallet_submit', 'twitter_follow', 'twitter_retweet', 'telegram_group', 'telegram_channel'].includes(task.name);
+  };
+  
+  // Get the verification field label and placeholder based on task type
+  const getVerificationFieldInfo = (taskName: string): {label: string; placeholder: string} => {
+    switch (taskName) {
+      case 'wallet_submit':
+        return {
+          label: 'Your BSC Wallet Address',
+          placeholder: '0x...'
+        };
+      case 'twitter_follow':
+        return {
+          label: 'Your Twitter Username',
+          placeholder: '@username'
+        };
+      case 'twitter_retweet':
+        return {
+          label: 'Retweet Link',
+          placeholder: 'https://twitter.com/...'
+        };
+      case 'telegram_group':
+        return {
+          label: 'Your Telegram Username',
+          placeholder: '@username'
+        };
+      case 'telegram_channel':
+        return {
+          label: 'Your Telegram Username',
+          placeholder: '@username'
+        };
+      default:
+        return {
+          label: 'Verification',
+          placeholder: 'Enter verification data...'
+        };
+    }
   };
   
   // Animation variants
@@ -202,7 +322,7 @@ const TasksPage: React.FC = () => {
                                   <Button 
                                     size="sm"
                                     className="bg-blue-600 hover:bg-blue-700 relative overflow-hidden group"
-                                    onClick={() => handleCompleteTask(task.name, task.id, task.link)}
+                                    onClick={() => handleTaskAction(task)}
                                     disabled={completeMutation.isPending}
                                   >
                                     {completeMutation.isPending && completedTaskId === `task-${task.id}` ? (
@@ -217,8 +337,11 @@ const TasksPage: React.FC = () => {
                                       </>
                                     ) : (
                                       <>
-                                        {task.link ? 'Go to Task' : 'Complete Task'}
-                                        <ArrowRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                                        {task.link ? 'Go to Task' : (needsVerification(task) ? 'Verify Task' : 'Complete Task')}
+                                        {task.link ? 
+                                          <ExternalLink className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform" /> :
+                                          <ArrowRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                                        }
                                       </>
                                     )}
                                   </Button>
@@ -318,6 +441,87 @@ const TasksPage: React.FC = () => {
       
       {/* Footer with padding for mobile nav */}
       <div className="h-16 md:h-0"></div>
+      
+      {/* Task Verification Dialog */}
+      <Dialog open={verificationDialogOpen} onOpenChange={setVerificationDialogOpen}>
+        <DialogContent className="bg-[#1c3252] border-[#2a4365] text-white">
+          <DialogHeader>
+            <DialogTitle>Verify Task Completion</DialogTitle>
+            <DialogDescription className="text-gray-400">
+              {currentTask ? (
+                <>Please provide verification for completing the "{currentTask.name.split('_').map(word => 
+                  word.charAt(0).toUpperCase() + word.slice(1)
+                ).join(' ')}" task.</>
+              ) : 'Please provide verification to complete this task.'}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <form onSubmit={handleVerificationSubmit}>
+            <div className="space-y-4 py-4">
+              {verificationError && (
+                <div className="flex items-center bg-red-900/30 text-red-200 p-3 rounded text-sm mb-4">
+                  <AlertTriangle className="h-4 w-4 mr-2 flex-shrink-0" />
+                  <p>{verificationError}</p>
+                </div>
+              )}
+              
+              {currentTask && (
+                <div className="grid gap-4">
+                  <Label htmlFor="verification-data" className="text-sm">
+                    {getVerificationFieldInfo(currentTask.name).label}
+                  </Label>
+                  <Input
+                    id="verification-data"
+                    value={verificationData}
+                    onChange={e => setVerificationData(e.target.value)}
+                    placeholder={getVerificationFieldInfo(currentTask.name).placeholder}
+                    className="bg-[#172a41] border-[#2a4365]"
+                  />
+                  
+                  {currentTask.link && (
+                    <div className="flex items-center text-sm mt-2 text-blue-400">
+                      <p>If you haven't completed the task yet, <a 
+                        href={currentTask.link} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="underline hover:text-blue-300"
+                        onClick={() => window.open(currentTask.link, '_blank', 'noopener,noreferrer')}
+                      >click here</a> to get started.</p>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+            
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setVerificationDialogOpen(false)}
+                className="border-gray-500 text-gray-300 hover:bg-gray-700 hover:text-white"
+              >
+                Cancel
+              </Button>
+              <Button 
+                type="submit"
+                disabled={completeMutation.isPending}
+                className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700"
+              >
+                {completeMutation.isPending && (
+                  <motion.div
+                    className="mr-2"
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                  >
+                    <CircleDashed className="h-4 w-4" />
+                  </motion.div>
+                )}
+                Verify & Complete
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
