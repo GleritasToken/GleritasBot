@@ -25,10 +25,7 @@ const AboutPage: React.FC = () => {
             <div className="mb-8">
               <h3 className="text-xl font-bold mb-4 bg-gradient-to-r from-blue-400 to-purple-500 text-transparent bg-clip-text">Welcome to GLRS</h3>
               <p className="text-gray-300 mb-4">
-                Gleritas (GLRS) is a BEP-20 token built on the Binance Smart Chain (BSC) designed to revolutionize how communities engage with blockchain technology. By participating in our airdrop program, you're becoming an early member of our growing ecosystem.
-              </p>
-              <p className="text-gray-300 mb-4">
-                The GLRS token will be used for governance, staking, and various utilities within our platform. Join our social media channels to stay updated on the latest news and developments.
+                Gleritas (GLRS) is a BEP-20 token built on the Binance Smart Chain (BSC). Gleritas (GLRS) is a next-generation blockchain-powered cryptocurrency built to seamlessly connect the world of digital assets with the fast-growing e-commerce industry. Our mission is to empower both merchants and consumers by providing fast, secure, and cost-effective payment solutions that goes beyond traditional systems.
               </p>
             </div>
             
@@ -57,7 +54,7 @@ const AboutPage: React.FC = () => {
                 </a>
                 
                 <a 
-                  href="#" 
+                  href="https://Gleritastoken.com" 
                   target="_blank" 
                   rel="noopener noreferrer"
                   className="block"
@@ -123,7 +120,7 @@ const AboutPage: React.FC = () => {
                 </a>
                 
                 <a 
-                  href="#" 
+                  href="https://twitter.com/GleritasToken" 
                   target="_blank" 
                   rel="noopener noreferrer"
                   className="block"
