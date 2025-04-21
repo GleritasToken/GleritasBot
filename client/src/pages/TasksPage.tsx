@@ -485,7 +485,11 @@ const TasksPage: React.FC = () => {
                         target="_blank" 
                         rel="noopener noreferrer"
                         className="underline hover:text-blue-300"
-                        onClick={() => window.open(currentTask.link, '_blank', 'noopener,noreferrer')}
+                        onClick={() => {
+                          if (currentTask.link) {
+                            window.open(currentTask.link, '_blank', 'noopener,noreferrer');
+                          }
+                        }}
                       >click here</a> to get started.</p>
                     </div>
                   )}

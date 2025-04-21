@@ -7,7 +7,10 @@ export const taskNames = [
   "telegram_group",
   "telegram_channel",
   "twitter_follow",
+  "twitter_retweet",
   "twitter_engage",
+  "website_visit",
+  "discord_join",
   "youtube",
   "wallet_submit"
 ] as const;
@@ -141,6 +144,37 @@ export const registerUserSchema = z.object({
 export const completeTaskSchema = z.object({
   taskName: z.enum(taskNames),
   verificationData: z.string().optional(),
+}).superRefine((data, ctx) => {
+  // For specific tasks, we require verification data
+  const requiresVerification = [
+    "telegram_group", 
+    "telegram_channel", 
+    "twitter_follow", 
+    "twitter_retweet",
+    "twitter_engage", 
+    "discord_join",
+    "wallet_submit"
+  ];
+  
+  if (requiresVerification.includes(data.taskName) && (!data.verificationData || !data.verificationData.trim())) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: `Verification data is required for ${data.taskName} task`,
+      path: ["verificationData"]
+    });
+  }
+  
+  // Specific validation for wallet addresses
+  if (data.taskName === "wallet_submit" && data.verificationData) {
+    const isValidBscAddress = /^0x[a-fA-F0-9]{40}$/.test(data.verificationData);
+    if (!isValidBscAddress) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Invalid BSC wallet address format",
+        path: ["verificationData"]
+      });
+    }
+  }
 });
 
 export const walletSubmissionSchema = z.object({
