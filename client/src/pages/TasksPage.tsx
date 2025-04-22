@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useUser } from '@/providers/UserProvider';
-import { CheckCircle, CircleDashed, ArrowRight, AlertTriangle, ExternalLink, MessageCircle } from 'lucide-react';
+import { CheckCircle, CircleDashed, ArrowRight, AlertTriangle, AlertCircle, ExternalLink, MessageCircle } from 'lucide-react';
 import Navigation from '@/components/Navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Task } from '@shared/schema';
@@ -151,9 +151,19 @@ const TasksPage: React.FC = () => {
   // Filter tasks
   const completedTaskNames = user?.tasks?.filter(task => task.completed).map(task => task.taskName) || [];
   
-  const availableTasks = allTasks?.filter(task => 
-    !completedTaskNames.includes(task.name)
-  ) || [];
+  const hasTelegramConnect = completedTaskNames.includes('telegram_connect');
+  
+  // Only include telegram_connect task if not connected
+  // Or include all other tasks if telegram is connected
+  const availableTasks = allTasks?.filter(task => {
+    if (!user?.telegramId) {
+      // If user hasn't connected Telegram, only show the telegram_connect task
+      return task.name === 'telegram_connect' && !completedTaskNames.includes(task.name);
+    } else {
+      // If user has connected Telegram, show all uncompleted tasks
+      return !completedTaskNames.includes(task.name);
+    }
+  }) || [];
   
   const completedTasks = user?.tasks?.filter(task => task.completed) || [];
   
@@ -393,7 +403,7 @@ const TasksPage: React.FC = () => {
                     </Card>
                     
                     <div className="mt-8 text-center py-12">
-                      <AlertCircle className="h-12 w-12 mx-auto mb-4 text-amber-400" />
+                      <AlertTriangle className="h-12 w-12 mx-auto mb-4 text-amber-400" />
                       <h3 className="text-xl font-medium mb-2">Connect Telegram First</h3>
                       <p className="text-gray-400">
                         You need to connect your Telegram account to access airdrop tasks. 
