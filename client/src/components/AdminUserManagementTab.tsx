@@ -347,10 +347,10 @@ const AdminUserManagementTab: React.FC = () => {
                               variant="outline"
                               size="sm"
                               onClick={() => handleOpenResetTokensDialog(user)}
-                              className="h-8 border-blue-700 bg-blue-900/20 text-blue-400 hover:bg-blue-800/30"
+                              className="h-8 border-red-700 bg-red-900/20 text-red-400 hover:bg-red-800/30"
                             >
                               <RotateCcw className="h-4 w-4 mr-1" />
-                              Reset
+                              Reset Data
                             </Button>
                           </div>
                         </TableCell>
@@ -551,47 +551,64 @@ const AdminUserManagementTab: React.FC = () => {
         </DialogContent>
       </Dialog>
       
-      {/* Reset Tokens Dialog */}
+      {/* Reset User Data Dialog */}
       <Dialog open={isResetTokensDialogOpen} onOpenChange={setIsResetTokensDialogOpen}>
         <DialogContent className="bg-[#1c3252] border-[#2a4365] text-white">
           <DialogHeader>
             <DialogTitle className="flex items-center">
-              <RotateCcw className="h-5 w-5 mr-2 text-blue-400" />
-              Reset User Tokens
+              <RotateCcw className="h-5 w-5 mr-2 text-red-400" />
+              Reset User Data
             </DialogTitle>
           </DialogHeader>
           
           <div className="py-4">
             <div className="mb-4">
               <p className="text-sm text-gray-300 mb-2">
-                You are about to reset tokens for user:
+                You are about to reset data for user:
               </p>
               <div className="bg-[#172a41] p-2 rounded text-sm mb-4">
                 <span className="font-bold">{selectedUser?.username}</span>
                 {selectedUser?.walletAddress && (
                   <div className="text-xs text-gray-400 mt-1">
-                    Wallet: {selectedUser.walletAddress}
+                    Wallet: {selectedUser.walletAddress} <span className="text-red-400">(will be removed)</span>
+                  </div>
+                )}
+                {selectedUser?.telegramId && (
+                  <div className="text-xs text-gray-400 mt-1">
+                    Telegram ID: {selectedUser.telegramId} <span className="text-red-400">(will be removed)</span>
                   </div>
                 )}
                 <div className="flex items-center mt-1">
                   <Wallet className="h-3 w-3 mr-1 text-yellow-400" />
                   <span className="text-yellow-400">
-                    Current Balance: {selectedUser?.totalTokens || 0} GLRS
+                    Current Balance: {selectedUser?.totalTokens || 0} GLRS <span className="text-red-400">(will be reset to 0)</span>
                   </span>
                 </div>
               </div>
+              
+              <div className="bg-amber-950/30 border border-amber-800 rounded p-3 mb-4">
+                <p className="text-sm font-medium text-amber-400 mb-2">This action will:</p>
+                <ul className="list-disc pl-5 mb-2 space-y-1 text-xs text-gray-300">
+                  <li>Delete all task completion history</li>
+                  <li>Remove Telegram connection</li>
+                  <li>Clear wallet address</li>
+                  <li>Reset token balance to zero</li>
+                </ul>
+                <p className="text-xs text-amber-400">The user will need to start over with all tasks.</p>
+              </div>
+              
               <p className="text-sm text-gray-300 mb-2">
-                Please provide a reason for resetting tokens (optional):
+                Please provide a reason for the reset (optional):
               </p>
               <Textarea
                 value={resetReason}
                 onChange={(e) => setResetReason(e.target.value)}
-                placeholder="Reason for token reset..."
+                placeholder="Reason for user data reset..."
                 className="bg-[#172a41] border-[#2a4365] mb-2"
               />
-              <p className="text-xs text-blue-400 flex items-start">
+              <p className="text-xs text-red-400 flex items-start font-medium">
                 <AlertCircle className="h-3 w-3 mr-1 mt-0.5 flex-shrink-0" />
-                This will reset the user's token balance to zero. This action cannot be undone.
+                This action cannot be undone. All user tasks and connections will be removed.
               </p>
             </div>
           </div>
@@ -609,12 +626,12 @@ const AdminUserManagementTab: React.FC = () => {
               type="button"
               onClick={handleResetTokens}
               disabled={resetTokensMutation.isPending}
-              className="bg-blue-600 hover:bg-blue-700 text-white"
+              className="bg-red-600 hover:bg-red-700 text-white"
             >
               {resetTokensMutation.isPending && (
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
               )}
-              Reset Tokens
+              Reset User Data
             </Button>
           </DialogFooter>
         </DialogContent>
