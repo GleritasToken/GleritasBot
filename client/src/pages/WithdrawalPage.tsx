@@ -109,7 +109,7 @@ const WithdrawalPage: React.FC = () => {
     if (withdrawAmount < 10) {
       toast({
         title: 'Minimum Withdrawal',
-        description: 'Minimum withdrawal amount is 10 GLRS',
+        description: 'Minimum withdrawal amount is 10 GLRS points',
         variant: 'destructive',
       });
       return;
@@ -118,7 +118,7 @@ const WithdrawalPage: React.FC = () => {
     if (withdrawAmount > (user?.totalPoints || 0)) {
       toast({
         title: 'Insufficient Balance',
-        description: 'You don\'t have enough points to withdraw this amount',
+        description: 'You don\'t have enough GLRS points to withdraw this amount',
         variant: 'destructive',
       });
       return;
@@ -194,10 +194,10 @@ const WithdrawalPage: React.FC = () => {
             <CardHeader className="bg-[#172a41] border-b border-[#2a4365]">
               <CardTitle className="flex items-center text-lg">
                 <Wallet className="h-5 w-5 mr-2 text-blue-400" />
-                Withdraw GLRS Tokens
+                Withdraw GLRS Points
               </CardTitle>
               <CardDescription className="text-gray-400">
-                Withdraw your earned GLRS tokens to your connected wallet
+                Convert your earned GLRS points to tokens in your connected wallet
               </CardDescription>
             </CardHeader>
             <CardContent className="p-6">
@@ -218,7 +218,7 @@ const WithdrawalPage: React.FC = () => {
                       damping: 20
                     }}
                   >
-                    {user?.totalPoints || 0} GLRS
+                    {user?.totalPoints || 0} GLRS Points
                   </motion.p>
                 </motion.div>
                 
@@ -241,8 +241,8 @@ const WithdrawalPage: React.FC = () => {
                       className="my-4"
                     />
                     <div className="flex justify-between text-sm text-gray-400">
-                      <span>Min: 10 GLRS</span>
-                      <span>Max: {Math.max(user?.totalTokens || 10, 10)} GLRS</span>
+                      <span>Min: 10 GLRS Points</span>
+                      <span>Max: {Math.max(user?.totalPoints || 10, 10)} GLRS Points</span>
                     </div>
                   </div>
                   
@@ -253,13 +253,13 @@ const WithdrawalPage: React.FC = () => {
                         value={withdrawAmount}
                         onChange={(e) => setWithdrawAmount(Number(e.target.value))}
                         min={10}
-                        max={user?.totalTokens || 0}
+                        max={user?.totalPoints || 0}
                         className="bg-[#243b5c] border-[#2a4365] text-white"
                       />
                     </div>
                     <Button
                       onClick={handleWithdraw}
-                      disabled={withdrawMutation.isPending || !user?.walletAddress || user?.totalTokens < 10}
+                      disabled={withdrawMutation.isPending || !user?.walletAddress || (user?.totalPoints || 0) < 10}
                       className="bg-blue-600 hover:bg-blue-700 relative overflow-hidden group"
                     >
                       {withdrawMutation.isPending ? (
@@ -283,6 +283,18 @@ const WithdrawalPage: React.FC = () => {
                     </p>
                   )}
                 </div>
+              </div>
+              
+              {/* Premium Fee Options */}
+              <div className="mb-8">
+                <h3 className="font-medium mb-3">Premium Withdrawal Options</h3>
+                <FeeOptions onComplete={() => {
+                  queryClient.invalidateQueries({ queryKey: ['/api/user'] });
+                  toast({
+                    title: 'Premium Status Updated',
+                    description: 'Your premium status has been updated successfully!',
+                  });
+                }} />
               </div>
               
               {/* Withdrawal History */}
@@ -350,7 +362,7 @@ const WithdrawalPage: React.FC = () => {
                               Please send 0.001 BNB to the following address and submit the transaction hash:
                             </p>
                             <div className="bg-[#1c3252] p-2 rounded mb-3 font-mono text-xs overflow-hidden">
-                              0x7A123Bb4D123E56789aBc9876543210dEfB1234c
+                              {FEES_RECIPIENT_ADDRESS}
                             </div>
                             
                             {activeWithdrawal === withdrawal.id ? (
