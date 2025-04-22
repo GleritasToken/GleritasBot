@@ -839,6 +839,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Reset all user tasks (admin only)
+  app.post("/api/admin/reset-all-tasks", requireAdmin, async (req: Request, res: Response) => {
+    try {
+      const result = await storage.resetAllUserTasks();
+      
+      if (result) {
+        res.json({
+          success: true,
+          message: "All user tasks have been reset successfully. Users can now complete tasks again."
+        });
+      } else {
+        res.status(500).json({
+          success: false,
+          error: "Failed to reset user tasks."
+        });
+      }
+    } catch (error) {
+      console.error("Reset all tasks error:", error);
+      res.status(500).json({
+        success: false,
+        error: "An error occurred while resetting tasks."
+      });
+    }
+  });
+  
   // Create HTTP server
   const httpServer = createServer(app);
 

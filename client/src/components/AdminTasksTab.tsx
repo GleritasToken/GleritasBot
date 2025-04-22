@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Edit, Plus, CheckCircle, Clock, Trash2 } from 'lucide-react';
+import { Loader2, Edit, Plus, CheckCircle, Clock, Trash2, RefreshCw } from 'lucide-react';
 import { 
   Dialog, 
   DialogContent, 
@@ -51,6 +51,7 @@ interface TaskFormData {
 const AdminTasksTab: React.FC = () => {
   const [isTaskDialogOpen, setIsTaskDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isResetTasksDialogOpen, setIsResetTasksDialogOpen] = useState(false);
   const [taskToDelete, setTaskToDelete] = useState<TaskWithStats | null>(null);
   const [currentTask, setCurrentTask] = useState<TaskWithStats | null>(null);
   const [formData, setFormData] = useState<TaskFormData>({
@@ -163,6 +164,39 @@ const AdminTasksTab: React.FC = () => {
       toast({
         title: "Failed to delete task",
         description: error.message || "An error occurred while deleting the task",
+        variant: "destructive"
+      });
+    }
+  });
+  
+  // Reset all tasks mutation
+  const resetAllTasksMutation = useMutation({
+    mutationFn: async () => {
+      const res = await fetch('/api/admin/reset-all-tasks', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.error || 'Failed to reset all tasks');
+      }
+      
+      return res.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/tasks'] });
+      setIsResetTasksDialogOpen(false);
+      toast({
+        title: "Tasks Reset",
+        description: data.message || "All user tasks have been reset successfully. Users can now complete tasks again.",
+        variant: "default"
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Failed to reset tasks",
+        description: error.message || "An error occurred while resetting tasks",
         variant: "destructive"
       });
     }
