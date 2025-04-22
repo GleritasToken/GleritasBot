@@ -2,7 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { X, ExternalLink, AlertCircle, Wallet } from 'lucide-react';
-import { FaWallet, FaEthereum } from 'react-icons/fa';
+import { SiMeta } from 'react-icons/si';
+import { FaWallet } from 'react-icons/fa';
 
 interface MobileWalletConnectProps {
   onConnect: (address: string) => void;
@@ -17,9 +18,7 @@ export default function MobileWalletConnect({ onConnect, onCancel }: MobileWalle
   const [error, setError] = useState<string | null>(null);
   const [installedWallets, setInstalledWallets] = useState<{[key: string]: boolean}>({
     metamask: false,
-    trustwallet: false,
-    binance: false,
-    coinbase: false
+    trustwallet: false
   });
   
   // Check for installed wallets
@@ -27,9 +26,7 @@ export default function MobileWalletConnect({ onConnect, onCancel }: MobileWalle
     const checkWallets = async () => {
       const installed = {
         metamask: !!window.ethereum?.isMetaMask,
-        trustwallet: !!(window.ethereum?.isTrust || window.trustwallet),
-        binance: !!window.BinanceChain,
-        coinbase: !!window.ethereum?.isCoinbaseWallet
+        trustwallet: !!(window.ethereum?.isTrust || window.trustwallet)
       };
       
       setInstalledWallets(installed);
@@ -210,7 +207,7 @@ export default function MobileWalletConnect({ onConnect, onCancel }: MobileWalle
               </div>
             ) : (
               <>
-                <FaWallet className="h-8 w-8 mb-2 text-orange-500" />
+                <SiMeta className="h-8 w-8 mb-2 text-orange-500" />
                 <span className="text-sm font-medium">MetaMask</span>
                 {installedWallets.metamask && (
                   <span className="absolute top-2 right-2 bg-green-500 rounded-full w-2 h-2"></span>
@@ -234,48 +231,6 @@ export default function MobileWalletConnect({ onConnect, onCancel }: MobileWalle
                 <FaWallet className="h-8 w-8 mb-2 text-blue-500" />
                 <span className="text-sm font-medium">Trust Wallet</span>
                 {installedWallets.trustwallet && (
-                  <span className="absolute top-2 right-2 bg-green-500 rounded-full w-2 h-2"></span>
-                )}
-              </>
-            )}
-          </Button>
-          
-          <Button 
-            onClick={() => connectWallet('binance')}
-            variant="outline"
-            disabled={connecting !== null}
-            className="flex flex-col items-center justify-center h-24 border-[#2a4365] hover:border-yellow-500 bg-[#243b5c] hover:bg-[#243b5c] relative overflow-hidden"
-          >
-            {connecting === 'binance' ? (
-              <div className="absolute inset-0 flex items-center justify-center bg-[#243b5c]">
-                <div className="w-5 h-5 border-2 border-yellow-500 border-t-transparent rounded-full animate-spin"></div>
-              </div>
-            ) : (
-              <>
-                <FaWallet className="h-8 w-8 mb-2 text-yellow-500" />
-                <span className="text-sm font-medium">Binance Wallet</span>
-                {installedWallets.binance && (
-                  <span className="absolute top-2 right-2 bg-green-500 rounded-full w-2 h-2"></span>
-                )}
-              </>
-            )}
-          </Button>
-          
-          <Button 
-            onClick={() => connectWallet('coinbase')}
-            variant="outline"
-            disabled={connecting !== null}
-            className="flex flex-col items-center justify-center h-24 border-[#2a4365] hover:border-blue-600 bg-[#243b5c] hover:bg-[#243b5c] relative overflow-hidden"
-          >
-            {connecting === 'coinbase' ? (
-              <div className="absolute inset-0 flex items-center justify-center bg-[#243b5c]">
-                <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-              </div>
-            ) : (
-              <>
-                <FaWallet className="h-8 w-8 mb-2 text-blue-600" />
-                <span className="text-sm font-medium">Coinbase Wallet</span>
-                {installedWallets.coinbase && (
                   <span className="absolute top-2 right-2 bg-green-500 rounded-full w-2 h-2"></span>
                 )}
               </>
