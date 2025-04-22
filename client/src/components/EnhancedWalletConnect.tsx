@@ -41,8 +41,8 @@ export default function EnhancedWalletConnect({
         const encodedUrl = encodeURIComponent(miniAppUrl);
         
         const DEEP_LINKS = {
-          metamask: `https://metamask.app.link/dapp/${encodedUrl}?chainId=56`,
-          trustwallet: `https://link.trustwallet.com/open_url?coin=20000714&url=${encodedUrl}`
+          metamask: `ethereum:${window.location.href}`,
+          trustwallet: `https://link.trustwallet.com/open_url?coin_id=56&url=${encodedUrl}`
         };
         
         const FALLBACK_URLS = {
