@@ -15,6 +15,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import TelegramConnectDialog from '@/components/TelegramConnectDialog';
+import EnhancedWalletConnect from '@/components/EnhancedWalletConnect';
 
 interface VerificationData {
   taskName: string;
@@ -700,6 +701,47 @@ const TasksPage: React.FC = () => {
                     </motion.div>
                   )}
                   Verify Automatically
+                </Button>
+              </DialogFooter>
+            </div>
+          ) : currentTask?.name === 'wallet_submit' ? (
+            <div className="space-y-4 py-4">
+              {verificationError && (
+                <div className="flex items-center bg-red-900/30 text-red-200 p-3 rounded text-sm mb-4">
+                  <AlertTriangle className="h-4 w-4 mr-2 flex-shrink-0" />
+                  <p>{verificationError}</p>
+                </div>
+              )}
+              
+              <p className="text-sm text-white/80 mb-4">
+                Connect your BSC wallet to receive GLRS points. This wallet will be used for any future withdrawals.
+              </p>
+              
+              <EnhancedWalletConnect
+                onWalletConnected={(address) => {
+                  if (!currentTask || !address) return;
+                  
+                  setVerificationData(address);
+                  setCompletedTaskId(`task-${currentTask.id}`);
+                  
+                  // Auto-submit after wallet is connected
+                  completeMutation.mutate({ 
+                    taskName: currentTask.name, 
+                    verificationData: address 
+                  });
+                }}
+                isConnecting={completeMutation.isPending}
+                showCard={false}
+              />
+              
+              <DialogFooter>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setVerificationDialogOpen(false)}
+                  className="border-gray-500 text-gray-300 hover:bg-gray-700 hover:text-white"
+                >
+                  Cancel
                 </Button>
               </DialogFooter>
             </div>
