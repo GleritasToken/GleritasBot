@@ -64,7 +64,7 @@ const TasksPage: React.FC = () => {
         
         toast({
           title: "Task Verified!",
-          description: "You've earned GLRS tokens for completing this task!",
+          description: "You've earned GLRS points for completing this task!",
         });
         
         // Auto-switch to completed tab after a delay
@@ -116,7 +116,7 @@ const TasksPage: React.FC = () => {
       
       toast({
         title: "Task Completed!",
-        description: "You've earned GLRS tokens for completing this task!",
+        description: "You've earned GLRS points for completing this task!",
       });
       
       // Auto-switch to completed tab after a delay
@@ -340,7 +340,7 @@ const TasksPage: React.FC = () => {
   // Get task description
   const getTaskDescription = (taskName: string) => {
     const task = allTasks?.find(t => t.name === taskName);
-    return task?.description || 'Complete this task to earn GLRS tokens.';
+    return task?.description || 'Complete this task to earn GLRS points.';
   };
 
   return (
@@ -414,7 +414,7 @@ const TasksPage: React.FC = () => {
                         This is the first required step of the airdrop process.
                       </p>
                       <p className="text-amber-400 font-medium">
-                        Completing this task will reward you with 30 GLRS tokens!
+                        Completing this task will reward you with 30 GLRS points!
                       </p>
                       <Button 
                         size="lg" 
@@ -436,7 +436,7 @@ const TasksPage: React.FC = () => {
                     <CheckCircle className="h-12 w-12 mx-auto mb-4 text-green-500" />
                     <h3 className="text-xl font-medium mb-2">All Tasks Completed!</h3>
                     <p className="text-gray-400 mb-4">
-                      You've completed all available tasks. Check back later for more opportunities to earn GLRS tokens.
+                      You've completed all available tasks. Check back later for more opportunities to earn GLRS points.
                     </p>
                   </motion.div>
                 ) : (
@@ -466,7 +466,7 @@ const TasksPage: React.FC = () => {
                                     ).join(' ')}
                                   </h3>
                                   <span className="flex items-center bg-[#1c3252] px-3 py-1 rounded-full text-sm text-amber-400 font-medium md:ml-2">
-                                    +{task.tokenAmount} GLRS
+                                    +{task.pointAmount} GLRS
                                   </span>
                                 </div>
                                 <p className="text-gray-300 text-sm mb-4">
@@ -570,7 +570,7 @@ const TasksPage: React.FC = () => {
                                       backgroundColor: "rgba(76, 29, 149, 0.3)" 
                                     }}
                                   >
-                                    +{task.tokenAmount} GLRS
+                                    +{task.pointAmount} GLRS
                                   </motion.span>
                                 </div>
                                 <p className="text-gray-300 text-sm mb-2">
