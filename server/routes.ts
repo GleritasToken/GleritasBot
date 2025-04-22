@@ -124,7 +124,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             await storage.createReferral({
               referrerUserId: referrer.id,
               referredUserId: newUser.id,
-              tokenAmount: 5 // 5 GLRS tokens per referral
+              pointAmount: 5 // 5 GLRS points per referral
             });
           } else {
             console.log(`Referral not processed: User ${referrer.id} has reached the 50 referrals limit`);
@@ -861,24 +861,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       if (!validationResult.success) {
         return res.status(400).json({ 
-          message: "Invalid reset tokens request", 
+          message: "Invalid reset points request", 
           errors: validationResult.error.format() 
         });
       }
       
-      const updatedUser = await storage.resetUserTokens(userId);
+      const updatedUser = await storage.resetUserPoints(userId);
       
       if (!updatedUser) {
         return res.status(404).json({ message: "User not found." });
       }
       
       res.json({
-        message: "User tokens reset successfully",
+        message: "User points reset successfully",
         user: updatedUser
       });
     } catch (error) {
-      console.error("Reset tokens error:", error);
-      res.status(500).json({ message: "Failed to reset user tokens." });
+      console.error("Reset points error:", error);
+      res.status(500).json({ message: "Failed to reset user points." });
     }
   });
   
