@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Slider } from '@/components/ui/slider';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useUser } from '@/providers/UserProvider';
-import { AlertCircle, Wallet, ArrowRight, Clock, CheckCircle, XCircle, Loader2 } from 'lucide-react';
+import { AlertCircle, Wallet, ArrowRight, Clock, CheckCircle, XCircle, Loader2, Lock } from 'lucide-react';
 import Navigation from '@/components/Navigation';
 import FeeOptions from '@/components/FeeOptions';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -221,6 +221,14 @@ const WithdrawalPage: React.FC = () => {
                     {user?.totalPoints || 0} GLRS Points
                   </motion.p>
                 </motion.div>
+
+                {/* Withdrawal available soon message */}
+                <Alert className="bg-amber-900/30 border-amber-800/50 text-amber-300 mb-6">
+                  <Lock className="h-4 w-4 mr-2" />
+                  <AlertDescription>
+                    <span className="font-semibold">Withdrawal available soon.</span> Points will be converted to tokens and tokens withdrawal will be live soon.
+                  </AlertDescription>
+                </Alert>
                 
                 <Alert className="bg-blue-900/30 border-blue-800/50 text-blue-300 mb-6">
                   <AlertCircle className="h-4 w-4 mr-2" />
@@ -255,25 +263,16 @@ const WithdrawalPage: React.FC = () => {
                         min={10}
                         max={user?.totalPoints || 0}
                         className="bg-[#243b5c] border-[#2a4365] text-white"
+                        disabled={true} // Disabled as per requirement
                       />
                     </div>
                     <Button
-                      onClick={handleWithdraw}
-                      disabled={withdrawMutation.isPending || !user?.walletAddress || (user?.totalPoints || 0) < 10}
-                      className="bg-blue-600 hover:bg-blue-700 relative overflow-hidden group"
+                      // onClick={handleWithdraw} - Disabled as per requirement
+                      disabled={true}
+                      className="bg-gray-600 hover:bg-gray-700 relative overflow-hidden group cursor-not-allowed"
                     >
-                      {withdrawMutation.isPending ? (
-                        <>
-                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                          Processing...
-                        </>
-                      ) : (
-                        <>
-                          <Wallet className="h-4 w-4 mr-2" />
-                          Withdraw
-                          <ArrowRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform" />
-                        </>
-                      )}
+                      <Lock className="h-4 w-4 mr-2" />
+                      Coming Soon
                     </Button>
                   </div>
                   
@@ -386,34 +385,24 @@ const WithdrawalPage: React.FC = () => {
                                     size="sm"
                                     className="text-xs bg-blue-600 hover:bg-blue-700"
                                     onClick={() => handleFeeSubmit(withdrawal.id)}
-                                    disabled={feeSubmitMutation.isPending || !txHash}
+                                    disabled={feeSubmitMutation.isPending}
                                   >
                                     {feeSubmitMutation.isPending ? (
-                                      <>
-                                        <Loader2 className="h-3 w-3 mr-1 animate-spin" />
-                                        Verifying...
-                                      </>
-                                    ) : (
-                                      <>Submit</>
-                                    )}
+                                      <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                                    ) : null}
+                                    Submit
                                   </Button>
                                 </div>
                               </div>
                             ) : (
                               <Button
                                 size="sm"
-                                className="text-xs w-full bg-blue-600 hover:bg-blue-700"
+                                className="w-full text-xs bg-blue-600 hover:bg-blue-700"
                                 onClick={() => setActiveWithdrawal(withdrawal.id)}
                               >
-                                I've Sent the BNB Fee
+                                Submit BNB Fee Payment
                               </Button>
                             )}
-                          </div>
-                        )}
-                        
-                        {withdrawal.txHash && (
-                          <div className="mt-2 text-xs text-gray-400">
-                            <span className="font-medium">Tx Hash:</span> {withdrawal.txHash}
                           </div>
                         )}
                       </motion.div>
@@ -425,9 +414,6 @@ const WithdrawalPage: React.FC = () => {
           </Card>
         </motion.div>
       </div>
-      
-      {/* Footer with padding for mobile nav */}
-      <div className="h-16 md:h-0"></div>
     </div>
   );
 };

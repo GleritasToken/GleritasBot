@@ -1,0 +1,147 @@
+﻿1. The GLRS balance in the header should reflect the user's GLRS points balance 
+2. Disable the withdrawal button as I don't want it live for now replace it with *Withdrawal available soon* with the description *Points will be converted to tokens and tokens withdrawal will be live soon*
+3. Use the code below to enable smooth wallet connection and try using truth wallet and Metamask logo as their icons 
+# ==============================================
+# 1. INSTALL DEPENDENCIES & SET UP BACKEND
+# ==============================================
+
+# Install required packages
+npm install express ethers cors dotenv
+
+# Create backend server file
+cat > server.js << 'EOL'
+const express = require('express');
+const { ethers } = require('ethers');
+const cors = require('cors');
+require('dotenv').config();
+
+const app = express();
+app.use(cors());
+app.use(express.json());
+
+// BSC RPC Endpoint
+const BSC_RPC = "https://bsc-dataseed.binance.org/";
+const provider = new ethers.providers.JsonRpcProvider(BSC_RPC);
+
+// Token Contract (Replace with your ABI if needed)
+const TOKEN_ADDRESS = "0x7c427B65ebA206026A055B04c6086AC9af40B1B4";
+const TOKEN_ABI = [
+  "function balanceOf(address owner) view returns (uint256)",
+  "function decimals() view returns (uint8)"
+];
+
+// Verify Wallet
+app.post('/verify-wallet', async (req, res) => {
+  const { address, signature } = req.body;
+  try {
+    const recoveredAddress = ethers.utils.verifyMessage(
+      "Connect to Crypto Airdrop MiniApp", 
+      signature
+    );
+    const tokenContract = new ethers.Contract(TOKEN_ADDRESS, TOKEN_ABI, provider);
+    const balance = await tokenContract.balanceOf(address);
+    const decimals = await tokenContract.decimals();
+    const formattedBalance = ethers.utils.formatUnits(balance, decimals);
+    res.json({
+      success: recoveredAddress.toLowerCase() === address.toLowerCase(),
+      balance: formattedBalance,
+      tokenAddress: TOKEN_ADDRESS
+    });
+  } catch (error) {
+    res.status(400).json({ error: "Verification failed" });
+  }
+});
+
+// Start server
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`Server running on BSC RPC: ${BSC_RPC}`));
+EOL
+
+# Set environment variables
+echo "PORT=3000" > .env
+echo "BSC_RPC=https://bsc-dataseed.binance.org/" >> .env
+
+# Start server
+node server.js
+
+# ==============================================
+# 2. FRONTEND INTEGRATION (Add to Mini App)
+# ==============================================
+
+# Wallet Connection Function (Add to your JS)
+function connectWallet(walletType) {
+  const miniAppUrl = "https://crypto-airdrop-your-mum.replit.app";
+  const encodedUrl = encodeURIComponent(miniAppUrl);
+
+  const DEEP_LINKS = {
+    metamask: `https://metamask.app.link/dapp/${encodedUrl}?chainId=56`,
+    trustwallet: `https://link.trustwallet.com/open_url?coin=20000714&url=${encodedUrl}`
+  };
+
+  const FALLBACK_URLS = {
+    metamask: "https://metamask.io/download.html",
+    trustwallet: "https://trustwallet.com/download"
+  };
+
+  Telegram.WebApp.openLink(DEEP_LINKS[walletType]);
+
+  setTimeout(() => {
+    if (!window.ethereum?.isConnected?.()) {
+      Telegram.WebApp.showConfirm(
+        `${walletType} not detected! Install it first?`,
+        (confirmed) => {
+          if (confirmed) Telegram.WebApp.openLink(FALLBACK_URLS[walletType]);
+        }
+      );
+    } else {
+      window.ethereum.request({
+        method: 'wallet_addEthereumChain',
+        params: [{
+          chainId: '0x38',
+          chainName: 'Binance Smart Chain',
+          nativeCurrency: { name: 'BNB', symbol: 'BNB', decimals: 18 },
+          rpcUrls: ['https://bsc-dataseed.binance.org/'],
+          blockExplorerUrls: ['https://bscscan.com/']
+        }]
+      }).then(() => window.ethereum.request({ method: 'eth_requestAccounts' }))
+        .then(accounts => {
+          return window.ethereum.request({
+            method: 'personal_sign',
+            params: ["Connect to Crypto Airdrop MiniApp", accounts[0]]
+          });
+        }).then(signature => {
+          return fetch('/verify-wallet', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+              address: window.ethereum.selectedAddress, 
+              signature 
+            })
+          });
+        }).then(response => response.json())
+          .then(result => {
+            if (result.success) {
+              Telegram.WebApp.showAlert(`✅ Connected! Balance: ${result.balance || '0'} tokens`);
+            }
+          });
+    }
+  }, 2000);
+}
+
+# ==============================================
+# 3. HTML BUTTONS (Add to Mini App)
+# ==============================================
+
+# Add these buttons to your HTML
+<button onclick="connectWallet('metamask')">🌐 Connect MetaMask</button>
+<button onclick="connectWallet('trustwallet')">🔒 Connect Trust Wallet</button>
+
+# ==============================================
+# 4. TESTING (Run in Replit Shell)
+# ==============================================
+
+# Test backend verification
+curl -X POST https://crypto-airdrop-your-mum.replit.app/verify-wallet \
+  -H "Content-Type: application/json" \
+  -d '{"address":"0xUSER_ADDRESS","signature":"0xSIGNATURE"}'
+
