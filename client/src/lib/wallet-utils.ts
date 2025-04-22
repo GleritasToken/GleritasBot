@@ -125,19 +125,19 @@ export async function connectWallet(walletType?: string): Promise<string | null>
             console.error('Trust Wallet connection error:', error);
           }
         } else if (isMobileDevice) {
-          // Direct connection for Trust Wallet on mobile
-          const currentUrl = window.location.href;
-          console.log("Opening Trust Wallet deep link for mobile...");
+          // For Trust Wallet on mobile, we need to use a simplified approach
+          console.log("Opening Trust Wallet for mobile (simplified deeplink)...");
           
-          // Use trust:// protocol first for direct access
-          const directDeepLink = `trust://open_url?coin_id=56&url=${encodeURIComponent(currentUrl)}`;
-          window.location.href = directDeepLink;
+          // Add a parameter to help identify when returning from wallet
+          const returnUrl = window.location.href.includes('?') 
+            ? `${window.location.href}&wallet_return=true` 
+            : `${window.location.href}?wallet_return=true`;
+            
+          // Use simpler format that works more reliably
+          window.location.href = `trust://open_url?url=${encodeURIComponent(returnUrl)}`;
           
-          // Fallback to universal link after short delay
-          setTimeout(() => {
-            const universalLink = `https://link.trustwallet.com/open_url?coin_id=56&url=${encodeURIComponent(currentUrl)}`;
-            window.location.href = universalLink;
-          }, 300);
+          // No fallback universal link - forcing direct trust:// protocol
+          // Instead of setTimeout, we'll rely on user manually returning to app
           
           return null;
         }

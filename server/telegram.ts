@@ -435,7 +435,17 @@ export async function verifyTwitterFollow(userTelegramId: number, twitterUsernam
 export function setupTelegramRoutes(app: any) {
   // Webhook endpoint for Telegram
   app.post('/api/telegram-webhook', (req: any, res: any) => {
-    bot.handleUpdate(req.body, res);
+    try {
+      bot.handleUpdate(req.body, res);
+    } catch (error) {
+      console.error('Error handling Telegram webhook:', error);
+      res.status(500).json({ error: 'Failed to process Telegram webhook' });
+    }
+  });
+  
+  // Add a GET endpoint for testing Telegram webhook
+  app.get('/api/telegram-webhook', (req: any, res: any) => {
+    res.json({ status: 'Telegram webhook is active', botInfo: bot.botInfo || null });
   });
   
   // Task verification endpoint
@@ -603,8 +613,8 @@ export function setupTelegramRoutes(app: any) {
           telegramId,
           walletAddress: user.walletAddress,
           referralCode: user.referralCode,
-          totalTokens: user.totalTokens,
-          referralTokens: user.referralTokens,
+          totalPoints: user.totalPoints, 
+          referralPoints: user.referralPoints,
           referralCount: user.referralCount,
           tasks: userWithTasks?.tasks || []
         }
@@ -651,8 +661,8 @@ export function setupTelegramRoutes(app: any) {
           telegramId: parseInt(user.fingerprint?.replace('telegram_', '') || '0'),
           walletAddress: user.walletAddress,
           referralCode: user.referralCode,
-          totalTokens: user.totalTokens,
-          referralTokens: user.referralTokens,
+          totalPoints: user.totalPoints,
+          referralPoints: user.referralPoints,
           referralCount: user.referralCount,
           tasks: userWithTasks?.tasks || []
         }
