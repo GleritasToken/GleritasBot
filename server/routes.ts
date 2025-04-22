@@ -446,21 +446,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Premium fee payment endpoint
   app.post("/api/premium-fee", requireUser, async (req: Request, res: Response) => {
     try {
-      const { userId, optionType, txHash } = req.body;
+      const { optionType, txHash } = req.body;
+      const user = req.user!; // User is guaranteed by requireUser middleware
       
-      if (!userId || !optionType || !txHash) {
+      if (!optionType || !txHash) {
         return res.status(400).json({
           success: false,
           message: "Missing required fields"
-        });
-      }
-      
-      // Verify that the user exists
-      const user = await storage.getUser(parseInt(userId));
-      if (!user) {
-        return res.status(404).json({
-          success: false,
-          message: "User not found"
         });
       }
       
@@ -475,7 +467,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Apply the premium status based on the option type
       let updatedUser;
       switch (optionType) {
-        case 'boost_earnings':
+        case 'earnings_boost':
           // Double earning multiplier
           updatedUser = await storage.updateUser(user.id, {
             isPremium: true,
@@ -495,8 +487,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           });
           break;
           
-        case 'priority_withdrawal':
-          // Enable withdrawal access
+        case 'priority_withdrawals':
+          // Enable priority withdrawal access
           updatedUser = await storage.updateUser(user.id, {
             isPremium: true,
             premiumOptionChosen: optionType,
@@ -704,7 +696,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return {
           ...task,
           completionCount: completions.length,
-          totalTokensAwarded: completions.reduce((sum, ut) => sum + ut.tokenAmount, 0)
+          totalPointsAwarded: completions.reduce((sum, ut) => sum + ut.tokenAmount, 0)
         };
       });
       

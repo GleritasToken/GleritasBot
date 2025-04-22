@@ -334,7 +334,7 @@ const WithdrawalPage: React.FC = () => {
                         <div className="flex flex-col md:flex-row justify-between mb-2">
                           <div>
                             <div className="flex items-center">
-                              <h4 className="font-medium text-lg">{withdrawal.amount} GLRS</h4>
+                              <h4 className="font-medium text-lg">{withdrawal.amount} GLRS Points</h4>
                               <span className={`ml-2 px-2 py-0.5 rounded-full text-xs flex items-center ${getStatusBadge(withdrawal.status)}`}>
                                 {getStatusIcon(withdrawal.status)}
                                 {withdrawal.status.charAt(0).toUpperCase() + withdrawal.status.slice(1)}
