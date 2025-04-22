@@ -21,6 +21,7 @@ export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   username: text("username").notNull().unique(),
   walletAddress: text("wallet_address"),
+  telegramId: integer("telegram_id"),
   referralCode: text("referral_code").notNull().unique(),
   referredBy: text("referred_by"),
   totalTokens: integer("total_tokens").notNull().default(0),

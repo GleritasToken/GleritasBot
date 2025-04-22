@@ -288,6 +288,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Connect Telegram ID to user account
+  app.post("/api/connect-telegram", requireUser, async (req: Request, res: Response) => {
+    try {
+      const { telegramId } = req.body;
+      
+      if (!telegramId || isNaN(Number(telegramId))) {
+        return res.status(400).json({ message: "Invalid Telegram ID" });
+      }
+      
+      const numericTelegramId = Number(telegramId);
+      
+      // Check if Telegram ID is already connected to another account
+      const users = await storage.getAllUsers();
+      const existingUser = users.find(u => u.telegramId === numericTelegramId);
+      
+      if (existingUser && existingUser.id !== req.user!.id) {
+        return res.status(400).json({ 
+          message: "This Telegram ID is already connected to another account"
+        });
+      }
+      
+      // Update user's Telegram ID
+      const updatedUser = await storage.updateUser(req.user!.id, {
+        telegramId: numericTelegramId
+      });
+      
+      if (!updatedUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      res.json({
+        success: true,
+        message: "Telegram account connected successfully"
+      });
+      
+    } catch (error) {
+      console.error("Telegram connection error:", error);
+      res.status(500).json({ message: "Failed to connect Telegram account" });
+    }
+  });
+
   // Submit wallet address
   app.post("/api/wallet", requireUser, async (req: Request, res: Response) => {
     try {
