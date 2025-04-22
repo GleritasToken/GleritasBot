@@ -48,7 +48,7 @@ export const TelegramProvider: React.FC<{ children: ReactNode }> = ({ children }
       try {
         console.log("Starting Telegram initialization...");
         
-        // Check if this is a Telegram WebApp with multiple detection methods
+        // Check if this is a Telegram WebApp
         const isTelegramApp = isTelegramWebApp();
         console.log("Is this a Telegram WebApp?", isTelegramApp);
         setIsTelegram(isTelegramApp);
@@ -56,40 +56,20 @@ export const TelegramProvider: React.FC<{ children: ReactNode }> = ({ children }
         if (isTelegramApp) {
           console.log("This is a Telegram WebApp environment");
           
-          // Enhanced WebApp instance detection
-          let app = getTelegramWebApp();
+          // Get the WebApp instance
+          const app = getTelegramWebApp();
           console.log("WebApp instance:", app ? "Obtained successfully" : "Failed to obtain");
-          
-          // Handle case where window.Telegram exists but not properly initialized
-          if (!app && typeof window !== 'undefined' && window.Telegram) {
-            console.log("window.Telegram exists but WebApp not properly initialized, attempting recovery");
-            
-            // Try to reinitialize WebApp object
-            try {
-              // Force WebApp initialization if available but not properly set up
-              if (window.Telegram && !window.Telegram.WebApp && (window as any).TelegramWebviewProxy) {
-                console.log("TelegramWebviewProxy detected, attempting manual initialization");
-                // This might help in some Telegram clients
-                const webViewProxyEvent = new Event('TelegramWebviewProxy__Ready');
-                window.dispatchEvent(webViewProxyEvent);
-                
-                // Check if initialization worked
-                app = window.Telegram?.WebApp || null;
-              }
-            } catch (initError) {
-              console.error("Error in manual WebApp initialization:", initError);
-            }
-          }
           
           // Even if we don't have the WebApp instance, we might still be in a Telegram WebApp
           // In some environments, the Telegram object might be injected after our code runs
           setWebApp(app);
           
-          // Handle delayed Telegram object injection
+          // Attempt to get window.Telegram or handle the case where it's not available yet
+          // Some Telegram clients might inject this object after our code runs
           if (typeof window !== 'undefined' && !window.Telegram) {
             console.log("window.Telegram not available yet, setting up observer");
             
-            // Set up a timer to check for Telegram object every 300ms (faster polling)
+            // Set up a timer to check for Telegram object every 500ms
             const intervalId = setInterval(() => {
               if (window.Telegram?.WebApp) {
                 console.log("Telegram WebApp object detected via polling");
@@ -97,10 +77,10 @@ export const TelegramProvider: React.FC<{ children: ReactNode }> = ({ children }
                 setWebApp(window.Telegram.WebApp);
                 handleTelegramWebApp(window.Telegram.WebApp);
               }
-            }, 300);
+            }, 500);
             
-            // Clear interval after 15 seconds to prevent endless polling but give more time
-            setTimeout(() => clearInterval(intervalId), 15000);
+            // Clear interval after 10 seconds to prevent endless polling
+            setTimeout(() => clearInterval(intervalId), 10000);
           } else if (app) {
             await handleTelegramWebApp(app);
           } else {

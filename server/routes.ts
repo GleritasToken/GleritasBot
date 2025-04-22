@@ -15,7 +15,6 @@ import {
 } from "@shared/schema";
 import { z } from "zod";
 import { randomBytes } from "crypto";
-import { setupTelegramRoutes } from "./telegram";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Initialize tasks
@@ -1061,9 +1060,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
   });
-  
-  // Setup Telegram routes and webhook handler
-  setupTelegramRoutes(app);
   
   // Create HTTP server
   const httpServer = createServer(app);

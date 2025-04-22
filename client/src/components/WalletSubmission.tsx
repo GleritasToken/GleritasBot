@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -19,55 +19,6 @@ const WalletSubmission: React.FC = () => {
   const { toast } = useToast();
   const [showMobileConnect, setShowMobileConnect] = useState(false);
   const isMobile = useIsMobile();
-
-  // Handle wallet events from mobile deep links
-  useEffect(() => {
-    // Listen for wallet connected events
-    const handleWalletConnectedEvent = (event: any) => {
-      const address = event.detail?.address;
-      console.log("Wallet connected event received:", address);
-      if (address && validateWalletAddress(address)) {
-        console.log("Valid address received from wallet event:", address);
-        // Call the handler with the wallet address
-        handleWalletSelected(address);
-      }
-    };
-    
-    // Add event listener
-    window.addEventListener('walletConnected', handleWalletConnectedEvent);
-    
-    // Check URL params for wallet_return
-    const checkUrlParams = () => {
-      const params = new URLSearchParams(window.location.search);
-      if (params.get('wallet_return') === 'true') {
-        console.log("Detected return from wallet app via URL param");
-        
-        // Try to get connected wallet
-        setTimeout(async () => {
-          try {
-            // Attempt to get ethereum provider
-            if (window.ethereum?.selectedAddress) {
-              const address = window.ethereum.selectedAddress;
-              console.log("Found wallet address on return:", address);
-              if (validateWalletAddress(address)) {
-                handleWalletSelected(address);
-              }
-            }
-          } catch (e) {
-            console.error("Error checking wallet after return:", e);
-          }
-        }, 500);
-      }
-    };
-    
-    // Check params on component mount
-    checkUrlParams();
-    
-    // Cleanup
-    return () => {
-      window.removeEventListener('walletConnected', handleWalletConnectedEvent);
-    };
-  }, [handleWalletSelected, refreshUser]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
