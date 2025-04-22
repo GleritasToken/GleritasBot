@@ -265,7 +265,7 @@ export class DatabaseStorage implements IStorage {
     const referralData = {
       referrerUserId: insertReferral.referrerUserId,
       referredUserId: insertReferral.referredUserId,
-      tokenAmount,
+      pointAmount,
       createdAt: new Date()
     };
     
@@ -276,8 +276,8 @@ export class DatabaseStorage implements IStorage {
     const referrer = await this.getUser(insertReferral.referrerUserId);
     if (referrer) {
       const newReferralCount = referrer.referralCount + 1;
-      const newReferralPoints = referrer.referralPoints + tokenAmount;
-      const newTotalPoints = referrer.totalPoints + tokenAmount;
+      const newReferralPoints = referrer.referralPoints + pointAmount;
+      const newTotalPoints = referrer.totalPoints + pointAmount;
       
       await this.updateUser(referrer.id, { 
         referralCount: newReferralCount,
@@ -507,13 +507,13 @@ export class DatabaseStorage implements IStorage {
         ut.taskName === task.name && ut.completed);
       const completionCount = completions.length;
       const totalPointsAwarded = completions.reduce((sum, ut) => 
-        sum + ut.tokenAmount, 0);
+        sum + ut.pointAmount, 0);
       
       return {
         id: task.id,
         name: task.name,
         description: task.description,
-        tokenAmount: task.tokenAmount,
+        pointAmount: task.pointAmount,
         isRequired: task.isRequired,
         iconClass: task.iconClass,
         createdAt: task.createdAt,
@@ -621,42 +621,42 @@ export class DatabaseStorage implements IStorage {
         {
           name: "telegram_group",
           description: "Join our official Telegram group",
-          tokenAmount: 10,
+          pointAmount: 10,
           isRequired: true,
           iconClass: "fab fa-telegram-plane text-blue-500"
         },
         {
           name: "telegram_channel",
           description: "Subscribe to our announcement channel",
-          tokenAmount: 5,
+          pointAmount: 5,
           isRequired: true,
           iconClass: "fab fa-telegram-plane text-blue-500"
         },
         {
           name: "twitter_follow",
           description: "Follow @GleritasToken on Twitter",
-          tokenAmount: 10,
+          pointAmount: 10,
           isRequired: true,
           iconClass: "fab fa-twitter text-blue-500"
         },
         {
           name: "twitter_engage",
           description: "Like, retweet, and comment on our pinned tweet",
-          tokenAmount: 10,
+          pointAmount: 10,
           isRequired: true,
           iconClass: "fab fa-twitter text-blue-500"
         },
         {
           name: "youtube",
           description: "Watch and like our intro video (Optional)",
-          tokenAmount: 10,
+          pointAmount: 10,
           isRequired: false,
           iconClass: "fab fa-youtube text-red-500"
         },
         {
           name: "wallet_submit",
           description: "Provide a valid wallet address for token distribution",
-          tokenAmount: 0,
+          pointAmount: 0,
           isRequired: true,
           iconClass: "fas fa-wallet text-yellow-500"
         }
