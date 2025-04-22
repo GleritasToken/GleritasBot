@@ -773,7 +773,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // Reset a user's tokens (admin only)
+  // Reset a user's tokens only (admin only)
   app.post("/api/admin/users/:userId/reset-tokens", requireAdmin, async (req: Request, res: Response) => {
     try {
       const userId = parseInt(req.params.userId);
@@ -802,6 +802,70 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Reset tokens error:", error);
       res.status(500).json({ message: "Failed to reset user tokens." });
+    }
+  });
+  
+  // Reset a user's tasks only (admin only)
+  app.post("/api/admin/users/:userId/reset-tasks", requireAdmin, async (req: Request, res: Response) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      const validationResult = resetTokensSchema.safeParse({
+        userId,
+        ...req.body
+      });
+      
+      if (!validationResult.success) {
+        return res.status(400).json({ 
+          message: "Invalid reset tasks request", 
+          errors: validationResult.error.format() 
+        });
+      }
+      
+      const updatedUser = await storage.resetUserTasks(userId);
+      
+      if (!updatedUser) {
+        return res.status(404).json({ message: "User not found." });
+      }
+      
+      res.json({
+        message: "User tasks reset successfully",
+        user: updatedUser
+      });
+    } catch (error) {
+      console.error("Reset tasks error:", error);
+      res.status(500).json({ message: "Failed to reset user tasks." });
+    }
+  });
+  
+  // Full reset of user data (admin only)
+  app.post("/api/admin/users/:userId/reset-data", requireAdmin, async (req: Request, res: Response) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      const validationResult = resetTokensSchema.safeParse({
+        userId,
+        ...req.body
+      });
+      
+      if (!validationResult.success) {
+        return res.status(400).json({ 
+          message: "Invalid reset data request", 
+          errors: validationResult.error.format() 
+        });
+      }
+      
+      const updatedUser = await storage.resetUserData(userId);
+      
+      if (!updatedUser) {
+        return res.status(404).json({ message: "User not found." });
+      }
+      
+      res.json({
+        message: "User data reset successfully",
+        user: updatedUser
+      });
+    } catch (error) {
+      console.error("Reset data error:", error);
+      res.status(500).json({ message: "Failed to reset user data." });
     }
   });
   

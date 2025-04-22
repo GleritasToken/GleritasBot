@@ -61,6 +61,8 @@ const AdminUserManagementTab: React.FC = () => {
   const [isBanDialogOpen, setIsBanDialogOpen] = useState(false);
   const [isUnbanDialogOpen, setIsUnbanDialogOpen] = useState(false);
   const [isResetTokensDialogOpen, setIsResetTokensDialogOpen] = useState(false);
+  const [isResetTasksDialogOpen, setIsResetTasksDialogOpen] = useState(false);
+  const [isResetDataDialogOpen, setIsResetDataDialogOpen] = useState(false);
   const [banReason, setBanReason] = useState('');
   const [resetReason, setResetReason] = useState('');
   const itemsPerPage = 10;
@@ -164,7 +166,7 @@ const AdminUserManagementTab: React.FC = () => {
       setResetReason('');
       toast({
         title: "Tokens reset",
-        description: "The user's tokens have been reset successfully",
+        description: "The user's tokens have been reset to zero",
         variant: "default"
       });
     },
@@ -172,6 +174,76 @@ const AdminUserManagementTab: React.FC = () => {
       toast({
         title: "Failed to reset tokens",
         description: error.message || "An error occurred while resetting the user's tokens",
+        variant: "destructive"
+      });
+    }
+  });
+  
+  // Reset tasks mutation
+  const resetTasksMutation = useMutation({
+    mutationFn: async (data: ResetTokensData) => {
+      const res = await fetch(`/api/admin/users/${data.userId}/reset-tasks`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reason: data.reason })
+      });
+      
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message || 'Failed to reset user tasks');
+      }
+      
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/users'] });
+      setIsResetTasksDialogOpen(false);
+      setResetReason('');
+      toast({
+        title: "Tasks reset",
+        description: "The user's completed tasks have been reset",
+        variant: "default"
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Failed to reset tasks",
+        description: error.message || "An error occurred while resetting the user's tasks",
+        variant: "destructive"
+      });
+    }
+  });
+  
+  // Reset full user data mutation
+  const resetDataMutation = useMutation({
+    mutationFn: async (data: ResetTokensData) => {
+      const res = await fetch(`/api/admin/users/${data.userId}/reset-data`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reason: data.reason })
+      });
+      
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message || 'Failed to reset user data');
+      }
+      
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/users'] });
+      setIsResetDataDialogOpen(false);
+      setResetReason('');
+      toast({
+        title: "Data reset",
+        description: "The user's data has been reset. They'll need to reconnect Telegram and complete tasks again.",
+        variant: "default"
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Failed to reset user data",
+        description: error.message || "An error occurred while resetting the user's data",
         variant: "destructive"
       });
     }
@@ -192,6 +264,18 @@ const AdminUserManagementTab: React.FC = () => {
     setSelectedUser(user);
     setResetReason('');
     setIsResetTokensDialogOpen(true);
+  };
+  
+  const handleOpenResetTasksDialog = (user: User) => {
+    setSelectedUser(user);
+    setResetReason('');
+    setIsResetTasksDialogOpen(true);
+  };
+  
+  const handleOpenResetDataDialog = (user: User) => {
+    setSelectedUser(user);
+    setResetReason('');
+    setIsResetDataDialogOpen(true);
   };
 
   const handleBanUser = () => {
@@ -221,6 +305,24 @@ const AdminUserManagementTab: React.FC = () => {
     if (!selectedUser) return;
     
     resetTokensMutation.mutate({
+      userId: selectedUser.id,
+      reason: resetReason
+    });
+  };
+  
+  const handleResetTasks = () => {
+    if (!selectedUser) return;
+    
+    resetTasksMutation.mutate({
+      userId: selectedUser.id,
+      reason: resetReason
+    });
+  };
+  
+  const handleResetData = () => {
+    if (!selectedUser) return;
+    
+    resetDataMutation.mutate({
       userId: selectedUser.id,
       reason: resetReason
     });
@@ -343,15 +445,35 @@ const AdminUserManagementTab: React.FC = () => {
                                 Ban
                               </Button>
                             )}
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => handleOpenResetTokensDialog(user)}
-                              className="h-8 border-red-700 bg-red-900/20 text-red-400 hover:bg-red-800/30"
-                            >
-                              <RotateCcw className="h-4 w-4 mr-1" />
-                              Reset Data
-                            </Button>
+                            <div className="flex gap-1">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleOpenResetTokensDialog(user)}
+                                className="h-8 border-yellow-700 bg-yellow-900/20 text-yellow-400 hover:bg-yellow-800/30"
+                              >
+                                <Wallet className="h-4 w-4 mr-1" />
+                                Reset Tokens
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleOpenResetTasksDialog(user)}
+                                className="h-8 border-blue-700 bg-blue-900/20 text-blue-400 hover:bg-blue-800/30"
+                              >
+                                <RotateCcw className="h-4 w-4 mr-1" />
+                                Reset Tasks
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleOpenResetDataDialog(user)}
+                                className="h-8 border-red-700 bg-red-900/20 text-red-400 hover:bg-red-800/30"
+                              >
+                                <RotateCcw className="h-4 w-4 mr-1" />
+                                Reset All
+                              </Button>
+                            </div>
                           </div>
                         </TableCell>
                       </TableRow>
@@ -551,20 +673,168 @@ const AdminUserManagementTab: React.FC = () => {
         </DialogContent>
       </Dialog>
       
-      {/* Reset User Data Dialog */}
+      {/* Reset Tokens Only Dialog */}
       <Dialog open={isResetTokensDialogOpen} onOpenChange={setIsResetTokensDialogOpen}>
         <DialogContent className="bg-[#1c3252] border-[#2a4365] text-white">
           <DialogHeader>
             <DialogTitle className="flex items-center">
-              <RotateCcw className="h-5 w-5 mr-2 text-red-400" />
-              Reset User Data
+              <Wallet className="h-5 w-5 mr-2 text-yellow-400" />
+              Reset User Tokens
             </DialogTitle>
           </DialogHeader>
           
           <div className="py-4">
             <div className="mb-4">
               <p className="text-sm text-gray-300 mb-2">
-                You are about to reset data for user:
+                You are about to reset tokens for user:
+              </p>
+              <div className="bg-[#172a41] p-2 rounded text-sm mb-4">
+                <span className="font-bold">{selectedUser?.username}</span>
+                <div className="flex items-center mt-1">
+                  <Wallet className="h-3 w-3 mr-1 text-yellow-400" />
+                  <span className="text-yellow-400">
+                    Current Balance: {selectedUser?.totalTokens || 0} GLRS <span className="text-red-400">(will be reset to 0)</span>
+                  </span>
+                </div>
+              </div>
+              
+              <div className="bg-yellow-950/30 border border-yellow-800 rounded p-3 mb-4">
+                <p className="text-sm font-medium text-yellow-400 mb-2">This action will:</p>
+                <ul className="list-disc pl-5 mb-2 space-y-1 text-xs text-gray-300">
+                  <li>Reset token balance to zero</li>
+                  <li>Reset referral tokens to zero</li>
+                </ul>
+                <p className="text-xs text-yellow-400">The user will keep all completed tasks and connections.</p>
+              </div>
+              
+              <p className="text-sm text-gray-300 mb-2">
+                Please provide a reason for resetting tokens (optional):
+              </p>
+              <Textarea
+                value={resetReason}
+                onChange={(e) => setResetReason(e.target.value)}
+                placeholder="Reason for token reset..."
+                className="bg-[#172a41] border-[#2a4365] mb-2"
+              />
+              <p className="text-xs text-yellow-400 flex items-start font-medium">
+                <AlertCircle className="h-3 w-3 mr-1 mt-0.5 flex-shrink-0" />
+                This action cannot be undone. The token balance will be set to zero.
+              </p>
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsResetTokensDialogOpen(false)}
+              className="border-gray-500 text-gray-300 hover:bg-gray-700 hover:text-white"
+            >
+              Cancel
+            </Button>
+            <Button 
+              type="button"
+              onClick={handleResetTokens}
+              disabled={resetTokensMutation.isPending}
+              className="bg-yellow-600 hover:bg-yellow-700 text-white"
+            >
+              {resetTokensMutation.isPending && (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              )}
+              Reset Tokens
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Reset Tasks Only Dialog */}
+      <Dialog open={isResetTasksDialogOpen} onOpenChange={setIsResetTasksDialogOpen}>
+        <DialogContent className="bg-[#1c3252] border-[#2a4365] text-white">
+          <DialogHeader>
+            <DialogTitle className="flex items-center">
+              <RotateCcw className="h-5 w-5 mr-2 text-blue-400" />
+              Reset User Tasks
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="py-4">
+            <div className="mb-4">
+              <p className="text-sm text-gray-300 mb-2">
+                You are about to reset tasks for user:
+              </p>
+              <div className="bg-[#172a41] p-2 rounded text-sm mb-4">
+                <span className="font-bold">{selectedUser?.username}</span>
+                <div className="flex items-center mt-1">
+                  <Check className="h-3 w-3 mr-1 text-blue-400" />
+                  <span className="text-blue-400">
+                    Completed Tasks: <span className="text-red-400">(will be deleted)</span>
+                  </span>
+                </div>
+              </div>
+              
+              <div className="bg-blue-950/30 border border-blue-800 rounded p-3 mb-4">
+                <p className="text-sm font-medium text-blue-400 mb-2">This action will:</p>
+                <ul className="list-disc pl-5 mb-2 space-y-1 text-xs text-gray-300">
+                  <li>Delete all task completion history</li>
+                  <li>Allow the user to complete tasks again</li>
+                </ul>
+                <p className="text-xs text-blue-400">The user will keep their token balance and account connections.</p>
+              </div>
+              
+              <p className="text-sm text-gray-300 mb-2">
+                Please provide a reason for resetting tasks (optional):
+              </p>
+              <Textarea
+                value={resetReason}
+                onChange={(e) => setResetReason(e.target.value)}
+                placeholder="Reason for tasks reset..."
+                className="bg-[#172a41] border-[#2a4365] mb-2"
+              />
+              <p className="text-xs text-blue-400 flex items-start font-medium">
+                <AlertCircle className="h-3 w-3 mr-1 mt-0.5 flex-shrink-0" />
+                This action cannot be undone. All task completion records will be deleted.
+              </p>
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsResetTasksDialogOpen(false)}
+              className="border-gray-500 text-gray-300 hover:bg-gray-700 hover:text-white"
+            >
+              Cancel
+            </Button>
+            <Button 
+              type="button"
+              onClick={handleResetTasks}
+              disabled={resetTasksMutation.isPending}
+              className="bg-blue-600 hover:bg-blue-700 text-white"
+            >
+              {resetTasksMutation.isPending && (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              )}
+              Reset Tasks
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Reset All User Data Dialog */}
+      <Dialog open={isResetDataDialogOpen} onOpenChange={setIsResetDataDialogOpen}>
+        <DialogContent className="bg-[#1c3252] border-[#2a4365] text-white">
+          <DialogHeader>
+            <DialogTitle className="flex items-center">
+              <RotateCcw className="h-5 w-5 mr-2 text-red-400" />
+              Reset All User Data
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="py-4">
+            <div className="mb-4">
+              <p className="text-sm text-gray-300 mb-2">
+                You are about to reset ALL data for user:
               </p>
               <div className="bg-[#172a41] p-2 rounded text-sm mb-4">
                 <span className="font-bold">{selectedUser?.username}</span>
@@ -586,29 +856,30 @@ const AdminUserManagementTab: React.FC = () => {
                 </div>
               </div>
               
-              <div className="bg-amber-950/30 border border-amber-800 rounded p-3 mb-4">
-                <p className="text-sm font-medium text-amber-400 mb-2">This action will:</p>
+              <div className="bg-red-950/30 border border-red-800 rounded p-3 mb-4">
+                <p className="text-sm font-medium text-red-400 mb-2">This action will:</p>
                 <ul className="list-disc pl-5 mb-2 space-y-1 text-xs text-gray-300">
                   <li>Delete all task completion history</li>
                   <li>Remove Telegram connection</li>
                   <li>Clear wallet address</li>
                   <li>Reset token balance to zero</li>
+                  <li>Reset referral tokens to zero</li>
                 </ul>
-                <p className="text-xs text-amber-400">The user will need to start over with all tasks.</p>
+                <p className="text-xs text-red-400">This is a full user reset. They will need to start over with everything.</p>
               </div>
               
               <p className="text-sm text-gray-300 mb-2">
-                Please provide a reason for the reset (optional):
+                Please provide a reason for the full reset (optional):
               </p>
               <Textarea
                 value={resetReason}
                 onChange={(e) => setResetReason(e.target.value)}
-                placeholder="Reason for user data reset..."
+                placeholder="Reason for full user data reset..."
                 className="bg-[#172a41] border-[#2a4365] mb-2"
               />
               <p className="text-xs text-red-400 flex items-start font-medium">
                 <AlertCircle className="h-3 w-3 mr-1 mt-0.5 flex-shrink-0" />
-                This action cannot be undone. All user tasks and connections will be removed.
+                This action cannot be undone. All user tasks, connections, and tokens will be removed.
               </p>
             </div>
           </div>
@@ -617,21 +888,21 @@ const AdminUserManagementTab: React.FC = () => {
             <Button
               type="button"
               variant="outline"
-              onClick={() => setIsResetTokensDialogOpen(false)}
+              onClick={() => setIsResetDataDialogOpen(false)}
               className="border-gray-500 text-gray-300 hover:bg-gray-700 hover:text-white"
             >
               Cancel
             </Button>
             <Button 
               type="button"
-              onClick={handleResetTokens}
-              disabled={resetTokensMutation.isPending}
+              onClick={handleResetData}
+              disabled={resetDataMutation.isPending}
               className="bg-red-600 hover:bg-red-700 text-white"
             >
-              {resetTokensMutation.isPending && (
+              {resetDataMutation.isPending && (
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
               )}
-              Reset User Data
+              Reset All Data
             </Button>
           </DialogFooter>
         </DialogContent>
