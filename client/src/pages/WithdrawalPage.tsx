@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useUser } from '@/providers/UserProvider';
-import { AlertCircle, Lock } from 'lucide-react';
+import { AlertCircle, Lock, Wallet } from 'lucide-react';
 import Navigation from '@/components/Navigation';
 import FeeOptions from '@/components/FeeOptions';
 import { useQueryClient } from '@tanstack/react-query';
