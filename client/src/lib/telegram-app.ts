@@ -9,27 +9,52 @@ export function isTelegramWebApp(): boolean {
   // First check if we're in a browser environment
   if (typeof window === 'undefined') return false;
 
-  // Check for Telegram's WebApp object
-  const isTelegram = window.Telegram?.WebApp !== undefined;
+  // Multiple detection methods for Telegram WebApp
   
-  // Check URL parameters for Telegram Mini App detection
+  // 1. Check for Telegram's WebApp object
+  const hasTelegramObject = window.Telegram?.WebApp !== undefined;
+  
+  // 2. Check URL parameters for Telegram Mini App detection
   const url = new URL(window.location.href);
   const hasWebAppParams = url.searchParams.has('tgWebAppData') || 
                           url.searchParams.has('tgWebAppStartParam') ||
+                          url.searchParams.has('start_param') ||  // Another possible param
+                          url.searchParams.has('tgWebAppPlatform') ||
                           window.location.hash.includes('tgWebApp');
   
-  console.log('Telegram detection:', {
-    isTelegram,
+  // 3. Check for Telegram WebView proxy
+  const hasTelegramProxy = typeof (window as any).TelegramWebviewProxy !== 'undefined';
+  
+  // 4. Check for user agent patterns that might indicate Telegram WebView
+  const userAgent = navigator.userAgent.toLowerCase();
+  const hasTelegramUserAgent = userAgent.includes('telegram') || userAgent.includes('tgweb');
+  
+  // 5. Check if page was loaded in iframe which might indicate it's in a Telegram WebView
+  const inIframe = window !== window.parent;
+  
+  // 6. Check if specific Telegram WebApp events are available
+  const hasWebAppEvents = typeof (window as any).TelegramGameProxy !== 'undefined' ||
+                         typeof (window as any).TelegramGameProxy_receiveEvent !== 'undefined';
+  
+  // Enhanced logging for better debugging
+  console.log('Telegram WebApp detection:', {
+    hasTelegramObject,
     hasWebAppParams,
+    hasTelegramProxy,
+    hasTelegramUserAgent,
+    inIframe,
+    hasWebAppEvents,
     telegramExists: typeof window.Telegram !== 'undefined',
     webAppExists: typeof window.Telegram?.WebApp !== 'undefined',
     currentUrl: window.location.href,
+    userAgent: navigator.userAgent
   });
   
   // Debug what's available in window
   if (typeof window !== 'undefined') {
-    console.log('Available global objects:', Object.keys(window).filter(key => 
-      key.startsWith('Tele') || key.includes('telegram') || key.includes('Telegram')
+    console.log('Available Telegram-related global objects:', Object.keys(window).filter(key => 
+      key.startsWith('Tele') || key.includes('telegram') || key.includes('Telegram') || 
+      key.includes('tg') || key.includes('TG') || key.includes('Tg')
     ));
   }
   
@@ -40,7 +65,14 @@ export function isTelegramWebApp(): boolean {
     return true;
   }
   
-  return isTelegram || hasWebAppParams;
+  // Combined detection for higher accuracy
+  // We consider the page to be in a Telegram WebApp if:
+  // - Telegram object is available, OR
+  // - Telegram WebApp URL parameters are present, OR
+  // - Telegram WebView proxy is available AND we're in an iframe
+  // - Force enabled via URL parameter for testing
+  return hasTelegramObject || hasWebAppParams || (hasTelegramProxy && inIframe) || 
+         (hasWebAppEvents && (inIframe || hasTelegramUserAgent));
 }
 
 // Get the Telegram WebApp instance if available

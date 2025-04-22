@@ -103,10 +103,72 @@ export async function connectWallet(walletType?: string): Promise<string | null>
             console.error('MetaMask connection error:', error);
           }
         } else if (isMobileDevice) {
-          // Open MetaMask deep link on mobile - use metamask.app.link format
-          const deepLink = `https://metamask.app.link/dapp/${window.location.host.replace('https://', '')}${window.location.pathname}`;
-          console.log("Opening MetaMask deep link:", deepLink);
-          window.open(deepLink, '_blank');
+          // Enhanced MetaMask mobile connection with multiple fallbacks
+          console.log("Opening MetaMask for mobile with enhanced deep links...");
+          
+          // Extract host without protocol
+          const hostWithPath = window.location.host.replace('https://', '') + window.location.pathname;
+          
+          // Add a parameter to help identify when returning from wallet
+          const returnUrl = window.location.href.includes('?') 
+            ? `${window.location.href}&wallet_return=true` 
+            : `${window.location.href}?wallet_return=true`;
+          
+          // Create event listener for when app returns to browser
+          const handleVisibilityChange = () => {
+            if (document.visibilityState === 'visible') {
+              console.log("App returned to browser, checking MetaMask connection");
+              document.removeEventListener('visibilitychange', handleVisibilityChange);
+              
+              // Set timeout to allow wallet to reconnect
+              setTimeout(async () => {
+                try {
+                  // Try to get wallet after return
+                  const provider = detectEthereumProvider();
+                  if (provider && (provider as any).selectedAddress) {
+                    console.log("Wallet connected after return:", (provider as any).selectedAddress);
+                    
+                    // Dispatch a custom event to notify about the connection
+                    const walletEvent = new CustomEvent('walletConnected', {
+                      detail: { address: (provider as any).selectedAddress }
+                    });
+                    window.dispatchEvent(walletEvent);
+                  }
+                } catch (e) {
+                  console.error("Error checking wallet after return:", e);
+                }
+              }, 1000);
+            }
+          };
+          
+          // Listen for app return
+          document.addEventListener('visibilitychange', handleVisibilityChange);
+          
+          // Method 1: Standard MetaMask deep link 
+          const metaMaskDeepLink = `https://metamask.app.link/dapp/${hostWithPath}`;
+          
+          // Method 2: Alternative format using ethereum protocol
+          const metaMaskAltLink = `ethereum://https://${hostWithPath}`;
+          
+          // Method 3: Direct metamask:// protocol (works on some devices)
+          const metaMaskDirectLink = `metamask://dapp/${hostWithPath}`;
+          
+          // Try standard link first
+          console.log("Opening primary MetaMask deep link:", metaMaskDeepLink);
+          window.location.href = metaMaskDeepLink;
+          
+          // Set fallbacks with timeouts
+          setTimeout(() => {
+            console.log("First deep link may have failed, trying alternative format");
+            window.location.href = metaMaskAltLink;
+            
+            // Final fallback
+            setTimeout(() => {
+              console.log("Trying direct protocol as last resort");
+              window.location.href = metaMaskDirectLink;
+            }, 1000);
+          }, 1500);
+          
           return null;
         }
         break;
@@ -125,19 +187,71 @@ export async function connectWallet(walletType?: string): Promise<string | null>
             console.error('Trust Wallet connection error:', error);
           }
         } else if (isMobileDevice) {
-          // For Trust Wallet on mobile, we need to use a simplified approach
-          console.log("Opening Trust Wallet for mobile (simplified deeplink)...");
+          // Enhanced Trust Wallet mobile connection with multiple fallbacks
+          console.log("Opening Trust Wallet for mobile with enhanced deep links...");
           
           // Add a parameter to help identify when returning from wallet
           const returnUrl = window.location.href.includes('?') 
             ? `${window.location.href}&wallet_return=true` 
             : `${window.location.href}?wallet_return=true`;
-            
-          // Use simpler format that works more reliably
-          window.location.href = `trust://open_url?url=${encodeURIComponent(returnUrl)}`;
           
-          // No fallback universal link - forcing direct trust:// protocol
-          // Instead of setTimeout, we'll rely on user manually returning to app
+          // Create event listener for when app returns to browser
+          const handleVisibilityChange = () => {
+            if (document.visibilityState === 'visible') {
+              console.log("App returned to browser, checking wallet connection");
+              document.removeEventListener('visibilitychange', handleVisibilityChange);
+              
+              // Set timeout to allow wallet to reconnect
+              setTimeout(async () => {
+                try {
+                  // Try to get wallet after return
+                  const provider = detectEthereumProvider();
+                  if (provider && (provider as any).selectedAddress) {
+                    console.log("Wallet connected after return:", (provider as any).selectedAddress);
+                    // We can't directly update the state here since we've already returned null
+                    // This is part of the workaround for the Trust Wallet connectivity
+                    // The calling component should handle this case with polling or visibility change events
+                    
+                    // Dispatch a custom event to notify about the connection
+                    const walletEvent = new CustomEvent('walletConnected', {
+                      detail: { address: (provider as any).selectedAddress }
+                    });
+                    window.dispatchEvent(walletEvent);
+                  }
+                } catch (e) {
+                  console.error("Error checking wallet after return:", e);
+                }
+              }, 1000);
+            }
+          };
+          
+          // Listen for app return
+          document.addEventListener('visibilitychange', handleVisibilityChange);
+          
+          // Method 1: Direct Trust Wallet URL scheme
+          const trustWalletDeepLink = `trust://open_url?url=${encodeURIComponent(returnUrl)}`;
+          
+          // Method 2: Fallback Universal Link format
+          const trustUniversalLink = `https://link.trustwallet.com/open_url?url=${encodeURIComponent(returnUrl)}`;
+          
+          // Method 3: WalletConnect style link (alternate format)
+          const wcDeepLink = `trust://wc?uri=${encodeURIComponent(returnUrl)}`;
+          
+          // Try direct scheme with timeout fallbacks
+          console.log("Attempting Trust Wallet deep link: ", trustWalletDeepLink);
+          window.location.href = trustWalletDeepLink;
+          
+          // Set fallbacks with timeouts
+          setTimeout(() => {
+            console.log("First deep link may have failed, trying universal link");
+            window.location.href = trustUniversalLink;
+            
+            // Final fallback
+            setTimeout(() => {
+              console.log("Trying wallet connect style deep link as last resort");
+              window.location.href = wcDeepLink;
+            }, 1000);
+          }, 1500);
           
           return null;
         }
