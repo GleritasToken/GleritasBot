@@ -19,6 +19,7 @@ interface User {
   id: number;
   username: string;
   walletAddress: string | null;
+  telegramId?: number;
   referralCode: string;
   referredBy: string | null;
   totalTokens: number;
