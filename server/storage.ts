@@ -321,7 +321,7 @@ export class MemStorage implements IStorage {
       id,
       referrerUserId: insertReferral.referrerUserId,
       referredUserId: insertReferral.referredUserId,
-      tokenAmount,
+      pointAmount,
       createdAt: new Date()
     };
     
@@ -331,13 +331,13 @@ export class MemStorage implements IStorage {
     const referrer = await this.getUser(insertReferral.referrerUserId);
     if (referrer) {
       const newReferralCount = referrer.referralCount + 1;
-      const newReferralTokens = referrer.referralTokens + tokenAmount;
-      const newTotalTokens = referrer.totalTokens + tokenAmount;
+      const newReferralPoints = referrer.referralPoints + pointAmount;
+      const newTotalPoints = referrer.totalPoints + pointAmount;
       
       await this.updateUser(referrer.id, { 
         referralCount: newReferralCount,
-        referralTokens: newReferralTokens,
-        totalTokens: newTotalTokens
+        referralPoints: newReferralPoints,
+        totalPoints: newTotalPoints
       });
     }
     
@@ -659,7 +659,7 @@ export class MemStorage implements IStorage {
       },
       {
         name: "wallet_submit",
-        description: "Provide a valid wallet address for token distribution",
+        description: "Provide a valid wallet address for points distribution",
         pointAmount: 0,
         isRequired: true,
         iconClass: "fas fa-wallet text-yellow-500",

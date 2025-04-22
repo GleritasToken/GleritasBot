@@ -61,7 +61,7 @@ export const userTasks = pgTable("user_tasks", {
   userId: integer("user_id").notNull(),
   taskName: text("task_name").notNull(),
   completed: boolean("completed").notNull().default(false),
-  pointAmount: integer("token_amount").notNull().default(0),
+  pointAmount: integer("point_amount").notNull().default(0),
   verificationData: text("verification_data"),
   completedAt: timestamp("completed_at"),
 });
