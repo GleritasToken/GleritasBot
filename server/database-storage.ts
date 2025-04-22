@@ -70,8 +70,8 @@ export class DatabaseStorage implements IStorage {
       referredBy: insertUser.referredBy || null,
       ipAddress: insertUser.ipAddress || null,
       fingerprint: insertUser.fingerprint || null,
-      total_points: 0,
-      referral_points: 0,
+      totalTokens: 0,
+      referralTokens: 0,
       referralCount: 0,
       createdAt: new Date()
     };
@@ -151,7 +151,7 @@ export class DatabaseStorage implements IStorage {
     const taskData = {
       name: insertTask.name,
       description: insertTask.description,
-      point_amount: insertTask.tokenAmount,
+      tokenAmount: insertTask.tokenAmount,
       isRequired: insertTask.isRequired ?? true, // Default to true if not specified
       iconClass: insertTask.iconClass,
       createdAt: new Date()
@@ -225,7 +225,7 @@ export class DatabaseStorage implements IStorage {
       userId: insertUserTask.userId,
       taskName: insertUserTask.taskName,
       verificationData: insertUserTask.verificationData || null,
-      point_amount: pointAmount,
+      tokenAmount: pointAmount,
       completed: true,
       completedAt: new Date()
     };
@@ -265,7 +265,7 @@ export class DatabaseStorage implements IStorage {
     const referralData = {
       referrerUserId: insertReferral.referrerUserId,
       referredUserId: insertReferral.referredUserId,
-      point_amount: pointAmount,
+      tokenAmount: pointAmount,
       createdAt: new Date()
     };
     
