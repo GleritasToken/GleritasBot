@@ -195,7 +195,7 @@ export class MemStorage implements IStorage {
       id,
       name: insertTask.name,
       description: insertTask.description,
-      tokenAmount: insertTask.tokenAmount,
+      pointAmount: insertTask.pointAmount,
       isRequired: insertTask.isRequired ?? true, // Default to true if not specified
       iconClass: insertTask.iconClass,
       link: insertTask.link || null,
@@ -247,9 +247,9 @@ export class MemStorage implements IStorage {
   }
 
   async completeUserTask(insertUserTask: InsertUserTask): Promise<UserTask> {
-    // Get the task to determine token amount
+    // Get the task to determine point amount
     const task = await this.getTask(insertUserTask.taskName);
-    const tokenAmount = task ? task.tokenAmount : 0;
+    const pointAmount = task ? task.pointAmount : 0;
     
     const id = this.currentUserTaskId++;
     const userTask: UserTask = { 
@@ -257,18 +257,18 @@ export class MemStorage implements IStorage {
       userId: insertUserTask.userId,
       taskName: insertUserTask.taskName,
       verificationData: insertUserTask.verificationData || null,
-      tokenAmount,
+      pointAmount,
       completed: true,
       completedAt: new Date()
     };
     
     this.userTasks.set(id, userTask);
     
-    // Update user's total tokens
+    // Update user's total points
     const user = await this.getUser(insertUserTask.userId);
     if (user) {
-      const updatedTotalTokens = user.totalTokens + tokenAmount;
-      await this.updateUser(user.id, { totalTokens: updatedTotalTokens });
+      const updatedTotalPoints = user.totalPoints + pointAmount;
+      await this.updateUser(user.id, { totalPoints: updatedTotalPoints });
     }
     
     return userTask;
@@ -295,12 +295,12 @@ export class MemStorage implements IStorage {
       this.userTasks.clear();
       this.currentUserTaskId = 1;
       
-      // Reset totalTokens for all users (but keep referral tokens)
+      // Reset totalPoints for all users (but keep referral points)
       for (const user of users) {
-        // Only subtract task-earned tokens (not referral tokens)
-        const taskTokens = user.totalTokens - user.referralTokens;
+        // Only subtract task-earned points (not referral points)
+        const taskPoints = user.totalPoints - user.referralPoints;
         await this.updateUser(user.id, { 
-          totalTokens: user.referralTokens // Keep only referral tokens
+          totalPoints: user.referralPoints // Keep only referral points
         });
       }
       
@@ -314,8 +314,8 @@ export class MemStorage implements IStorage {
   // Referral Operations
   async createReferral(insertReferral: InsertReferral): Promise<Referral> {
     const id = this.currentReferralId++;
-    // Default token amount is 5 if not provided
-    const tokenAmount = insertReferral.tokenAmount ?? 5;
+    // Default point amount is 5 if not provided
+    const pointAmount = insertReferral.pointAmount ?? 5;
     
     const referral: Referral = { 
       id,
