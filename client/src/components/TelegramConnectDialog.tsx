@@ -3,10 +3,16 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, HelpCircle } from "lucide-react";
 import { useMutation } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
+import { 
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface TelegramConnectDialogProps {
   isOpen: boolean;
@@ -41,12 +47,22 @@ const TelegramConnectDialog: React.FC<TelegramConnectDialogProps> = ({
       onClose();
     },
     onError: (error: Error) => {
-      setError(error.message);
+      let errorMessage = error.message;
+      
+      // Enhance error message for common issues
+      if (errorMessage.includes("Failed to connect Telegram account")) {
+        errorMessage = "Server error: Could not connect your Telegram account. Please check your Telegram ID and try again later.";
+      }
+      
+      setError(errorMessage);
       toast({
         title: "Connection Failed",
-        description: error.message,
+        description: errorMessage,
         variant: "destructive",
       });
+      
+      // Log the error for debugging purposes
+      console.error("Telegram connection error:", error);
     }
   });
 
@@ -90,14 +106,34 @@ const TelegramConnectDialog: React.FC<TelegramConnectDialogProps> = ({
                 className="bg-[#243b5c] border-[#2a4365] focus:border-blue-500"
               />
               <div className="text-sm text-gray-400">
-                <p>To find your Telegram ID:</p>
+                <div className="flex items-center gap-1">
+                  <p>To find your Telegram ID:</p>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger>
+                        <HelpCircle className="h-4 w-4 text-blue-400" />
+                      </TooltipTrigger>
+                      <TooltipContent className="bg-[#1c3252] border-[#2a4365] text-white max-w-xs">
+                        <p>Your Telegram ID is a unique number assigned to your account. It's not your username or phone number.</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </div>
                 <ol className="list-decimal pl-5 mt-1">
                   <li>Open Telegram and search for "@userinfobot"</li>
                   <li>Start a chat with this bot and send any message (like "Hi")</li>
                   <li>The bot will reply with your Telegram ID (a number)</li>
                   <li>Copy just the number and paste it here</li>
                 </ol>
-                <p className="text-amber-400 mt-2 text-xs">* Connecting your Telegram account will reward you with 30 GLRS tokens!</p>
+                <div className="mt-3 p-2 bg-blue-900/30 border border-blue-800 rounded-md">
+                  <p className="text-xs text-blue-300">
+                    <strong>Troubleshooting:</strong> If you're experiencing connection issues, try:
+                    <br />- Making sure you're entering just the number (e.g., 123456789)
+                    <br />- Refreshing the page and trying again
+                    <br />- Ensuring you're using your main Telegram account ID
+                  </p>
+                </div>
+                <p className="text-amber-400 mt-2 text-xs">* Connecting your Telegram account will reward you with 30 GLRS Points!</p>
               </div>
             </div>
 

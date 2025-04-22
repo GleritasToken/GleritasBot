@@ -292,55 +292,86 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/connect-telegram", requireUser, async (req: Request, res: Response) => {
     try {
       const { telegramId } = req.body;
+      console.log(`Connecting Telegram ID: ${telegramId} for user: ${req.user!.username}`);
       
       if (!telegramId || isNaN(Number(telegramId))) {
+        console.error(`Invalid Telegram ID format: ${telegramId}`);
         return res.status(400).json({ message: "Invalid Telegram ID" });
       }
       
       const numericTelegramId = Number(telegramId);
+      console.log(`Numeric Telegram ID: ${numericTelegramId}`);
       
       // Check if Telegram ID is already connected to another account
+      console.log(`Checking if Telegram ID ${numericTelegramId} is already connected to another account`);
       const users = await storage.getAllUsers();
       const existingUser = users.find(u => u.telegramId === numericTelegramId);
       
       if (existingUser && existingUser.id !== req.user!.id) {
+        console.error(`Telegram ID ${numericTelegramId} already connected to user: ${existingUser.username}`);
         return res.status(400).json({ 
           message: "This Telegram ID is already connected to another account"
         });
       }
       
       // Update user's Telegram ID
-      const updatedUser = await storage.updateUser(req.user!.id, {
-        telegramId: numericTelegramId
-      });
-      
-      if (!updatedUser) {
-        return res.status(404).json({ message: "User not found" });
-      }
-      
-      // Complete the telegram_connect task if not already completed
-      const task = await storage.getTask("telegram_connect");
-      if (task) {
-        const isCompleted = await storage.checkTaskCompletion(req.user!.id, "telegram_connect");
-        if (!isCompleted) {
-          await storage.completeUserTask({
-            userId: req.user!.id,
-            taskName: "telegram_connect",
-            completed: true,
-            pointAmount: task.pointAmount,
-            verificationData: "telegram_id_" + numericTelegramId
-          });
+      console.log(`Updating user ${req.user!.id} with Telegram ID: ${numericTelegramId}`);
+      try {
+        const updatedUser = await storage.updateUser(req.user!.id, {
+          telegramId: numericTelegramId
+        });
+        
+        if (!updatedUser) {
+          console.error(`User ${req.user!.id} not found during updateUser`);
+          return res.status(404).json({ message: "User not found" });
         }
+        
+        console.log(`Successfully updated user with Telegram ID. Now completing task.`);
+        
+        // Complete the telegram_connect task if not already completed
+        try {
+          const task = await storage.getTask("telegram_connect");
+          if (task) {
+            console.log(`Found telegram_connect task with point amount: ${task.pointAmount}`);
+            const isCompleted = await storage.checkTaskCompletion(req.user!.id, "telegram_connect");
+            console.log(`Task already completed: ${isCompleted}`);
+            
+            if (!isCompleted) {
+              console.log(`Completing telegram_connect task for user ${req.user!.id}`);
+              try {
+                await storage.completeUserTask({
+                  userId: req.user!.id,
+                  taskName: "telegram_connect",
+                  completed: true,
+                  pointAmount: task.pointAmount,
+                  verificationData: "telegram_id_" + numericTelegramId
+                });
+                console.log(`Successfully completed telegram_connect task`);
+              } catch (completeTaskError) {
+                console.error(`Error completing telegram_connect task:`, completeTaskError);
+                // Continue even if task completion fails
+              }
+            }
+          } else {
+            console.error(`telegram_connect task not found in database`);
+          }
+        } catch (taskError) {
+          console.error(`Error processing telegram_connect task:`, taskError);
+          // Continue even if task processing fails
+        }
+        
+        res.json({
+          success: true,
+          message: "Telegram account connected successfully"
+        });
+      } catch (updateError) {
+        console.error(`Error updating user with Telegram ID:`, updateError);
+        return res.status(500).json({ message: "Failed to update user with Telegram ID" });
       }
-      
-      res.json({
-        success: true,
-        message: "Telegram account connected successfully"
-      });
       
     } catch (error) {
       console.error("Telegram connection error:", error);
-      res.status(500).json({ message: "Failed to connect Telegram account" });
+      res.status(500).json({ message: "Failed to connect Telegram account", error: String(error) });
     }
   });
 
