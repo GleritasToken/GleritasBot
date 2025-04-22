@@ -70,8 +70,8 @@ export class DatabaseStorage implements IStorage {
       referredBy: insertUser.referredBy || null,
       ipAddress: insertUser.ipAddress || null,
       fingerprint: insertUser.fingerprint || null,
-      totalTokens: 0,
-      referralTokens: 0,
+      totalPoints: 0,
+      referralPoints: 0,
       referralCount: 0,
       createdAt: new Date()
     };
@@ -151,7 +151,7 @@ export class DatabaseStorage implements IStorage {
     const taskData = {
       name: insertTask.name,
       description: insertTask.description,
-      tokenAmount: insertTask.tokenAmount,
+      pointAmount: insertTask.pointAmount,
       isRequired: insertTask.isRequired ?? true, // Default to true if not specified
       iconClass: insertTask.iconClass,
       createdAt: new Date()
@@ -217,15 +217,15 @@ export class DatabaseStorage implements IStorage {
   }
   
   async completeUserTask(insertUserTask: InsertUserTask): Promise<UserTask> {
-    // Get the task to determine token amount
+    // Get the task to determine point amount
     const task = await this.getTask(insertUserTask.taskName);
-    const tokenAmount = task ? task.tokenAmount : 0;
+    const pointAmount = task ? task.pointAmount : 0;
     
     const userTaskData = {
       userId: insertUserTask.userId,
       taskName: insertUserTask.taskName,
       verificationData: insertUserTask.verificationData || null,
-      tokenAmount,
+      pointAmount,
       completed: true,
       completedAt: new Date()
     };
@@ -236,7 +236,7 @@ export class DatabaseStorage implements IStorage {
     // Update user's total points
     const user = await this.getUser(insertUserTask.userId);
     if (user) {
-      const updatedTotalPoints = user.totalPoints + tokenAmount;
+      const updatedTotalPoints = user.totalPoints + pointAmount;
       await this.updateUser(user.id, { totalPoints: updatedTotalPoints });
     }
     
@@ -259,8 +259,8 @@ export class DatabaseStorage implements IStorage {
   
   // Referral operations
   async createReferral(insertReferral: InsertReferral): Promise<Referral> {
-    // Default token amount is 5 if not provided
-    const tokenAmount = insertReferral.tokenAmount ?? 5;
+    // Default point amount is 5 if not provided
+    const pointAmount = insertReferral.pointAmount ?? 5;
     
     const referralData = {
       referrerUserId: insertReferral.referrerUserId,

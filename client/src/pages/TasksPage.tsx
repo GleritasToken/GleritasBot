@@ -521,7 +521,7 @@ const TasksPage: React.FC = () => {
                     <CircleDashed className="h-12 w-12 mx-auto mb-4 text-gray-500" />
                     <h3 className="text-xl font-medium mb-2">No Tasks Completed Yet</h3>
                     <p className="text-gray-400 mb-4">
-                      You haven't completed any tasks yet. Start earning GLRS tokens by completing the available tasks.
+                      You haven't completed any tasks yet. Start earning GLRS points by completing the available tasks.
                     </p>
                     <Button 
                       onClick={() => setActiveTab('available')}
