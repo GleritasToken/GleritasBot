@@ -461,9 +461,9 @@ const TasksPage: React.FC = () => {
                               <div className="flex-1">
                                 <div className="flex flex-col md:flex-row md:items-center justify-between mb-2">
                                   <h3 className="font-medium text-lg">
-                                    {task.name ? task.name.split('_').map(word => 
+                                    {task.name.split('_').map(word => 
                                       word.charAt(0).toUpperCase() + word.slice(1)
-                                    ).join(' ') : 'Unknown Task'}
+                                    ).join(' ')}
                                   </h3>
                                   <span className="flex items-center bg-[#1c3252] px-3 py-1 rounded-full text-sm text-amber-400 font-medium md:ml-2">
                                     +{task.tokenAmount} GLRS
@@ -559,9 +559,9 @@ const TasksPage: React.FC = () => {
                               <div className="flex-1">
                                 <div className="flex flex-col md:flex-row md:items-center justify-between mb-2">
                                   <h3 className="font-medium text-lg">
-                                    {task.taskName ? task.taskName.split('_').map(word => 
+                                    {task.taskName.split('_').map(word => 
                                       word.charAt(0).toUpperCase() + word.slice(1)
-                                    ).join(' ') : 'Unknown Task'}
+                                    ).join(' ')}
                                   </h3>
                                   <motion.span 
                                     className="flex items-center bg-[#1c3252] px-3 py-1 rounded-full text-sm text-amber-400 font-medium md:ml-2"
@@ -626,9 +626,9 @@ const TasksPage: React.FC = () => {
                 </>
               ) : (
                 currentTask ? (
-                  <>Please provide verification for completing the "{currentTask.name ? currentTask.name.split('_').map(word => 
+                  <>Please provide verification for completing the "{currentTask.name.split('_').map(word => 
                     word.charAt(0).toUpperCase() + word.slice(1)
-                  ).join(' ') : 'Unknown'}" task.</>
+                  ).join(' ')}" task.</>
                 ) : 'Please provide verification to complete this task.'
               )}
             </DialogDescription>
