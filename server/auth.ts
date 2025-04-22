@@ -30,8 +30,8 @@ export function setupAuth(app: Express) {
   app.use(
     session({
       secret: process.env.SESSION_SECRET || "GLRS-airdrop-token-secret", // Better to use env variable
-      resave: false,
-      saveUninitialized: false,
+      resave: true, // Changed to true to ensure session is saved on every request
+      saveUninitialized: true, // Changed to true to save uninitialized sessions
       store: storage.sessionStore,
       proxy: true, // Add trust proxy
       cookie: {
@@ -58,17 +58,25 @@ export function setupAuth(app: Express) {
         return res.status(401).json({ message: "User not found" });
       }
       
-      // Store user ID in session
+      // Store user ID in session and save session immediately
       req.session.userId = user.id;
       
-      return res.json({
-        message: "Login successful",
-        user: {
-          id: user.id,
-          username: user.username,
-          referralCode: user.referralCode,
-          totalTokens: user.totalTokens
+      // Explicitly save the session
+      req.session.save((err) => {
+        if (err) {
+          console.error("Error saving session:", err);
+          return res.status(500).json({ message: "Login successful but session saving failed. Please try again." });
         }
+        
+        res.json({
+          message: "Login successful",
+          user: {
+            id: user.id,
+            username: user.username,
+            referralCode: user.referralCode,
+            totalPoints: user.totalPoints // Updated to totalPoints
+          }
+        });
       });
     } catch (error) {
       console.error("Login error:", error);

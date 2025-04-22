@@ -31,27 +31,58 @@ const TelegramConnectDialog: React.FC<TelegramConnectDialogProps> = ({
 
   const connectMutation = useMutation({
     mutationFn: async (telegramId: string) => {
-      const response = await apiRequest('POST', '/api/connect-telegram', { telegramId });
+      console.log(`Attempting to connect Telegram ID: ${telegramId}`);
+      
+      // Use fetch directly with credentials included to ensure cookies are sent
+      const response = await fetch('/api/connect-telegram', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ telegramId }),
+        credentials: 'same-origin' // Important: Include credentials for session cookies
+      });
+      
+      console.log(`Response status: ${response.status}`);
+      
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Failed to connect Telegram account");
+        const errorData = await response.json();
+        console.error("Error response:", errorData);
+        
+        if (response.status === 401) {
+          // Session likely expired, need to refresh
+          window.location.href = '/auth'; // Redirect to authentication
+          throw new Error("Your session has expired. Please log in again.");
+        }
+        
+        throw new Error(errorData.message || "Failed to connect Telegram account");
       }
+      
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log("Telegram connection successful:", data);
       toast({
         title: "Success!",
         description: "Your Telegram account has been connected successfully.",
       });
-      onSuccess();
-      onClose();
+      // Wait briefly before closing to allow any backend operations to complete
+      setTimeout(() => {
+        onSuccess();
+        onClose();
+      }, 500);
     },
     onError: (error: Error) => {
       let errorMessage = error.message;
+      console.error("Detailed Telegram connection error:", error);
       
       // Enhance error message for common issues
       if (errorMessage.includes("Failed to connect Telegram account")) {
-        errorMessage = "Server error: Could not connect your Telegram account. Please check your Telegram ID and try again later.";
+        errorMessage = "Server error: Could not connect your Telegram account. Please check your Telegram ID and try again.";
+      } else if (errorMessage.includes("Unauthorized") || errorMessage.includes("session has expired")) {
+        errorMessage = "Your session has expired. Please reload the page and try again.";
+      } else if (errorMessage.includes("already connected")) {
+        errorMessage = "This Telegram ID is already connected to another account. Please use a different Telegram account.";
       }
       
       setError(errorMessage);
@@ -60,9 +91,6 @@ const TelegramConnectDialog: React.FC<TelegramConnectDialogProps> = ({
         description: errorMessage,
         variant: "destructive",
       });
-      
-      // Log the error for debugging purposes
-      console.error("Telegram connection error:", error);
     }
   });
 
@@ -129,8 +157,10 @@ const TelegramConnectDialog: React.FC<TelegramConnectDialogProps> = ({
                   <p className="text-xs text-blue-300">
                     <strong>Troubleshooting:</strong> If you're experiencing connection issues, try:
                     <br />- Making sure you're entering just the number (e.g., 123456789)
-                    <br />- Refreshing the page and trying again
+                    <br />- Logging out and logging back in before connecting
                     <br />- Ensuring you're using your main Telegram account ID
+                    <br />- Clearing your browser cache or trying in a private/incognito window
+                    <br />- Waiting a few minutes before trying again
                   </p>
                 </div>
                 <p className="text-amber-400 mt-2 text-xs">* Connecting your Telegram account will reward you with 30 GLRS Points!</p>

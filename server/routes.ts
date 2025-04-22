@@ -22,16 +22,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Helper middleware to check if a request is from a registered user
   const requireUser = async (req: Request, res: Response, next: Function) => {
+    console.log("Session check - session ID:", req.sessionID);
+    console.log("Session check - session data:", req.session);
+    
     const userId = req.session.userId;
     if (!userId) {
+      console.log("Session missing userId - unauthorized");
       return res.status(401).json({ message: "Unauthorized. Please register first." });
     }
     
+    console.log(`Session has userId: ${userId}, retrieving user...`);
     const user = await storage.getUser(userId);
     if (!user) {
+      console.log(`User with ID ${userId} not found in database`);
       return res.status(401).json({ message: "User not found." });
     }
     
+    console.log(`User found: ${user.username} (${user.id})`);
     req.user = user;
     next();
   };
@@ -132,17 +139,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
-      // Save user ID in session
+      // Save user ID in session and explicitly save it
       req.session.userId = newUser.id;
       
-      res.status(201).json({
-        message: "Registration successful",
-        user: {
-          id: newUser.id,
-          username: newUser.username,
-          referralCode: newUser.referralCode,
-          totalPoints: newUser.totalPoints
+      // Ensure session is saved before responding
+      req.session.save(err => {
+        if (err) {
+          console.error("Error saving session during registration:", err);
+          return res.status(500).json({ message: "Registration successful but session saving failed. Please try logging in." });
         }
+        
+        res.status(201).json({
+          message: "Registration successful",
+          user: {
+            id: newUser.id,
+            username: newUser.username,
+            referralCode: newUser.referralCode,
+            totalPoints: newUser.totalPoints
+          }
+        });
       });
     } catch (error) {
       console.error("Registration error:", error);
@@ -317,6 +332,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Update user's Telegram ID
       console.log(`Updating user ${req.user!.id} with Telegram ID: ${numericTelegramId}`);
       try {
+        // Store the current session ID before making database changes
+        const sessionId = req.sessionID;
+        console.log(`Current session ID before update: ${sessionId}`);
+        
         const updatedUser = await storage.updateUser(req.user!.id, {
           telegramId: numericTelegramId
         });
@@ -360,9 +379,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Continue even if task processing fails
         }
         
-        res.json({
-          success: true,
-          message: "Telegram account connected successfully"
+        // Verify session is still valid after all operations
+        console.log(`Checking session after task completion, session ID: ${req.sessionID}`);
+        console.log(`Session data after updates:`, req.session);
+        
+        // Ensure session is saved before responding
+        req.session.save(err => {
+          if (err) {
+            console.error("Error saving session after connecting Telegram:", err);
+            return res.status(500).json({ message: "Telegram connected but session saving failed. Please refresh the page." });
+          }
+          
+          console.log("Session successfully saved after connecting Telegram");
+          res.json({
+            success: true,
+            message: "Telegram account connected successfully"
+          });
         });
       } catch (updateError) {
         console.error(`Error updating user with Telegram ID:`, updateError);
