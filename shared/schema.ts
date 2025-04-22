@@ -22,19 +22,12 @@ export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   username: text("username").notNull().unique(),
   walletAddress: text("wallet_address"),
-  telegramId: text("telegram_id"), // Changed to text to handle large Telegram IDs
+  telegramId: integer("telegram_id"),
   referralCode: text("referral_code").notNull().unique(),
   referredBy: text("referred_by"),
-  // Changed totalTokens to totalPoints for GLRS Points system
-  totalPoints: integer("total_points").notNull().default(0),
-  referralPoints: integer("referral_points").notNull().default(0),
+  totalTokens: integer("total_tokens").notNull().default(0),
+  referralTokens: integer("referral_tokens").notNull().default(0),
   referralCount: integer("referral_count").notNull().default(0),
-  // Premium status fields for the fee options
-  isPremium: boolean("is_premium").notNull().default(false),
-  premiumOptionChosen: text("premium_option_chosen"),
-  premiumTxHash: text("premium_tx_hash"),
-  pointsMultiplier: integer("points_multiplier").notNull().default(1),
-  canWithdraw: boolean("can_withdraw").notNull().default(false),
   ipAddress: text("ip_address"),
   fingerprint: text("fingerprint"),
   isBanned: boolean("is_banned").notNull().default(false),
@@ -45,14 +38,9 @@ export const users = pgTable("users", {
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
   createdAt: true,
-  totalPoints: true,
-  referralPoints: true, 
-  referralCount: true,
-  isPremium: true,
-  premiumOptionChosen: true,
-  premiumTxHash: true,
-  pointsMultiplier: true,
-  canWithdraw: true
+  totalTokens: true,
+  referralTokens: true, 
+  referralCount: true
 });
 
 // Tasks completed by users
@@ -61,7 +49,7 @@ export const userTasks = pgTable("user_tasks", {
   userId: integer("user_id").notNull(),
   taskName: text("task_name").notNull(),
   completed: boolean("completed").notNull().default(false),
-  pointAmount: integer("point_amount").notNull().default(0),
+  tokenAmount: integer("token_amount").notNull().default(0),
   verificationData: text("verification_data"),
   completedAt: timestamp("completed_at"),
 });
@@ -76,7 +64,7 @@ export const referrals = pgTable("referrals", {
   id: serial("id").primaryKey(),
   referrerUserId: integer("referrer_user_id").notNull(),
   referredUserId: integer("referred_user_id").notNull(),
-  pointAmount: integer("point_amount").notNull().default(0),
+  tokenAmount: integer("token_amount").notNull().default(0),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
@@ -85,12 +73,12 @@ export const insertReferralSchema = createInsertSchema(referrals).omit({
   createdAt: true
 });
 
-// Task definitions (point rewards and requirements)
+// Task definitions (token rewards and requirements)
 export const tasks = pgTable("tasks", {
   id: serial("id").primaryKey(),
   name: text("name").notNull().unique(),
   description: text("description").notNull(),
-  pointAmount: integer("point_amount").notNull(),
+  tokenAmount: integer("token_amount").notNull(),
   isRequired: boolean("is_required").notNull().default(true),
   iconClass: text("icon_class").notNull(),
   link: text("link"),
@@ -199,7 +187,7 @@ export const walletSubmissionSchema = z.object({
 export const createTaskSchema = z.object({
   name: z.string().min(3).max(50),
   description: z.string().min(3),
-  pointAmount: z.number().min(1),
+  tokenAmount: z.number().min(1),
   isRequired: z.boolean().default(false),
   iconClass: z.string(),
   link: z.union([
@@ -216,7 +204,7 @@ export const banUserSchema = z.object({
   banReason: z.string().min(3).max(255)
 });
 
-export const resetPointsSchema = z.object({
+export const resetTokensSchema = z.object({
   userId: z.number().positive(),
   reason: z.string().min(3).max(255).optional()
 });
@@ -234,16 +222,4 @@ export const withdrawalStatusUpdateSchema = z.object({
   adminNotes: z.string().optional(),
   rejectionReason: z.string().optional(),
   txHash: z.string().optional()
-});
-
-// Premium options enum
-export const premiumOptionTypes = ['earnings_boost', 'premium_tasks', 'priority_withdrawals'] as const;
-export type PremiumOptionType = typeof premiumOptionTypes[number];
-
-// Fee payment schema for premium features
-export const premiumFeePaymentSchema = z.object({
-  userId: z.number().positive(),
-  optionType: z.enum(premiumOptionTypes),
-  txHash: z.string().min(10).max(100),
-  captchaToken: z.string()
 });

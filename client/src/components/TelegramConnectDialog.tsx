@@ -3,16 +3,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { AlertCircle, HelpCircle } from "lucide-react";
+import { AlertCircle } from "lucide-react";
 import { useMutation } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
-import { 
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 
 interface TelegramConnectDialogProps {
   isOpen: boolean;
@@ -31,64 +25,26 @@ const TelegramConnectDialog: React.FC<TelegramConnectDialogProps> = ({
 
   const connectMutation = useMutation({
     mutationFn: async (telegramId: string) => {
-      console.log(`Attempting to connect Telegram ID: ${telegramId}`);
-      
-      // Use fetch directly with credentials included to ensure cookies are sent
-      const response = await fetch('/api/connect-telegram', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ telegramId }),
-        credentials: 'same-origin' // Important: Include credentials for session cookies
-      });
-      
-      console.log(`Response status: ${response.status}`);
-      
+      const response = await apiRequest('POST', '/api/connect-telegram', { telegramId });
       if (!response.ok) {
-        const errorData = await response.json();
-        console.error("Error response:", errorData);
-        
-        if (response.status === 401) {
-          // Session likely expired, need to refresh
-          window.location.href = '/auth'; // Redirect to authentication
-          throw new Error("Your session has expired. Please log in again.");
-        }
-        
-        throw new Error(errorData.message || "Failed to connect Telegram account");
+        const error = await response.json();
+        throw new Error(error.message || "Failed to connect Telegram account");
       }
-      
       return response.json();
     },
-    onSuccess: (data) => {
-      console.log("Telegram connection successful:", data);
+    onSuccess: () => {
       toast({
         title: "Success!",
         description: "Your Telegram account has been connected successfully.",
       });
-      // Wait briefly before closing to allow any backend operations to complete
-      setTimeout(() => {
-        onSuccess();
-        onClose();
-      }, 500);
+      onSuccess();
+      onClose();
     },
     onError: (error: Error) => {
-      let errorMessage = error.message;
-      console.error("Detailed Telegram connection error:", error);
-      
-      // Enhance error message for common issues
-      if (errorMessage.includes("Failed to connect Telegram account")) {
-        errorMessage = "Server error: Could not connect your Telegram account. Please check your Telegram ID and try again.";
-      } else if (errorMessage.includes("Unauthorized") || errorMessage.includes("session has expired")) {
-        errorMessage = "Your session has expired. Please reload the page and try again.";
-      } else if (errorMessage.includes("already connected")) {
-        errorMessage = "This Telegram ID is already connected to another account. Please use a different Telegram account.";
-      }
-      
-      setError(errorMessage);
+      setError(error.message);
       toast({
         title: "Connection Failed",
-        description: errorMessage,
+        description: error.message,
         variant: "destructive",
       });
     }
@@ -134,27 +90,14 @@ const TelegramConnectDialog: React.FC<TelegramConnectDialogProps> = ({
                 className="bg-[#243b5c] border-[#2a4365] focus:border-blue-500"
               />
               <div className="text-sm text-gray-400">
-                <div className="flex items-center gap-1">
-                  <p>To find your Telegram ID:</p>
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger>
-                        <HelpCircle className="h-4 w-4 text-blue-400" />
-                      </TooltipTrigger>
-                      <TooltipContent className="bg-[#1c3252] border-[#2a4365] text-white max-w-xs">
-                        <p>Your Telegram ID is a unique number assigned to your account. It's not your username or phone number.</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                </div>
+                <p>To find your Telegram ID:</p>
                 <ol className="list-decimal pl-5 mt-1">
                   <li>Open Telegram and search for "@userinfobot"</li>
                   <li>Start a chat with this bot and send any message (like "Hi")</li>
                   <li>The bot will reply with your Telegram ID (a number)</li>
                   <li>Copy just the number and paste it here</li>
                 </ol>
-
-                <p className="text-amber-400 mt-2 text-xs">* Connecting your Telegram account will reward you with 30 GLRS Points!</p>
+                <p className="text-amber-400 mt-2 text-xs">* Connecting your Telegram account will reward you with 30 GLRS tokens!</p>
               </div>
             </div>
 

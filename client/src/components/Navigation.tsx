@@ -51,7 +51,7 @@ export default function Navigation() {
         
         <div className="flex items-center space-x-2">
           <div className="flex items-center bg-[#1c3252] rounded-full px-3 py-1 text-white font-medium">
-            <span className="text-amber-400 mr-1">{user?.totalPoints || 0}</span>
+            <span className="text-amber-400 mr-1">{user?.totalTokens || 0}</span>
             <span className="text-sm">GLRS</span>
           </div>
           <Button 

@@ -2,8 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { X, ExternalLink, AlertCircle, Wallet } from 'lucide-react';
-import { SiMeta } from 'react-icons/si';
-import { FaWallet } from 'react-icons/fa';
+import { FaWallet, FaEthereum } from 'react-icons/fa';
 
 interface MobileWalletConnectProps {
   onConnect: (address: string) => void;
@@ -18,7 +17,9 @@ export default function MobileWalletConnect({ onConnect, onCancel }: MobileWalle
   const [error, setError] = useState<string | null>(null);
   const [installedWallets, setInstalledWallets] = useState<{[key: string]: boolean}>({
     metamask: false,
-    trustwallet: false
+    trustwallet: false,
+    binance: false,
+    coinbase: false
   });
   
   // Check for installed wallets
@@ -26,7 +27,9 @@ export default function MobileWalletConnect({ onConnect, onCancel }: MobileWalle
     const checkWallets = async () => {
       const installed = {
         metamask: !!window.ethereum?.isMetaMask,
-        trustwallet: !!(window.ethereum?.isTrust || window.trustwallet)
+        trustwallet: !!(window.ethereum?.isTrust || window.trustwallet),
+        binance: !!window.BinanceChain,
+        coinbase: !!window.ethereum?.isCoinbaseWallet
       };
       
       setInstalledWallets(installed);
@@ -56,14 +59,13 @@ export default function MobileWalletConnect({ onConnect, onCancel }: MobileWalle
               setError('Could not connect to MetaMask. Please try again.');
             }
           } else {
-            // Format for MetaMask deep link - use the app.link format without https://
-            deepLink = `https://metamask.app.link/dapp/${window.location.host.replace('https://', '')}${window.location.pathname}`;
+            deepLink = `https://metamask.app.link/dapp/${window.location.host}${window.location.pathname}`;
             // Open in a new tab first (to avoid navigation issues)
             window.open(deepLink, '_blank');
             
             // Try direct app protocol for mobile
             setTimeout(() => {
-              const directProtocol = `ethereum:${window.location.href}`;
+              const directProtocol = `ethereum:`;
               window.location.href = directProtocol;
             }, 100);
             
@@ -84,7 +86,7 @@ export default function MobileWalletConnect({ onConnect, onCancel }: MobileWalle
               setError('Could not connect to Trust Wallet. Please try again.');
             }
           } else {
-            // Updated universal link format for Trust Wallet
+            // Universal link format for Trust Wallet
             deepLink = `https://link.trustwallet.com/open_url?coin_id=56&url=${encodeURIComponent(window.location.href)}`;
             
             // Open in a new tab first (to avoid navigation issues)
@@ -92,8 +94,7 @@ export default function MobileWalletConnect({ onConnect, onCancel }: MobileWalle
             
             // Try direct app protocol for mobile
             setTimeout(() => {
-              // More specific protocol with URL for better compatibility
-              const directProtocol = `trust://open_url?coin_id=56&url=${encodeURIComponent(window.location.href)}`;
+              const directProtocol = `trust://`;
               window.location.href = directProtocol;
             }, 100);
             
@@ -101,7 +102,57 @@ export default function MobileWalletConnect({ onConnect, onCancel }: MobileWalle
           }
           break;
           
-        // Removed Binance and Coinbase wallet options as per requirements
+        case 'binance':
+          if (window.BinanceChain) {
+            try {
+              const accounts = await window.BinanceChain.request({ method: 'eth_requestAccounts' });
+              walletAddress = accounts[0];
+            } catch (err) {
+              console.error('Binance Wallet connection error:', err);
+              setError('Could not connect to Binance Wallet. Please try again.');
+            }
+          } else {
+            // Binance Wallet deep link - use custom URL scheme
+            deepLink = `bnc://link.binance.com/?applink=dapp%3A%2F%2F${window.location.host}`;
+            
+            // Open in a new tab first (to avoid navigation issues)
+            window.open(deepLink, '_blank');
+            
+            // Try direct app protocol for mobile
+            setTimeout(() => {
+              const directProtocol = `bnc://`;
+              window.location.href = directProtocol;
+            }, 100);
+            
+            return;
+          }
+          break;
+          
+        case 'coinbase':
+          if (window.ethereum?.isCoinbaseWallet) {
+            try {
+              const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+              walletAddress = accounts[0];
+            } catch (err) {
+              console.error('Coinbase Wallet connection error:', err);
+              setError('Could not connect to Coinbase Wallet. Please try again.');
+            }
+          } else {
+            // Coinbase Wallet deep link
+            deepLink = `https://go.cb-w.com/dapp?cb_url=${encodeURIComponent(window.location.href)}`;
+            
+            // Open in a new tab first (to avoid navigation issues)
+            window.open(deepLink, '_blank');
+            
+            // Try direct app protocol for mobile
+            setTimeout(() => {
+              const directProtocol = `cbwallet://`;
+              window.location.href = directProtocol;
+            }, 100);
+            
+            return;
+          }
+          break;
       }
       
       if (walletAddress) {
@@ -159,7 +210,7 @@ export default function MobileWalletConnect({ onConnect, onCancel }: MobileWalle
               </div>
             ) : (
               <>
-                <SiMeta className="h-8 w-8 mb-2 text-orange-500" />
+                <FaWallet className="h-8 w-8 mb-2 text-orange-500" />
                 <span className="text-sm font-medium">MetaMask</span>
                 {installedWallets.metamask && (
                   <span className="absolute top-2 right-2 bg-green-500 rounded-full w-2 h-2"></span>
@@ -183,6 +234,48 @@ export default function MobileWalletConnect({ onConnect, onCancel }: MobileWalle
                 <FaWallet className="h-8 w-8 mb-2 text-blue-500" />
                 <span className="text-sm font-medium">Trust Wallet</span>
                 {installedWallets.trustwallet && (
+                  <span className="absolute top-2 right-2 bg-green-500 rounded-full w-2 h-2"></span>
+                )}
+              </>
+            )}
+          </Button>
+          
+          <Button 
+            onClick={() => connectWallet('binance')}
+            variant="outline"
+            disabled={connecting !== null}
+            className="flex flex-col items-center justify-center h-24 border-[#2a4365] hover:border-yellow-500 bg-[#243b5c] hover:bg-[#243b5c] relative overflow-hidden"
+          >
+            {connecting === 'binance' ? (
+              <div className="absolute inset-0 flex items-center justify-center bg-[#243b5c]">
+                <div className="w-5 h-5 border-2 border-yellow-500 border-t-transparent rounded-full animate-spin"></div>
+              </div>
+            ) : (
+              <>
+                <FaWallet className="h-8 w-8 mb-2 text-yellow-500" />
+                <span className="text-sm font-medium">Binance Wallet</span>
+                {installedWallets.binance && (
+                  <span className="absolute top-2 right-2 bg-green-500 rounded-full w-2 h-2"></span>
+                )}
+              </>
+            )}
+          </Button>
+          
+          <Button 
+            onClick={() => connectWallet('coinbase')}
+            variant="outline"
+            disabled={connecting !== null}
+            className="flex flex-col items-center justify-center h-24 border-[#2a4365] hover:border-blue-600 bg-[#243b5c] hover:bg-[#243b5c] relative overflow-hidden"
+          >
+            {connecting === 'coinbase' ? (
+              <div className="absolute inset-0 flex items-center justify-center bg-[#243b5c]">
+                <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+              </div>
+            ) : (
+              <>
+                <FaWallet className="h-8 w-8 mb-2 text-blue-600" />
+                <span className="text-sm font-medium">Coinbase Wallet</span>
+                {installedWallets.coinbase && (
                   <span className="absolute top-2 right-2 bg-green-500 rounded-full w-2 h-2"></span>
                 )}
               </>

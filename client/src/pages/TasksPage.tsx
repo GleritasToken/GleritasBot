@@ -15,7 +15,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import TelegramConnectDialog from '@/components/TelegramConnectDialog';
-import EnhancedWalletConnect from '@/components/EnhancedWalletConnect';
 
 interface VerificationData {
   taskName: string;
@@ -65,7 +64,7 @@ const TasksPage: React.FC = () => {
         
         toast({
           title: "Task Verified!",
-          description: "You've earned GLRS points for completing this task!",
+          description: "You've earned GLRS tokens for completing this task!",
         });
         
         // Auto-switch to completed tab after a delay
@@ -117,7 +116,7 @@ const TasksPage: React.FC = () => {
       
       toast({
         title: "Task Completed!",
-        description: "You've earned GLRS points for completing this task!",
+        description: "You've earned GLRS tokens for completing this task!",
       });
       
       // Auto-switch to completed tab after a delay
@@ -341,7 +340,7 @@ const TasksPage: React.FC = () => {
   // Get task description
   const getTaskDescription = (taskName: string) => {
     const task = allTasks?.find(t => t.name === taskName);
-    return task?.description || 'Complete this task to earn GLRS points.';
+    return task?.description || 'Complete this task to earn GLRS tokens.';
   };
 
   return (
@@ -415,7 +414,7 @@ const TasksPage: React.FC = () => {
                         This is the first required step of the airdrop process.
                       </p>
                       <p className="text-amber-400 font-medium">
-                        Completing this task will reward you with 30 GLRS points!
+                        Completing this task will reward you with 30 GLRS tokens!
                       </p>
                       <Button 
                         size="lg" 
@@ -437,7 +436,7 @@ const TasksPage: React.FC = () => {
                     <CheckCircle className="h-12 w-12 mx-auto mb-4 text-green-500" />
                     <h3 className="text-xl font-medium mb-2">All Tasks Completed!</h3>
                     <p className="text-gray-400 mb-4">
-                      You've completed all available tasks. Check back later for more opportunities to earn GLRS points.
+                      You've completed all available tasks. Check back later for more opportunities to earn GLRS tokens.
                     </p>
                   </motion.div>
                 ) : (
@@ -467,7 +466,7 @@ const TasksPage: React.FC = () => {
                                     ).join(' ')}
                                   </h3>
                                   <span className="flex items-center bg-[#1c3252] px-3 py-1 rounded-full text-sm text-amber-400 font-medium md:ml-2">
-                                    +{allTasks?.find(t => t.name === task.name)?.pointAmount || 0} GLRS
+                                    +{task.tokenAmount} GLRS
                                   </span>
                                 </div>
                                 <p className="text-gray-300 text-sm mb-4">
@@ -522,7 +521,7 @@ const TasksPage: React.FC = () => {
                     <CircleDashed className="h-12 w-12 mx-auto mb-4 text-gray-500" />
                     <h3 className="text-xl font-medium mb-2">No Tasks Completed Yet</h3>
                     <p className="text-gray-400 mb-4">
-                      You haven't completed any tasks yet. Start earning GLRS points by completing the available tasks.
+                      You haven't completed any tasks yet. Start earning GLRS tokens by completing the available tasks.
                     </p>
                     <Button 
                       onClick={() => setActiveTab('available')}
@@ -571,7 +570,7 @@ const TasksPage: React.FC = () => {
                                       backgroundColor: "rgba(76, 29, 149, 0.3)" 
                                     }}
                                   >
-                                    +{task.pointAmount || allTasks?.find(t => t.name === task.taskName)?.pointAmount || 0} GLRS
+                                    +{task.tokenAmount} GLRS
                                   </motion.span>
                                 </div>
                                 <p className="text-gray-300 text-sm mb-2">
@@ -701,47 +700,6 @@ const TasksPage: React.FC = () => {
                     </motion.div>
                   )}
                   Verify Automatically
-                </Button>
-              </DialogFooter>
-            </div>
-          ) : currentTask?.name === 'wallet_submit' ? (
-            <div className="space-y-4 py-4">
-              {verificationError && (
-                <div className="flex items-center bg-red-900/30 text-red-200 p-3 rounded text-sm mb-4">
-                  <AlertTriangle className="h-4 w-4 mr-2 flex-shrink-0" />
-                  <p>{verificationError}</p>
-                </div>
-              )}
-              
-              <p className="text-sm text-white/80 mb-4">
-                Connect your BSC wallet to receive GLRS points. This wallet will be used for any future withdrawals.
-              </p>
-              
-              <EnhancedWalletConnect
-                onWalletConnected={(address) => {
-                  if (!currentTask || !address) return;
-                  
-                  setVerificationData(address);
-                  setCompletedTaskId(`task-${currentTask.id}`);
-                  
-                  // Auto-submit after wallet is connected
-                  completeMutation.mutate({ 
-                    taskName: currentTask.name, 
-                    verificationData: address 
-                  });
-                }}
-                isConnecting={completeMutation.isPending}
-                showCard={false}
-              />
-              
-              <DialogFooter>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setVerificationDialogOpen(false)}
-                  className="border-gray-500 text-gray-300 hover:bg-gray-700 hover:text-white"
-                >
-                  Cancel
                 </Button>
               </DialogFooter>
             </div>

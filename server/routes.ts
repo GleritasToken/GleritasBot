@@ -7,7 +7,7 @@ import {
   walletSubmissionSchema,
   createTaskSchema,
   banUserSchema,
-  resetPointsSchema,
+  resetTokensSchema,
   withdrawalActionSchema,
   withdrawalStatusUpdateSchema,
   taskNames,
@@ -22,23 +22,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Helper middleware to check if a request is from a registered user
   const requireUser = async (req: Request, res: Response, next: Function) => {
-    console.log("Session check - session ID:", req.sessionID);
-    console.log("Session check - session data:", req.session);
-    
     const userId = req.session.userId;
     if (!userId) {
-      console.log("Session missing userId - unauthorized");
       return res.status(401).json({ message: "Unauthorized. Please register first." });
     }
     
-    console.log(`Session has userId: ${userId}, retrieving user...`);
     const user = await storage.getUser(userId);
     if (!user) {
-      console.log(`User with ID ${userId} not found in database`);
       return res.status(401).json({ message: "User not found." });
     }
     
-    console.log(`User found: ${user.username} (${user.id})`);
     req.user = user;
     next();
   };
@@ -131,7 +124,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             await storage.createReferral({
               referrerUserId: referrer.id,
               referredUserId: newUser.id,
-              pointAmount: 5 // 5 GLRS points per referral
+              tokenAmount: 5 // 5 GLRS tokens per referral
             });
           } else {
             console.log(`Referral not processed: User ${referrer.id} has reached the 50 referrals limit`);
@@ -139,25 +132,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
       }
       
-      // Save user ID in session and explicitly save it
+      // Save user ID in session
       req.session.userId = newUser.id;
       
-      // Ensure session is saved before responding
-      req.session.save(err => {
-        if (err) {
-          console.error("Error saving session during registration:", err);
-          return res.status(500).json({ message: "Registration successful but session saving failed. Please try logging in." });
+      res.status(201).json({
+        message: "Registration successful",
+        user: {
+          id: newUser.id,
+          username: newUser.username,
+          referralCode: newUser.referralCode,
+          totalTokens: newUser.totalTokens
         }
-        
-        res.status(201).json({
-          message: "Registration successful",
-          user: {
-            id: newUser.id,
-            username: newUser.username,
-            referralCode: newUser.referralCode,
-            totalPoints: newUser.totalPoints
-          }
-        });
       });
     } catch (error) {
       console.error("Registration error:", error);
@@ -280,7 +265,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           userId: user.id,
           taskName,
           completed: true,
-          pointAmount: task.pointAmount,
+          tokenAmount: task.tokenAmount,
           verificationData: verificationData || null
         });
         
@@ -307,104 +292,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/connect-telegram", requireUser, async (req: Request, res: Response) => {
     try {
       const { telegramId } = req.body;
-      console.log(`Connecting Telegram ID: ${telegramId} for user: ${req.user!.username}`);
       
-      if (!telegramId || telegramId.trim() === '') {
-        console.error(`Invalid Telegram ID format: ${telegramId}`);
+      if (!telegramId || isNaN(Number(telegramId))) {
         return res.status(400).json({ message: "Invalid Telegram ID" });
       }
       
-      // Store as string - no conversion needed
-      const telegramIdStr = String(telegramId).trim();
-      console.log(`Telegram ID (as string): ${telegramIdStr}`);
+      const numericTelegramId = Number(telegramId);
       
       // Check if Telegram ID is already connected to another account
-      console.log(`Checking if Telegram ID ${telegramIdStr} is already connected to another account`);
       const users = await storage.getAllUsers();
-      const existingUser = users.find(u => u.telegramId === telegramIdStr);
+      const existingUser = users.find(u => u.telegramId === numericTelegramId);
       
       if (existingUser && existingUser.id !== req.user!.id) {
-        console.error(`Telegram ID ${telegramIdStr} already connected to user: ${existingUser.username}`);
         return res.status(400).json({ 
           message: "This Telegram ID is already connected to another account"
         });
       }
       
       // Update user's Telegram ID
-      console.log(`Updating user ${req.user!.id} with Telegram ID: ${telegramIdStr}`);
-      try {
-        // Store the current session ID before making database changes
-        const sessionId = req.sessionID;
-        console.log(`Current session ID before update: ${sessionId}`);
-        
-        const updatedUser = await storage.updateUser(req.user!.id, {
-          telegramId: telegramIdStr
-        });
-        
-        if (!updatedUser) {
-          console.error(`User ${req.user!.id} not found during updateUser`);
-          return res.status(404).json({ message: "User not found" });
-        }
-        
-        console.log(`Successfully updated user with Telegram ID. Now completing task.`);
-        
-        // Complete the telegram_connect task if not already completed
-        try {
-          const task = await storage.getTask("telegram_connect");
-          if (task) {
-            console.log(`Found telegram_connect task with point amount: ${task.pointAmount}`);
-            const isCompleted = await storage.checkTaskCompletion(req.user!.id, "telegram_connect");
-            console.log(`Task already completed: ${isCompleted}`);
-            
-            if (!isCompleted) {
-              console.log(`Completing telegram_connect task for user ${req.user!.id}`);
-              try {
-                await storage.completeUserTask({
-                  userId: req.user!.id,
-                  taskName: "telegram_connect",
-                  completed: true,
-                  pointAmount: task.pointAmount,
-                  verificationData: "telegram_id_" + telegramIdStr
-                });
-                console.log(`Successfully completed telegram_connect task`);
-              } catch (completeTaskError) {
-                console.error(`Error completing telegram_connect task:`, completeTaskError);
-                // Continue even if task completion fails
-              }
-            }
-          } else {
-            console.error(`telegram_connect task not found in database`);
-          }
-        } catch (taskError) {
-          console.error(`Error processing telegram_connect task:`, taskError);
-          // Continue even if task processing fails
-        }
-        
-        // Verify session is still valid after all operations
-        console.log(`Checking session after task completion, session ID: ${req.sessionID}`);
-        console.log(`Session data after updates:`, req.session);
-        
-        // Ensure session is saved before responding
-        req.session.save(err => {
-          if (err) {
-            console.error("Error saving session after connecting Telegram:", err);
-            return res.status(500).json({ message: "Telegram connected but session saving failed. Please refresh the page." });
-          }
-          
-          console.log("Session successfully saved after connecting Telegram");
-          res.json({
-            success: true,
-            message: "Telegram account connected successfully"
-          });
-        });
-      } catch (updateError) {
-        console.error(`Error updating user with Telegram ID:`, updateError);
-        return res.status(500).json({ message: "Failed to update user with Telegram ID" });
+      const updatedUser = await storage.updateUser(req.user!.id, {
+        telegramId: numericTelegramId
+      });
+      
+      if (!updatedUser) {
+        return res.status(404).json({ message: "User not found" });
       }
+      
+      // Complete the telegram_connect task if not already completed
+      const task = await storage.getTask("telegram_connect");
+      if (task) {
+        const isCompleted = await storage.checkTaskCompletion(req.user!.id, "telegram_connect");
+        if (!isCompleted) {
+          await storage.completeUserTask({
+            userId: req.user!.id,
+            taskName: "telegram_connect",
+            completed: true,
+            tokenAmount: task.tokenAmount,
+            verificationData: "telegram_id_" + numericTelegramId
+          });
+        }
+      }
+      
+      res.json({
+        success: true,
+        message: "Telegram account connected successfully"
+      });
       
     } catch (error) {
       console.error("Telegram connection error:", error);
-      res.status(500).json({ message: "Failed to connect Telegram account", error: String(error) });
+      res.status(500).json({ message: "Failed to connect Telegram account" });
     }
   });
 
@@ -452,7 +388,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             userId: user.id,
             taskName: "wallet_submit",
             completed: true,
-            pointAmount: walletTask.pointAmount,
+            tokenAmount: walletTask.tokenAmount,
             verificationData: walletAddress
           });
         }
@@ -497,7 +433,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({
         referralCode: user.referralCode,
         referralCount: user.referralCount,
-        referralPoints: user.referralPoints,
+        referralTokens: user.referralTokens,
         referrals
       });
     } catch (error) {
@@ -507,83 +443,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Create withdrawal request
-  // Premium fee payment endpoint
-  app.post("/api/premium-fee", requireUser, async (req: Request, res: Response) => {
-    try {
-      const { optionType, txHash } = req.body;
-      const user = req.user!; // User is guaranteed by requireUser middleware
-      
-      if (!optionType || !txHash) {
-        return res.status(400).json({
-          success: false,
-          message: "Missing required fields"
-        });
-      }
-      
-      // Verify that the user isn't already premium
-      if (user.isPremium) {
-        return res.status(400).json({
-          success: false,
-          message: "User already has premium status"
-        });
-      }
-      
-      // Apply the premium status based on the option type
-      let updatedUser;
-      switch (optionType) {
-        case 'earnings_boost':
-          // Double earning multiplier
-          updatedUser = await storage.updateUser(user.id, {
-            isPremium: true,
-            premiumOptionChosen: optionType,
-            premiumTxHash: txHash,
-            pointsMultiplier: 2, // Double points
-          });
-          break;
-          
-        case 'premium_tasks':
-          // Unlock premium tasks
-          updatedUser = await storage.updateUser(user.id, {
-            isPremium: true,
-            premiumOptionChosen: optionType,
-            premiumTxHash: txHash,
-            // Other options could be unlocked here
-          });
-          break;
-          
-        case 'priority_withdrawals':
-          // Enable priority withdrawal access
-          updatedUser = await storage.updateUser(user.id, {
-            isPremium: true,
-            premiumOptionChosen: optionType,
-            premiumTxHash: txHash,
-            canWithdraw: true, // Allow early withdrawal
-          });
-          break;
-          
-        default:
-          return res.status(400).json({
-            success: false,
-            message: "Invalid premium option type"
-          });
-      }
-      
-      // Return the updated user
-      return res.json({
-        success: true,
-        message: "Premium status activated successfully",
-        user: updatedUser
-      });
-      
-    } catch (error) {
-      console.error("Error activating premium status:", error);
-      return res.status(500).json({
-        success: false,
-        message: "Internal server error"
-      });
-    }
-  });
-  
   app.post("/api/withdrawals", requireUser, async (req: Request, res: Response) => {
     try {
       const user = req.user!;
@@ -612,9 +471,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "You must connect a wallet address before withdrawing tokens." });
       }
       
-      // Check if user has enough points
-      if (user.totalPoints < amount) {
-        return res.status(400).json({ message: "Insufficient points balance for withdrawal." });
+      // Check if user has enough tokens
+      if (user.totalTokens < amount) {
+        return res.status(400).json({ message: "Insufficient token balance for withdrawal." });
       }
       
       // Create withdrawal
@@ -626,9 +485,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         walletAddress: user.walletAddress
       });
       
-      // Update user's points balance
+      // Update user's token balance
       await storage.updateUser(user.id, { 
-        totalPoints: user.totalPoints - amount 
+        totalTokens: user.totalTokens - amount 
       });
       
       // Get updated user data
@@ -722,14 +581,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Count completed tasks
       const completedTasks = await storage.getAllUserTasks();
       
-      // Count total claimed points
-      const totalPointsClaimed = allUsers.reduce((sum, user) => sum + user.totalPoints, 0);
+      // Count total claimed tokens
+      const totalTokensClaimed = allUsers.reduce((sum, user) => sum + user.totalTokens, 0);
       
       res.json({
         totalUsers: allUsers.length,
         activeUsers: usersWithWallets.length,
         totalCompletedTasks: completedTasks.length,
-        totalPointsClaimed
+        totalTokensClaimed
       });
     } catch (error) {
       console.error("Admin stats error:", error);
@@ -760,7 +619,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return {
           ...task,
           completionCount: completions.length,
-          totalPointsAwarded: completions.reduce((sum, ut) => sum + ut.pointAmount, 0)
+          totalTokensAwarded: completions.reduce((sum, ut) => sum + ut.tokenAmount, 0)
         };
       });
       
@@ -914,35 +773,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // Reset a user's points only (admin only)
-  app.post("/api/admin/users/:userId/reset-points", requireAdmin, async (req: Request, res: Response) => {
+  // Reset a user's tokens only (admin only)
+  app.post("/api/admin/users/:userId/reset-tokens", requireAdmin, async (req: Request, res: Response) => {
     try {
       const userId = parseInt(req.params.userId);
-      const validationResult = resetPointsSchema.safeParse({
+      const validationResult = resetTokensSchema.safeParse({
         userId,
         ...req.body
       });
       
       if (!validationResult.success) {
         return res.status(400).json({ 
-          message: "Invalid reset points request", 
+          message: "Invalid reset tokens request", 
           errors: validationResult.error.format() 
         });
       }
       
-      const updatedUser = await storage.resetUserPoints(userId);
+      const updatedUser = await storage.resetUserTokens(userId);
       
       if (!updatedUser) {
         return res.status(404).json({ message: "User not found." });
       }
       
       res.json({
-        message: "User points reset successfully",
+        message: "User tokens reset successfully",
         user: updatedUser
       });
     } catch (error) {
-      console.error("Reset points error:", error);
-      res.status(500).json({ message: "Failed to reset user points." });
+      console.error("Reset tokens error:", error);
+      res.status(500).json({ message: "Failed to reset user tokens." });
     }
   });
   
@@ -950,7 +809,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/admin/users/:userId/reset-tasks", requireAdmin, async (req: Request, res: Response) => {
     try {
       const userId = parseInt(req.params.userId);
-      const validationResult = resetPointsSchema.safeParse({
+      const validationResult = resetTokensSchema.safeParse({
         userId,
         ...req.body
       });
@@ -982,7 +841,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/admin/users/:userId/reset-data", requireAdmin, async (req: Request, res: Response) => {
     try {
       const userId = parseInt(req.params.userId);
-      const validationResult = resetPointsSchema.safeParse({
+      const validationResult = resetTokensSchema.safeParse({
         userId,
         ...req.body
       });

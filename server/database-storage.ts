@@ -70,8 +70,8 @@ export class DatabaseStorage implements IStorage {
       referredBy: insertUser.referredBy || null,
       ipAddress: insertUser.ipAddress || null,
       fingerprint: insertUser.fingerprint || null,
-      totalPoints: 0,
-      referralPoints: 0,
+      totalTokens: 0,
+      referralTokens: 0,
       referralCount: 0,
       createdAt: new Date()
     };
@@ -151,7 +151,7 @@ export class DatabaseStorage implements IStorage {
     const taskData = {
       name: insertTask.name,
       description: insertTask.description,
-      pointAmount: insertTask.pointAmount,
+      tokenAmount: insertTask.tokenAmount,
       isRequired: insertTask.isRequired ?? true, // Default to true if not specified
       iconClass: insertTask.iconClass,
       createdAt: new Date()
@@ -217,15 +217,15 @@ export class DatabaseStorage implements IStorage {
   }
   
   async completeUserTask(insertUserTask: InsertUserTask): Promise<UserTask> {
-    // Get the task to determine point amount
+    // Get the task to determine token amount
     const task = await this.getTask(insertUserTask.taskName);
-    const pointAmount = task ? task.pointAmount : 0;
+    const tokenAmount = task ? task.tokenAmount : 0;
     
     const userTaskData = {
       userId: insertUserTask.userId,
       taskName: insertUserTask.taskName,
       verificationData: insertUserTask.verificationData || null,
-      pointAmount,
+      tokenAmount,
       completed: true,
       completedAt: new Date()
     };
@@ -233,11 +233,11 @@ export class DatabaseStorage implements IStorage {
     // Insert the task completion record
     const result = await db.insert(userTasks).values(userTaskData).returning();
     
-    // Update user's total points
+    // Update user's total tokens
     const user = await this.getUser(insertUserTask.userId);
     if (user) {
-      const updatedTotalPoints = user.totalPoints + pointAmount;
-      await this.updateUser(user.id, { totalPoints: updatedTotalPoints });
+      const updatedTotalTokens = user.totalTokens + tokenAmount;
+      await this.updateUser(user.id, { totalTokens: updatedTotalTokens });
     }
     
     return result[0];
@@ -259,13 +259,13 @@ export class DatabaseStorage implements IStorage {
   
   // Referral operations
   async createReferral(insertReferral: InsertReferral): Promise<Referral> {
-    // Default point amount is 5 if not provided
-    const pointAmount = insertReferral.pointAmount ?? 5;
+    // Default token amount is 5 if not provided
+    const tokenAmount = insertReferral.tokenAmount ?? 5;
     
     const referralData = {
       referrerUserId: insertReferral.referrerUserId,
       referredUserId: insertReferral.referredUserId,
-      pointAmount,
+      tokenAmount,
       createdAt: new Date()
     };
     
@@ -276,13 +276,13 @@ export class DatabaseStorage implements IStorage {
     const referrer = await this.getUser(insertReferral.referrerUserId);
     if (referrer) {
       const newReferralCount = referrer.referralCount + 1;
-      const newReferralPoints = referrer.referralPoints + pointAmount;
-      const newTotalPoints = referrer.totalPoints + pointAmount;
+      const newReferralTokens = referrer.referralTokens + tokenAmount;
+      const newTotalTokens = referrer.totalTokens + tokenAmount;
       
       await this.updateUser(referrer.id, { 
         referralCount: newReferralCount,
-        referralPoints: newReferralPoints,
-        totalPoints: newTotalPoints
+        referralTokens: newReferralTokens,
+        totalTokens: newTotalTokens
       });
     }
     
@@ -395,20 +395,20 @@ export class DatabaseStorage implements IStorage {
     return result[0];
   }
   
-  // Reset only points, keep other data
-  async resetUserPoints(userId: number): Promise<User | undefined> {
+  // Reset only tokens, keep other data
+  async resetUserTokens(userId: number): Promise<User | undefined> {
     try {
       const result = await db.update(users)
         .set({
-          totalPoints: 0,
-          referralPoints: 0
+          totalTokens: 0,
+          referralTokens: 0
         })
         .where(eq(users.id, userId))
         .returning();
       
       return result[0];
     } catch (error) {
-      console.error(`Error resetting user ${userId} points:`, error);
+      console.error(`Error resetting user ${userId} tokens:`, error);
       return undefined;
     }
   }
@@ -429,7 +429,7 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  // Full reset of user data (tasks, points, connections)
+  // Full reset of user data (tasks, tokens, connections)
   async resetUserData(userId: number): Promise<User | undefined> {
     try {
       // First, delete all user tasks
@@ -439,15 +439,10 @@ export class DatabaseStorage implements IStorage {
       // Then reset user data
       const result = await db.update(users)
         .set({
-          totalPoints: 0,
-          referralPoints: 0,
+          totalTokens: 0,
+          referralTokens: 0,
           telegramId: null,
-          walletAddress: null,
-          isPremium: false,
-          premiumOptionChosen: null,
-          premiumTxHash: null,
-          pointsMultiplier: 1,
-          canWithdraw: false
+          walletAddress: null
         })
         .where(eq(users.id, userId))
         .returning();
@@ -476,16 +471,11 @@ export class DatabaseStorage implements IStorage {
               // Keep only username and referral-related data
               telegramId: null,
               walletAddress: null,
-              totalPoints: user.referralPoints, // Keep only referral points
+              totalTokens: user.referralTokens, // Keep only referral tokens
               ipAddress: null,
               fingerprint: null,
               isBanned: false,
-              banReason: null,
-              isPremium: false,
-              premiumOptionChosen: null,
-              premiumTxHash: null,
-              pointsMultiplier: 1,
-              canWithdraw: false
+              banReason: null
             })
             .where(eq(users.id, user.id));
         }
@@ -506,19 +496,19 @@ export class DatabaseStorage implements IStorage {
       const completions = allUserTasks.filter(ut => 
         ut.taskName === task.name && ut.completed);
       const completionCount = completions.length;
-      const totalPointsAwarded = completions.reduce((sum, ut) => 
-        sum + ut.pointAmount, 0);
+      const totalTokensAwarded = completions.reduce((sum, ut) => 
+        sum + ut.tokenAmount, 0);
       
       return {
         id: task.id,
         name: task.name,
         description: task.description,
-        pointAmount: task.pointAmount,
+        tokenAmount: task.tokenAmount,
         isRequired: task.isRequired,
         iconClass: task.iconClass,
         createdAt: task.createdAt,
         completionCount,
-        totalPointsAwarded
+        totalTokensAwarded
       };
     });
   }
@@ -537,7 +527,7 @@ export class DatabaseStorage implements IStorage {
     ).length;
     
     const totalCompletedTasks = allUserTasks.filter(task => task.completed).length;
-    const totalPointsClaimed = allWithdrawals
+    const totalTokensClaimed = allWithdrawals
       .filter(w => w.status === 'completed')
       .reduce((sum, w) => sum + w.amount, 0);
     
@@ -595,7 +585,7 @@ export class DatabaseStorage implements IStorage {
       totalUsers,
       activeUsers,
       totalCompletedTasks,
-      totalPointsClaimed,
+      totalTokensClaimed,
       dailyStats: days,
       taskTypeBreakdown
     };
@@ -621,42 +611,42 @@ export class DatabaseStorage implements IStorage {
         {
           name: "telegram_group",
           description: "Join our official Telegram group",
-          pointAmount: 10,
+          tokenAmount: 10,
           isRequired: true,
           iconClass: "fab fa-telegram-plane text-blue-500"
         },
         {
           name: "telegram_channel",
           description: "Subscribe to our announcement channel",
-          pointAmount: 5,
+          tokenAmount: 5,
           isRequired: true,
           iconClass: "fab fa-telegram-plane text-blue-500"
         },
         {
           name: "twitter_follow",
           description: "Follow @GleritasToken on Twitter",
-          pointAmount: 10,
+          tokenAmount: 10,
           isRequired: true,
           iconClass: "fab fa-twitter text-blue-500"
         },
         {
           name: "twitter_engage",
           description: "Like, retweet, and comment on our pinned tweet",
-          pointAmount: 10,
+          tokenAmount: 10,
           isRequired: true,
           iconClass: "fab fa-twitter text-blue-500"
         },
         {
           name: "youtube",
           description: "Watch and like our intro video (Optional)",
-          pointAmount: 10,
+          tokenAmount: 10,
           isRequired: false,
           iconClass: "fab fa-youtube text-red-500"
         },
         {
           name: "wallet_submit",
           description: "Provide a valid wallet address for token distribution",
-          pointAmount: 0,
+          tokenAmount: 0,
           isRequired: true,
           iconClass: "fas fa-wallet text-yellow-500"
         }
