@@ -233,11 +233,11 @@ export class DatabaseStorage implements IStorage {
     // Insert the task completion record
     const result = await db.insert(userTasks).values(userTaskData).returning();
     
-    // Update user's total tokens
+    // Update user's total points
     const user = await this.getUser(insertUserTask.userId);
     if (user) {
-      const updatedTotalTokens = user.totalTokens + tokenAmount;
-      await this.updateUser(user.id, { totalTokens: updatedTotalTokens });
+      const updatedTotalPoints = user.totalPoints + tokenAmount;
+      await this.updateUser(user.id, { totalPoints: updatedTotalPoints });
     }
     
     return result[0];
@@ -276,13 +276,13 @@ export class DatabaseStorage implements IStorage {
     const referrer = await this.getUser(insertReferral.referrerUserId);
     if (referrer) {
       const newReferralCount = referrer.referralCount + 1;
-      const newReferralTokens = referrer.referralTokens + tokenAmount;
-      const newTotalTokens = referrer.totalTokens + tokenAmount;
+      const newReferralPoints = referrer.referralPoints + tokenAmount;
+      const newTotalPoints = referrer.totalPoints + tokenAmount;
       
       await this.updateUser(referrer.id, { 
         referralCount: newReferralCount,
-        referralTokens: newReferralTokens,
-        totalTokens: newTotalTokens
+        referralPoints: newReferralPoints,
+        totalPoints: newTotalPoints
       });
     }
     

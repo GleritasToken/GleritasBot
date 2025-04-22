@@ -141,7 +141,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           id: newUser.id,
           username: newUser.username,
           referralCode: newUser.referralCode,
-          totalTokens: newUser.totalTokens
+          totalPoints: newUser.totalPoints
         }
       });
     } catch (error) {
@@ -433,7 +433,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({
         referralCode: user.referralCode,
         referralCount: user.referralCount,
-        referralTokens: user.referralTokens,
+        referralPoints: user.referralPoints,
         referrals
       });
     } catch (error) {
