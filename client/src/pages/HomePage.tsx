@@ -52,7 +52,7 @@ const HomePage: React.FC = () => {
       <div className="container mx-auto px-4 py-6 max-w-5xl">
         {/* Wallet section */}
         <div className="mb-8">
-          {!user?.walletAddress ? (
+          {!(user?.walletAddress || user?.wallet_address) ? (
             <Card className="bg-[#1c3252] border-[#2a4365] overflow-hidden">
               <CardHeader className="bg-[#172a41] border-b border-[#2a4365]">
                 <CardTitle className="flex items-center text-lg">
@@ -92,13 +92,13 @@ const HomePage: React.FC = () => {
                   <div>
                     <p className="text-gray-300 mb-2">Your BSC wallet is connected</p>
                     <p className="font-mono bg-[#243b5c] p-2 rounded border border-[#2a4365] text-sm break-all">
-                      {user.walletAddress}
+                      {user.walletAddress || user.wallet_address || 'No wallet address found'}
                     </p>
                   </div>
                   <div className="mt-4 md:mt-0 text-center">
                     <div className="bg-[#243b5c] rounded-lg p-4 border border-[#2a4365]">
                       <p className="text-gray-300 text-sm">Current Balance</p>
-                      <p className="text-2xl font-bold text-amber-400">{user.totalTokens} GLRS</p>
+                      <p className="text-2xl font-bold text-amber-400">{user.totalTokens || user.total_points || 0} GLRS</p>
                     </div>
                   </div>
                 </div>
@@ -144,16 +144,16 @@ const HomePage: React.FC = () => {
                         <div className="flex-1">
                           <div className="flex justify-between items-start">
                             <h3 className="font-medium">
-                              {task.taskName.split('_').map(word => 
+                              {task.taskName ? task.taskName.split('_').map(word => 
                                 word.charAt(0).toUpperCase() + word.slice(1)
-                              ).join(' ')}
+                              ).join(' ') : 'Unknown Task'}
                             </h3>
                             <span className="flex items-center bg-[#1c3252] px-2 py-1 rounded-full text-xs text-amber-400">
-                              +{task.tokenAmount} GLRS
+                              +{task.tokenAmount || 0} GLRS
                             </span>
                           </div>
                           <p className="text-xs text-gray-400 mt-1">
-                            Completed on {new Date(task.completedAt).toLocaleDateString()}
+                            Completed on {task.completedAt ? new Date(task.completedAt).toLocaleDateString() : 'Unknown date'}
                           </p>
                         </div>
                       </div>
