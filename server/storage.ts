@@ -52,7 +52,7 @@ export interface IStorage {
   // Admin operations
   banUser(userId: number, banReason: string): Promise<User | undefined>;
   unbanUser(userId: number): Promise<User | undefined>;
-  resetUserTokens(userId: number): Promise<User | undefined>;
+  resetUserPoints(userId: number): Promise<User | undefined>;
   resetUserTasks(userId: number): Promise<User | undefined>;
   resetUserData(userId: number): Promise<User | undefined>;
   getTaskCompletionStats(): Promise<any>;

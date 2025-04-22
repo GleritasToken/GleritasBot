@@ -265,7 +265,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           userId: user.id,
           taskName,
           completed: true,
-          tokenAmount: task.tokenAmount,
+          pointAmount: task.pointAmount,
           verificationData: verificationData || null
         });
         
@@ -327,7 +327,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             userId: req.user!.id,
             taskName: "telegram_connect",
             completed: true,
-            tokenAmount: task.tokenAmount,
+            pointAmount: task.pointAmount,
             verificationData: "telegram_id_" + numericTelegramId
           });
         }
@@ -388,7 +388,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             userId: user.id,
             taskName: "wallet_submit",
             completed: true,
-            tokenAmount: walletTask.tokenAmount,
+            pointAmount: walletTask.pointAmount,
             verificationData: walletAddress
           });
         }
@@ -696,7 +696,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return {
           ...task,
           completionCount: completions.length,
-          totalPointsAwarded: completions.reduce((sum, ut) => sum + ut.tokenAmount, 0)
+          totalPointsAwarded: completions.reduce((sum, ut) => sum + ut.pointAmount, 0)
         };
       });
       

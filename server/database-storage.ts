@@ -396,7 +396,7 @@ export class DatabaseStorage implements IStorage {
   }
   
   // Reset only points, keep other data
-  async resetUserTokens(userId: number): Promise<User | undefined> {
+  async resetUserPoints(userId: number): Promise<User | undefined> {
     try {
       const result = await db.update(users)
         .set({
