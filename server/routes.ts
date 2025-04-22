@@ -556,9 +556,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "You must connect a wallet address before withdrawing tokens." });
       }
       
-      // Check if user has enough tokens
-      if (user.totalTokens < amount) {
-        return res.status(400).json({ message: "Insufficient token balance for withdrawal." });
+      // Check if user has enough points
+      if (user.totalPoints < amount) {
+        return res.status(400).json({ message: "Insufficient points balance for withdrawal." });
       }
       
       // Create withdrawal
@@ -570,9 +570,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         walletAddress: user.walletAddress
       });
       
-      // Update user's token balance
+      // Update user's points balance
       await storage.updateUser(user.id, { 
-        totalTokens: user.totalTokens - amount 
+        totalPoints: user.totalPoints - amount 
       });
       
       // Get updated user data
@@ -666,14 +666,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Count completed tasks
       const completedTasks = await storage.getAllUserTasks();
       
-      // Count total claimed tokens
-      const totalTokensClaimed = allUsers.reduce((sum, user) => sum + user.totalTokens, 0);
+      // Count total claimed points
+      const totalPointsClaimed = allUsers.reduce((sum, user) => sum + user.totalPoints, 0);
       
       res.json({
         totalUsers: allUsers.length,
         activeUsers: usersWithWallets.length,
         totalCompletedTasks: completedTasks.length,
-        totalTokensClaimed
+        totalPointsClaimed
       });
     } catch (error) {
       console.error("Admin stats error:", error);

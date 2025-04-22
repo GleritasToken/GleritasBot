@@ -395,20 +395,20 @@ export class DatabaseStorage implements IStorage {
     return result[0];
   }
   
-  // Reset only tokens, keep other data
+  // Reset only points, keep other data
   async resetUserTokens(userId: number): Promise<User | undefined> {
     try {
       const result = await db.update(users)
         .set({
-          totalTokens: 0,
-          referralTokens: 0
+          totalPoints: 0,
+          referralPoints: 0
         })
         .where(eq(users.id, userId))
         .returning();
       
       return result[0];
     } catch (error) {
-      console.error(`Error resetting user ${userId} tokens:`, error);
+      console.error(`Error resetting user ${userId} points:`, error);
       return undefined;
     }
   }
@@ -429,7 +429,7 @@ export class DatabaseStorage implements IStorage {
     }
   }
 
-  // Full reset of user data (tasks, tokens, connections)
+  // Full reset of user data (tasks, points, connections)
   async resetUserData(userId: number): Promise<User | undefined> {
     try {
       // First, delete all user tasks
@@ -439,10 +439,15 @@ export class DatabaseStorage implements IStorage {
       // Then reset user data
       const result = await db.update(users)
         .set({
-          totalTokens: 0,
-          referralTokens: 0,
+          totalPoints: 0,
+          referralPoints: 0,
           telegramId: null,
-          walletAddress: null
+          walletAddress: null,
+          isPremium: false,
+          premiumOptionChosen: null,
+          premiumTxHash: null,
+          pointsMultiplier: 1,
+          canWithdraw: false
         })
         .where(eq(users.id, userId))
         .returning();

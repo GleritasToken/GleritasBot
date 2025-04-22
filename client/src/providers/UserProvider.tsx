@@ -22,9 +22,17 @@ interface User {
   telegramId?: number;
   referralCode: string;
   referredBy: string | null;
-  totalTokens: number;
-  referralTokens: number;
+  // Changed from tokens to points
+  totalPoints: number;
+  referralPoints: number;
   referralCount: number;
+  // Premium fields
+  isPremium: boolean;
+  premiumOptionChosen?: string;
+  premiumTxHash?: string;
+  pointsMultiplier: number;
+  canWithdraw: boolean;
+  // Standard fields
   ipAddress: string | null;
   fingerprint: string | null;
   createdAt: string;
