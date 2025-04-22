@@ -7,14 +7,13 @@ import { useUser } from '@/providers/UserProvider';
 import { Wallet, Plus, ChevronDown, ChevronRight, ChevronUp } from 'lucide-react';
 import Navigation from '@/components/Navigation';
 import { useIsMobile } from '@/hooks/use-mobile';
-import MobileWalletConnect from '@/components/MobileWalletConnect';
+import SimpleWalletConnect from '@/components/SimpleWalletConnect';
 
 const HomePage: React.FC = () => {
   const { user } = useUser();
   const [showConnectWallet, setShowConnectWallet] = useState(false);
   const [showAllTasks, setShowAllTasks] = useState(false);
   const isMobile = useIsMobile();
-  const [showMobileWalletConnect, setShowMobileWalletConnect] = useState(false);
 
   // Filter completed tasks
   const completedTasks = user?.tasks?.filter(task => task.completed) || [];
@@ -24,24 +23,15 @@ const HomePage: React.FC = () => {
     ? completedTasks 
     : completedTasks.slice(0, 7);
   
-  // Handle wallet connection for mobile
+  // Handle wallet connection button click
   const handleWalletClick = () => {
-    if (isMobile) {
-      setShowMobileWalletConnect(true);
-    } else {
-      setShowConnectWallet(!showConnectWallet);
-    }
+    setShowConnectWallet(!showConnectWallet);
   };
   
-  // Handle mobile wallet connection
-  const handleMobileWalletConnect = (address: string) => {
-    // Handle the wallet connection here
-    setShowMobileWalletConnect(false);
-  };
-  
-  // Cancel mobile wallet connection
-  const handleMobileWalletCancel = () => {
-    setShowMobileWalletConnect(false);
+  // Wallet submit handler
+  const handleWalletSubmit = (address: string) => {
+    // Handle successful wallet connection
+    setShowConnectWallet(false);
   };
 
   return (
@@ -98,7 +88,7 @@ const HomePage: React.FC = () => {
                   <div className="mt-4 md:mt-0 text-center">
                     <div className="bg-[#243b5c] rounded-lg p-4 border border-[#2a4365]">
                       <p className="text-gray-300 text-sm">Current Balance</p>
-                      <p className="text-2xl font-bold text-amber-400">{user.totalTokens} GLRS</p>
+                      <p className="text-2xl font-bold text-amber-400">{user.totalPoints} GLRS</p>
                     </div>
                   </div>
                 </div>
