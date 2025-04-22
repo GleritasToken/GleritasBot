@@ -129,11 +129,22 @@ export class DatabaseStorage implements IStorage {
   
   async getUserWithTasks(userId: number): Promise<UserWithTasks | undefined> {
     try {
+      // Get user with raw SQL
       const user = await this.getUser(userId);
       if (!user) return undefined;
       
-      const userTasksList = await this.getUserTasks(userId);
-      return { ...user, tasks: userTasksList };
+      // Get tasks with raw SQL using snake_case column names
+      try {
+        const { rows } = await this.pool.query(
+          `SELECT * FROM user_tasks WHERE user_id = $1`,
+          [userId]
+        );
+        return { ...user, tasks: rows };
+      } catch (error) {
+        console.error("Error fetching user tasks:", error);
+        // Return user with empty tasks array to prevent application crashes
+        return { ...user, tasks: [] };
+      }
     } catch (error) {
       console.error("Error fetching user with tasks:", error);
       
@@ -262,9 +273,9 @@ export class DatabaseStorage implements IStorage {
   
   async getUserTasks(userId: number): Promise<UserTask[]> {
     try {
-      // Using raw query to avoid schema issues
+      // Column names with underscore instead of camelCase
       const { rows } = await this.pool.query(
-        `SELECT * FROM user_tasks WHERE "userId" = $1`,
+        `SELECT * FROM user_tasks WHERE user_id = $1`,
         [userId]
       );
       return rows;
@@ -277,10 +288,10 @@ export class DatabaseStorage implements IStorage {
   
   async getCompletedTasks(userId: number): Promise<UserTask[]> {
     try {
-      // Using raw query to avoid schema issues
+      // Column names with underscore instead of camelCase
       const { rows } = await this.pool.query(
         `SELECT * FROM user_tasks 
-         WHERE "userId" = $1 AND completed = true`,
+         WHERE user_id = $1 AND completed = true`,
         [userId]
       );
       return rows;
@@ -291,38 +302,57 @@ export class DatabaseStorage implements IStorage {
   }
   
   async completeUserTask(insertUserTask: InsertUserTask): Promise<UserTask> {
-    // Get the task to determine token amount
-    const task = await this.getTask(insertUserTask.taskName);
-    const tokenAmount = task ? task.tokenAmount : 0;
-    
-    const userTaskData = {
-      userId: insertUserTask.userId,
-      taskName: insertUserTask.taskName,
-      verificationData: insertUserTask.verificationData || null,
-      tokenAmount,
-      completed: true,
-      completedAt: new Date()
-    };
-    
-    // Insert the task completion record
-    const result = await db.insert(userTasks).values(userTaskData).returning();
-    
-    // Update user's total tokens
-    const user = await this.getUser(insertUserTask.userId);
-    if (user) {
-      const updatedTotalTokens = user.totalTokens + tokenAmount;
-      await this.updateUser(user.id, { totalTokens: updatedTotalTokens });
+    try {
+      // Get the task to determine token amount
+      const task = await this.getTask(insertUserTask.taskName);
+      const tokenAmount = task ? task.tokenAmount : 0;
+      const completedAt = new Date();
+      
+      // Use raw query with snake_case column names
+      const { rows } = await this.pool.query(
+        `INSERT INTO user_tasks (user_id, task_name, verification_data, token_amount, completed, completed_at)
+         VALUES ($1, $2, $3, $4, $5, $6)
+         RETURNING *`,
+        [
+          insertUserTask.userId,
+          insertUserTask.taskName,
+          insertUserTask.verificationData || null,
+          tokenAmount,
+          true,
+          completedAt
+        ]
+      );
+      
+      // Update user's total tokens
+      const user = await this.getUser(insertUserTask.userId);
+      if (user) {
+        // Check if we're using total_points or totalTokens in DB
+        try {
+          await this.pool.query(
+            `UPDATE users SET total_points = total_points + $1 WHERE id = $2`,
+            [tokenAmount, insertUserTask.userId]
+          );
+        } catch (tokenError) {
+          console.error("Error updating tokens:", tokenError);
+          // Fallback to ORM update
+          const updatedTotalTokens = user.totalTokens + tokenAmount;
+          await this.updateUser(user.id, { totalTokens: updatedTotalTokens });
+        }
+      }
+      
+      return rows[0];
+    } catch (error) {
+      console.error("Error completing task:", error);
+      throw error;
     }
-    
-    return result[0];
   }
   
   async checkTaskCompletion(userId: number, taskName: string): Promise<boolean> {
     try {
-      // Use raw query to avoid schema issues
+      // Column names with underscore instead of camelCase
       const { rows } = await this.pool.query(
         `SELECT * FROM user_tasks 
-         WHERE "userId" = $1 AND "taskName" = $2 AND completed = true`,
+         WHERE user_id = $1 AND task_name = $2 AND completed = true`,
         [userId, taskName]
       );
       return rows.length > 0;
@@ -491,13 +521,18 @@ export class DatabaseStorage implements IStorage {
   // Reset user tasks only
   async resetUserTasks(userId: number): Promise<User | undefined> {
     try {
-      // Delete all user tasks
-      await db.delete(userTasks)
-        .where(eq(userTasks.userId, userId));
+      // Delete all user tasks with raw SQL
+      await this.pool.query(
+        `DELETE FROM user_tasks WHERE user_id = $1`,
+        [userId]
+      );
       
       // Return the updated user
-      const [user] = await db.select().from(users).where(eq(users.id, userId));
-      return user;
+      const { rows } = await this.pool.query(
+        `SELECT * FROM users WHERE id = $1`,
+        [userId]
+      );
+      return rows[0];
     } catch (error) {
       console.error(`Error resetting user ${userId} tasks:`, error);
       return undefined;
@@ -507,22 +542,47 @@ export class DatabaseStorage implements IStorage {
   // Full reset of user data (tasks, tokens, connections)
   async resetUserData(userId: number): Promise<User | undefined> {
     try {
-      // First, delete all user tasks
-      await db.delete(userTasks)
-        .where(eq(userTasks.userId, userId));
+      // First, delete all user tasks with raw SQL
+      await this.pool.query(
+        `DELETE FROM user_tasks WHERE user_id = $1`,
+        [userId]
+      );
       
-      // Then reset user data
-      const result = await db.update(users)
-        .set({
-          totalTokens: 0,
-          referralTokens: 0,
-          telegramId: null,
-          walletAddress: null
-        })
-        .where(eq(users.id, userId))
-        .returning();
+      // Then reset user data with raw SQL, handling column name differences
+      try {
+        // Try with snake_case column names first (actual DB schema)
+        await this.pool.query(
+          `UPDATE users 
+           SET total_points = 0, 
+               referral_points = 0, 
+               telegram_id = NULL, 
+               wallet_address = NULL 
+           WHERE id = $1`,
+          [userId]
+        );
+      } catch (updateError) {
+        console.error("Error with snake_case update:", updateError);
+        
+        // Fallback to camelCase column names
+        const result = await db.update(users)
+          .set({
+            totalTokens: 0,
+            referralTokens: 0,
+            telegramId: null,
+            walletAddress: null
+          })
+          .where(eq(users.id, userId))
+          .returning();
+        
+        return result[0];
+      }
       
-      return result[0];
+      // Return the updated user
+      const { rows } = await this.pool.query(
+        `SELECT * FROM users WHERE id = $1`,
+        [userId]
+      );
+      return rows[0];
     } catch (error) {
       console.error(`Error resetting user ${userId} data:`, error);
       return undefined;
