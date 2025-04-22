@@ -308,10 +308,10 @@ const AdminTasksTab: React.FC = () => {
           <Button 
             onClick={() => setIsResetTasksDialogOpen(true)}
             variant="outline"
-            className="border-amber-600 text-amber-500 hover:bg-amber-950 hover:text-amber-400"
+            className="border-red-600 text-red-500 hover:bg-red-950 hover:text-red-400"
           >
             <RefreshCw className="h-4 w-4 mr-2" />
-            Reset All Tasks
+            Full User Reset
           </Button>
           <Button 
             onClick={handleOpenNewTaskDialog}
@@ -581,16 +581,24 @@ const AdminTasksTab: React.FC = () => {
       <AlertDialog open={isResetTasksDialogOpen} onOpenChange={setIsResetTasksDialogOpen}>
         <AlertDialogContent className="bg-[#1c3252] border-[#2a4365] text-white">
           <AlertDialogHeader>
-            <AlertDialogTitle>Reset all user task completions?</AlertDialogTitle>
+            <AlertDialogTitle>Full User Data Reset</AlertDialogTitle>
             <AlertDialogDescription className="text-gray-300">
               <p className="mb-2">
-                This action will reset all users' task completion history, allowing them to complete tasks again and earn tokens again.
+                This action will perform a <span className="font-bold text-red-400">complete reset</span> of all user data:
               </p>
-              <p className="mb-2">
-                Users will keep their current token balance, but will be able to re-complete all tasks for additional tokens.
+              <ul className="list-disc pl-5 mb-3 space-y-1">
+                <li>All task completion history will be deleted</li>
+                <li>All Telegram connections will be removed</li>
+                <li>All wallet addresses will be cleared</li>
+                <li>All token balances will be reset (except referral tokens)</li>
+                <li>All ban statuses will be removed</li>
+              </ul>
+              <p className="mb-3">
+                Users will need to reconnect their Telegram accounts and complete all tasks again.
+                Only usernames and referral data will be preserved.
               </p>
-              <p className="font-semibold text-amber-500">
-                This action cannot be undone and will affect all users on the platform.
+              <p className="font-semibold text-red-500 border border-red-500 p-2 rounded">
+                WARNING: This action cannot be undone and will affect ALL users on the platform.
               </p>
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -600,13 +608,13 @@ const AdminTasksTab: React.FC = () => {
             </AlertDialogCancel>
             <AlertDialogAction 
               onClick={() => resetAllTasksMutation.mutate()}
-              className="bg-amber-600 hover:bg-amber-700 text-white border-none"
+              className="bg-red-600 hover:bg-red-700 text-white border-none"
               disabled={resetAllTasksMutation.isPending}
             >
               {resetAllTasksMutation.isPending && (
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
               )}
-              Reset All Tasks
+              Reset All User Data
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
