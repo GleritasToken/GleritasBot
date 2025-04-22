@@ -467,7 +467,7 @@ const TasksPage: React.FC = () => {
                                     ).join(' ')}
                                   </h3>
                                   <span className="flex items-center bg-[#1c3252] px-3 py-1 rounded-full text-sm text-amber-400 font-medium md:ml-2">
-                                    +{task.pointAmount} GLRS
+                                    +{allTasks?.find(t => t.name === task.name)?.pointAmount || 0} GLRS
                                   </span>
                                 </div>
                                 <p className="text-gray-300 text-sm mb-4">
@@ -571,7 +571,7 @@ const TasksPage: React.FC = () => {
                                       backgroundColor: "rgba(76, 29, 149, 0.3)" 
                                     }}
                                   >
-                                    +{task.pointAmount} GLRS
+                                    +{task.pointAmount || allTasks?.find(t => t.name === task.taskName)?.pointAmount || 0} GLRS
                                   </motion.span>
                                 </div>
                                 <p className="text-gray-300 text-sm mb-2">
