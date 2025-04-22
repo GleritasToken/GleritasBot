@@ -125,10 +125,20 @@ export async function connectWallet(walletType?: string): Promise<string | null>
             console.error('Trust Wallet connection error:', error);
           }
         } else if (isMobileDevice) {
-          // Open Trust Wallet deep link on mobile
-          const deepLink = `https://link.trustwallet.com/open_url?coin_id=56&url=${encodeURIComponent(window.location.href)}`;
-          console.log("Opening Trust Wallet deep link:", deepLink);
-          window.open(deepLink, '_blank');
+          // Direct connection for Trust Wallet on mobile
+          const currentUrl = window.location.href;
+          console.log("Opening Trust Wallet deep link for mobile...");
+          
+          // Use trust:// protocol first for direct access
+          const directDeepLink = `trust://open_url?coin_id=56&url=${encodeURIComponent(currentUrl)}`;
+          window.location.href = directDeepLink;
+          
+          // Fallback to universal link after short delay
+          setTimeout(() => {
+            const universalLink = `https://link.trustwallet.com/open_url?coin_id=56&url=${encodeURIComponent(currentUrl)}`;
+            window.location.href = universalLink;
+          }, 300);
+          
           return null;
         }
         break;

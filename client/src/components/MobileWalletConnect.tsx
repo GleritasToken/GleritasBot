@@ -84,18 +84,19 @@ export default function MobileWalletConnect({ onConnect, onCancel }: MobileWalle
               setError('Could not connect to Trust Wallet. Please try again.');
             }
           } else {
-            // Updated universal link format for Trust Wallet
-            deepLink = `https://link.trustwallet.com/open_url?coin_id=56&url=${encodeURIComponent(window.location.href)}`;
+            // Use a more direct approach with Trust Wallet
+            const currentUrl = window.location.href;
+            // Direct Trust Wallet dApp browser URL with BSC network selection
+            deepLink = `trust://open_url?coin_id=56&url=${encodeURIComponent(currentUrl)}`;
             
-            // Open in a new tab first (to avoid navigation issues)
-            window.open(deepLink, '_blank');
+            // First, try with the trust:// protocol directly for in-app browsers
+            window.location.href = deepLink;
             
-            // Try direct app protocol for mobile
+            // Fallback to link.trustwallet.com for browser redirects after short delay
             setTimeout(() => {
-              // More specific protocol with URL for better compatibility
-              const directProtocol = `trust://open_url?coin_id=56&url=${encodeURIComponent(window.location.href)}`;
-              window.location.href = directProtocol;
-            }, 100);
+              const fallbackLink = `https://link.trustwallet.com/open_url?coin_id=56&url=${encodeURIComponent(currentUrl)}`;
+              window.location.href = fallbackLink;
+            }, 300);
             
             return;
           }
