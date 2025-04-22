@@ -229,8 +229,17 @@ export class DatabaseStorage implements IStorage {
   }
   
   async getTask(name: string): Promise<Task | undefined> {
-    const results = await db.select().from(tasks).where(eq(tasks.name, name));
-    return results[0];
+    try {
+      // Using raw query to avoid schema issues
+      const { rows } = await this.pool.query(
+        'SELECT * FROM tasks WHERE name = $1',
+        [name]
+      );
+      return rows[0];
+    } catch (error) {
+      console.error(`Error fetching task ${name}:`, error);
+      return undefined;
+    }
   }
   
   async createTask(insertTask: InsertTask): Promise<Task> {
@@ -461,7 +470,14 @@ export class DatabaseStorage implements IStorage {
   }
   
   async getAllWithdrawals(): Promise<Withdrawal[]> {
-    return await db.select().from(withdrawals);
+    try {
+      // Using raw query to avoid schema issues
+      const { rows } = await this.pool.query('SELECT * FROM withdrawals');
+      return rows;
+    } catch (error) {
+      console.error("Error fetching all withdrawals:", error);
+      return [];
+    }
   }
   
   async updateWithdrawalWithAdminAction(
@@ -491,41 +507,60 @@ export class DatabaseStorage implements IStorage {
   
   // Admin Operations
   async banUser(userId: number, banReason: string): Promise<User | undefined> {
-    const result = await db.update(users)
-      .set({
-        isBanned: true,
-        banReason
-      })
-      .where(eq(users.id, userId))
-      .returning();
-    
-    return result[0];
+    try {
+      // Using raw query to avoid schema issues
+      await this.pool.query(
+        `UPDATE users SET is_banned = true, ban_reason = $1 WHERE id = $2`,
+        [banReason, userId]
+      );
+      
+      // Return the updated user
+      const { rows } = await this.pool.query(
+        `SELECT * FROM users WHERE id = $1`,
+        [userId]
+      );
+      return rows[0];
+    } catch (error) {
+      console.error(`Error banning user ${userId}:`, error);
+      return undefined;
+    }
   }
   
   async unbanUser(userId: number): Promise<User | undefined> {
-    const result = await db.update(users)
-      .set({
-        isBanned: false,
-        banReason: null
-      })
-      .where(eq(users.id, userId))
-      .returning();
-    
-    return result[0];
+    try {
+      // Using raw query to avoid schema issues
+      await this.pool.query(
+        `UPDATE users SET is_banned = false, ban_reason = NULL WHERE id = $1`,
+        [userId]
+      );
+      
+      // Return the updated user
+      const { rows } = await this.pool.query(
+        `SELECT * FROM users WHERE id = $1`,
+        [userId]
+      );
+      return rows[0];
+    } catch (error) {
+      console.error(`Error unbanning user ${userId}:`, error);
+      return undefined;
+    }
   }
   
   // Reset only tokens, keep other data
   async resetUserTokens(userId: number): Promise<User | undefined> {
     try {
-      const result = await db.update(users)
-        .set({
-          totalTokens: 0,
-          referralTokens: 0
-        })
-        .where(eq(users.id, userId))
-        .returning();
+      // Using raw query to avoid schema issues
+      await this.pool.query(
+        `UPDATE users SET total_points = 0, referral_points = 0 WHERE id = $1`,
+        [userId]
+      );
       
-      return result[0];
+      // Return the updated user
+      const { rows } = await this.pool.query(
+        `SELECT * FROM users WHERE id = $1`,
+        [userId]
+      );
+      return rows[0];
     } catch (error) {
       console.error(`Error resetting user ${userId} tokens:`, error);
       return undefined;
@@ -605,32 +640,41 @@ export class DatabaseStorage implements IStorage {
   
   async resetAllUserTasks(): Promise<boolean> {
     try {
-      // Begin a transaction
-      await db.transaction(async (tx) => {
+      // Start a transaction manually
+      await this.pool.query('BEGIN');
+      
+      try {
+        // Delete all user tasks
+        await this.pool.query('DELETE FROM user_tasks');
+        
         // Get all users
         const allUsers = await this.getAllUsers();
         
-        // Delete all user tasks
-        await tx.delete(userTasks);
-        
         // Reset user data for all users
         for (const user of allUsers) {
-          await tx.update(users)
-            .set({
-              // Keep only username and referral-related data
-              telegramId: null,
-              walletAddress: null,
-              totalTokens: user.referralTokens, // Keep only referral tokens
-              ipAddress: null,
-              fingerprint: null,
-              isBanned: false,
-              banReason: null
-            })
-            .where(eq(users.id, user.id));
+          await this.pool.query(
+            `UPDATE users 
+             SET telegram_id = NULL, 
+                 wallet_address = NULL, 
+                 total_points = $1, 
+                 ip_address = NULL, 
+                 fingerprint = NULL, 
+                 is_banned = false, 
+                 ban_reason = NULL 
+             WHERE id = $2`,
+            [user.referral_points || 0, user.id]
+          );
         }
-      });
-      
-      return true;
+        
+        // Commit the transaction
+        await this.pool.query('COMMIT');
+        return true;
+      } catch (txError) {
+        // Rollback in case of error
+        await this.pool.query('ROLLBACK');
+        console.error("Transaction error during reset all tasks:", txError);
+        return false;
+      }
     } catch (error) {
       console.error("Error resetting all user tasks:", error);
       return false;
