@@ -153,16 +153,20 @@ const TasksPage: React.FC = () => {
   
   const hasTelegramConnect = completedTaskNames.includes('telegram_connect');
   
-  // Only include telegram_connect task if not connected
-  // Or include all other tasks if telegram is connected
+  // Filter available tasks based on Telegram connection status
   const availableTasks = allTasks?.filter(task => {
-    if (!user?.telegramId) {
-      // If user hasn't connected Telegram, only show the telegram_connect task
-      return task.name === 'telegram_connect' && !completedTaskNames.includes(task.name);
-    } else {
-      // If user has connected Telegram, show all uncompleted tasks
-      return !completedTaskNames.includes(task.name);
+    // First, don't show any completed tasks
+    if (completedTaskNames.includes(task.name)) {
+      return false;
     }
+    
+    // If user hasn't connected Telegram, ONLY show the telegram_connect task
+    if (!user?.telegramId) {
+      return task.name === 'telegram_connect';
+    }
+    
+    // If user has connected Telegram, show all other uncompleted tasks
+    return true;
   }) || [];
   
   const completedTasks = user?.tasks?.filter(task => task.completed) || [];
@@ -404,11 +408,22 @@ const TasksPage: React.FC = () => {
                     
                     <div className="mt-8 text-center py-12">
                       <AlertTriangle className="h-12 w-12 mx-auto mb-4 text-amber-400" />
-                      <h3 className="text-xl font-medium mb-2">Connect Telegram First</h3>
-                      <p className="text-gray-400">
-                        You need to connect your Telegram account to access airdrop tasks. 
-                        This step is required and will reward you with 30 GLRS tokens.
+                      <h3 className="text-xl font-medium mb-2">Step 1: Connect Telegram Account</h3>
+                      <p className="text-gray-400 mb-2">
+                        You must connect your Telegram account before you can access other airdrop tasks.
+                        This is the first required step of the airdrop process.
                       </p>
+                      <p className="text-amber-400 font-medium">
+                        Completing this task will reward you with 30 GLRS tokens!
+                      </p>
+                      <Button 
+                        size="lg" 
+                        className="bg-blue-600 hover:bg-blue-700 mt-4"
+                        onClick={() => setTelegramConnectOpen(true)}
+                      >
+                        <MessageCircle className="h-5 w-5 mr-2" />
+                        Connect Your Telegram Account
+                      </Button>
                     </div>
                   </motion.div>
                 ) : availableTasks.length === 0 ? (
