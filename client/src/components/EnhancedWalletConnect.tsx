@@ -41,7 +41,7 @@ export default function EnhancedWalletConnect({
         const encodedUrl = encodeURIComponent(miniAppUrl);
         
         const DEEP_LINKS = {
-          metamask: `ethereum:${window.location.href}`,
+          metamask: `https://metamask.app.link/dapp/${encodedUrl.replace('https://', '')}`,
           trustwallet: `https://link.trustwallet.com/open_url?coin_id=56&url=${encodedUrl}`
         };
         
@@ -235,7 +235,7 @@ export default function EnhancedWalletConnect({
       <CardHeader className="pb-3">
         <CardTitle>Connect Wallet</CardTitle>
         <CardDescription>
-          Connect your BSC wallet to receive GLRS tokens
+          Connect your BSC wallet to receive GLRS Points when qualifying activities are completed
         </CardDescription>
       </CardHeader>
       <CardContent>

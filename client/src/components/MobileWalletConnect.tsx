@@ -56,13 +56,14 @@ export default function MobileWalletConnect({ onConnect, onCancel }: MobileWalle
               setError('Could not connect to MetaMask. Please try again.');
             }
           } else {
-            deepLink = `https://metamask.app.link/dapp/${window.location.host}${window.location.pathname}`;
+            // Format for MetaMask deep link - use the app.link format without https://
+            deepLink = `https://metamask.app.link/dapp/${window.location.host.replace('https://', '')}${window.location.pathname}`;
             // Open in a new tab first (to avoid navigation issues)
             window.open(deepLink, '_blank');
             
             // Try direct app protocol for mobile
             setTimeout(() => {
-              const directProtocol = `ethereum:`;
+              const directProtocol = `ethereum:${window.location.href}`;
               window.location.href = directProtocol;
             }, 100);
             
@@ -83,7 +84,7 @@ export default function MobileWalletConnect({ onConnect, onCancel }: MobileWalle
               setError('Could not connect to Trust Wallet. Please try again.');
             }
           } else {
-            // Universal link format for Trust Wallet
+            // Updated universal link format for Trust Wallet
             deepLink = `https://link.trustwallet.com/open_url?coin_id=56&url=${encodeURIComponent(window.location.href)}`;
             
             // Open in a new tab first (to avoid navigation issues)
@@ -91,7 +92,8 @@ export default function MobileWalletConnect({ onConnect, onCancel }: MobileWalle
             
             // Try direct app protocol for mobile
             setTimeout(() => {
-              const directProtocol = `trust://`;
+              // More specific protocol with URL for better compatibility
+              const directProtocol = `trust://open_url?coin_id=56&url=${encodeURIComponent(window.location.href)}`;
               window.location.href = directProtocol;
             }, 100);
             
@@ -99,57 +101,7 @@ export default function MobileWalletConnect({ onConnect, onCancel }: MobileWalle
           }
           break;
           
-        case 'binance':
-          if (window.BinanceChain) {
-            try {
-              const accounts = await window.BinanceChain.request({ method: 'eth_requestAccounts' });
-              walletAddress = accounts[0];
-            } catch (err) {
-              console.error('Binance Wallet connection error:', err);
-              setError('Could not connect to Binance Wallet. Please try again.');
-            }
-          } else {
-            // Binance Wallet deep link - use custom URL scheme
-            deepLink = `bnc://link.binance.com/?applink=dapp%3A%2F%2F${window.location.host}`;
-            
-            // Open in a new tab first (to avoid navigation issues)
-            window.open(deepLink, '_blank');
-            
-            // Try direct app protocol for mobile
-            setTimeout(() => {
-              const directProtocol = `bnc://`;
-              window.location.href = directProtocol;
-            }, 100);
-            
-            return;
-          }
-          break;
-          
-        case 'coinbase':
-          if (window.ethereum?.isCoinbaseWallet) {
-            try {
-              const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-              walletAddress = accounts[0];
-            } catch (err) {
-              console.error('Coinbase Wallet connection error:', err);
-              setError('Could not connect to Coinbase Wallet. Please try again.');
-            }
-          } else {
-            // Coinbase Wallet deep link
-            deepLink = `https://go.cb-w.com/dapp?cb_url=${encodeURIComponent(window.location.href)}`;
-            
-            // Open in a new tab first (to avoid navigation issues)
-            window.open(deepLink, '_blank');
-            
-            // Try direct app protocol for mobile
-            setTimeout(() => {
-              const directProtocol = `cbwallet://`;
-              window.location.href = directProtocol;
-            }, 100);
-            
-            return;
-          }
-          break;
+        // Removed Binance and Coinbase wallet options as per requirements
       }
       
       if (walletAddress) {

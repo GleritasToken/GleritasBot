@@ -103,10 +103,10 @@ export async function connectWallet(walletType?: string): Promise<string | null>
             console.error('MetaMask connection error:', error);
           }
         } else if (isMobileDevice) {
-          // Open MetaMask deep link on mobile - use ethereum: protocol
-          const deepLink = `ethereum:${window.location.href}`;
+          // Open MetaMask deep link on mobile - use metamask.app.link format
+          const deepLink = `https://metamask.app.link/dapp/${window.location.host.replace('https://', '')}${window.location.pathname}`;
           console.log("Opening MetaMask deep link:", deepLink);
-          window.location.href = deepLink;
+          window.open(deepLink, '_blank');
           return null;
         }
         break;
@@ -216,18 +216,7 @@ export async function connectWallet(walletType?: string): Promise<string | null>
         return null;
       }
     } 
-    // Try Binance Chain Wallet
-    else if (window.BinanceChain) {
-      console.log("Binance Chain wallet detected");
-      try {
-        const accounts = await window.BinanceChain.request({ method: 'eth_requestAccounts' });
-        console.log("Connected Binance Chain accounts:", accounts);
-        return accounts[0];
-      } catch (error) {
-        console.error('Binance Chain Wallet connection error:', error);
-        return null;
-      }
-    } 
+    // Removed Binance Chain Wallet code as per requirements
     // Try Trust Wallet
     else if (window.trustwallet && window.trustwallet.ethereum) {
       console.log("Trust Wallet detected");
@@ -273,8 +262,6 @@ function detectEthereumProvider() {
     provider = window.ethereum;
   } else if (window.web3 && window.web3.currentProvider) {
     provider = window.web3.currentProvider;
-  } else if (window.BinanceChain) {
-    provider = window.BinanceChain;
   } else if (window.trustwallet && window.trustwallet.ethereum) {
     provider = window.trustwallet.ethereum;
   }
