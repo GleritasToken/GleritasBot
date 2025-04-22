@@ -258,10 +258,154 @@ export async function startBot() {
 }
 
 // Set up an API endpoint to initialize the Telegram Mini App in the frontend
+// Task verification methods
+export async function verifyTelegramChannel(userTelegramId: number, channelUsername: string): Promise<boolean> {
+  try {
+    // Make sure channel username starts with @ for the API call
+    const formattedChannelUsername = channelUsername.startsWith('@') 
+      ? channelUsername 
+      : `@${channelUsername}`;
+    
+    // Get chat member information
+    const member = await bot.telegram.getChatMember(formattedChannelUsername, userTelegramId);
+    
+    // Check if user is a member or admin
+    return ['member', 'administrator', 'creator'].includes(member.status);
+  } catch (error) {
+    console.error(`Error verifying channel membership for user ${userTelegramId}:`, error);
+    return false;
+  }
+}
+
+export async function verifyTelegramGroup(userTelegramId: number, groupUsername: string): Promise<boolean> {
+  try {
+    // Make sure group username starts with @ for the API call
+    const formattedGroupUsername = groupUsername.startsWith('@') 
+      ? groupUsername 
+      : `@${groupUsername}`;
+    
+    // Get chat member information
+    const member = await bot.telegram.getChatMember(formattedGroupUsername, userTelegramId);
+    
+    // Check if user is a member or admin
+    return ['member', 'administrator', 'creator'].includes(member.status);
+  } catch (error) {
+    console.error(`Error verifying group membership for user ${userTelegramId}:`, error);
+    return false;
+  }
+}
+
+export async function verifyTwitterFollow(userTelegramId: number, twitterUsername: string): Promise<boolean> {
+  // Twitter verification requires OAuth integration, which is beyond this simple example
+  // For now, return true - in a real implementation, you'd need to use Twitter API with user authentication
+  
+  // TODO: Implement actual Twitter verification when possible
+  console.log(`Simulating verification of Twitter follow for ${twitterUsername} by Telegram user ${userTelegramId}`);
+  return true;
+}
+
 export function setupTelegramRoutes(app: any) {
   // Webhook endpoint for Telegram
   app.post('/api/telegram-webhook', (req: any, res: any) => {
     bot.handleUpdate(req.body, res);
+  });
+  
+  // Task verification endpoint
+  app.post('/api/verify-task', async (req: any, res: any) => {
+    try {
+      const { userId, taskId, telegramId } = req.body;
+      
+      if (!userId || !taskId) {
+        return res.status(400).json({ 
+          success: false, 
+          error: "Missing userId or taskId" 
+        });
+      }
+      
+      // Get the user and task
+      const user = await storage.getUser(parseInt(userId));
+      const task = await storage.getTask(taskId);
+      
+      if (!user || !task) {
+        return res.status(404).json({ 
+          success: false, 
+          error: "User or task not found" 
+        });
+      }
+      
+      // Check if task is already completed
+      const isCompleted = await storage.checkTaskCompletion(user.id, taskId);
+      if (isCompleted) {
+        return res.json({ 
+          success: true, 
+          message: "Task already completed" 
+        });
+      }
+      
+      // Get the user's Telegram ID from fingerprint if available
+      const userTelegramId = telegramId || 
+        (user.fingerprint?.startsWith('telegram_') 
+          ? parseInt(user.fingerprint.replace('telegram_', ''))
+          : null);
+          
+      if (!userTelegramId) {
+        return res.status(400).json({
+          success: false,
+          error: "Telegram ID not available"
+        });
+      }
+      
+      let verificationSuccess = false;
+      let verificationData = "";
+      
+      // Verify task based on task type
+      switch(taskId) {
+        case 'telegram_channel':
+          verificationSuccess = await verifyTelegramChannel(userTelegramId, 'gleritaschat');
+          verificationData = "joined_channel";
+          break;
+          
+        case 'telegram_group':
+          verificationSuccess = await verifyTelegramGroup(userTelegramId, '+hcJdayisPFIxOGVk');
+          verificationData = "joined_group";
+          break;
+          
+        case 'twitter_follow':
+          verificationSuccess = await verifyTwitterFollow(userTelegramId, 'GleritasToken');
+          verificationData = "followed";
+          break;
+          
+        default:
+          // For other task types, we'll just accept the completion for now
+          verificationSuccess = true;
+          verificationData = "completed";
+      }
+      
+      if (verificationSuccess) {
+        // Complete the task
+        await storage.completeUserTask({
+          userId: user.id,
+          taskName: taskId,
+          verificationData
+        });
+        
+        return res.json({
+          success: true,
+          message: "Task verified and completed successfully"
+        });
+      } else {
+        return res.json({
+          success: false,
+          error: `Task verification failed. Please complete the task first.`
+        });
+      }
+    } catch (error) {
+      console.error("Error verifying task:", error);
+      return res.status(500).json({
+        success: false,
+        error: "Internal server error"
+      });
+    }
   });
   
   // Telegram user validation endpoint
