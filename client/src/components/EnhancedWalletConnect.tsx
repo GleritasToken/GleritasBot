@@ -8,7 +8,7 @@ import { SiMeta } from "react-icons/si";
 import { FaWallet } from "react-icons/fa";
 import { isTelegramMiniApp, TelegramMiniAppWebApp } from "@/lib/telegram-app";
 import { ethers } from "ethers";
-import { isValidAddress } from "@/lib/wallet-utils";
+import { isValidAddress, WALLET_DEEP_LINKS, WALLET_STORE_LINKS } from "@/lib/wallet-utils";
 
 // BSC Token Contract
 const TOKEN_ADDRESS = "0x7c427B65ebA206026A055B04c6086AC9af40B1B4";
@@ -35,23 +35,26 @@ export default function EnhancedWalletConnect({
     setConnecting(true);
     
     try {
+      // Detect device OS
+      const isAndroid = /Android/i.test(navigator.userAgent);
+      const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+      
+      // Choose the appropriate deep link based on device
+      const deepLink = isAndroid 
+        ? WALLET_DEEP_LINKS[walletType].android 
+        : WALLET_DEEP_LINKS[walletType].ios;
+      
+      // Store links if wallet not installed
+      const storeLink = isAndroid
+        ? WALLET_STORE_LINKS[walletType].android
+        : WALLET_STORE_LINKS[walletType].ios;
+      
       // Check if we're in a Telegram Mini App
       if (isTelegramMiniApp()) {
-        const miniAppUrl = window.location.origin;
-        const encodedUrl = encodeURIComponent(miniAppUrl);
+        console.log(`Opening ${walletType} via Telegram WebApp with deep link: ${deepLink}`);
         
-        const DEEP_LINKS = {
-          // Use direct ethereum: URI scheme instead of metamask.app.link to avoid SSL issues
-          metamask: `ethereum:${window.location.href}`,
-          trustwallet: `https://link.trustwallet.com/open_url?coin_id=56&url=${encodedUrl}`
-        };
-        
-        const FALLBACK_URLS = {
-          metamask: "https://metamask.io/download.html",
-          trustwallet: "https://trustwallet.com/download"
-        };
-        
-        TelegramMiniAppWebApp?.openLink(DEEP_LINKS[walletType]);
+        // Use Telegram's openLink method to open the wallet
+        TelegramMiniAppWebApp?.openLink(deepLink);
         
         // Give the wallet time to connect
         setTimeout(async () => {
@@ -60,7 +63,7 @@ export default function EnhancedWalletConnect({
             TelegramMiniAppWebApp?.showConfirm(
               `${walletType === 'metamask' ? 'MetaMask' : 'Trust Wallet'} not detected! Install it first?`,
               (confirmed: boolean) => {
-                if (confirmed) TelegramMiniAppWebApp?.openLink(FALLBACK_URLS[walletType]);
+                if (confirmed) TelegramMiniAppWebApp?.openLink(storeLink);
                 setConnecting(false);
               }
             );
@@ -133,13 +136,29 @@ export default function EnhancedWalletConnect({
         // Regular web browser connection logic
         // @ts-ignore
         if (!window.ethereum) {
-          toast({
-            title: "Wallet Not Found",
-            description: `Please install ${walletType === 'metamask' ? 'MetaMask' : 'Trust Wallet'} extension or app first.`,
-            variant: "destructive",
-          });
-          setConnecting(false);
-          return;
+          // For mobile without wallet but not in Telegram Mini App, open the wallet directly
+          if (isAndroid || isIOS) {
+            console.log(`Opening ${walletType} app with deep link: ${deepLink}`);
+            window.location.href = deepLink;
+            
+            // Set timeout to redirect to app store if wallet not installed
+            setTimeout(() => {
+              // If we're still here after 2 seconds, wallet probably isn't installed
+              // Redirect to app store
+              window.location.href = storeLink;
+              setConnecting(false);
+            }, 2000);
+            return;
+          } else {
+            // Desktop browser without extension
+            toast({
+              title: "Wallet Not Found",
+              description: `Please install ${walletType === 'metamask' ? 'MetaMask' : 'Trust Wallet'} extension or app first.`,
+              variant: "destructive",
+            });
+            setConnecting(false);
+            return;
+          }
         }
         
         try {
