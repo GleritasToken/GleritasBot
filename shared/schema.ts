@@ -22,7 +22,7 @@ export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   username: text("username").notNull().unique(),
   walletAddress: text("wallet_address"),
-  /* telegramId column will be added via migration */
+  telegramId: integer("telegram_id"),
   referralCode: text("referral_code").notNull().unique(),
   referredBy: text("referred_by"),
   totalTokens: integer("total_tokens").notNull().default(0),
@@ -114,9 +114,7 @@ export const insertWithdrawalSchema = createInsertSchema(withdrawals).omit({
 
 // Export types
 export type InsertUser = z.infer<typeof insertUserSchema>;
-export type User = typeof users.$inferSelect & {
-  telegramId?: number; // Add telegramId to the User type
-};
+export type User = typeof users.$inferSelect;
 
 export type InsertUserTask = z.infer<typeof insertUserTaskSchema>;
 export type UserTask = typeof userTasks.$inferSelect;

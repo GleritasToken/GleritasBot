@@ -92,10 +92,12 @@ const TelegramConnectDialog: React.FC<TelegramConnectDialogProps> = ({
               <div className="text-sm text-gray-400">
                 <p>To find your Telegram ID:</p>
                 <ol className="list-decimal pl-5 mt-1">
-                  <li>Send a message to @userinfobot on Telegram</li>
-                  <li>The bot will reply with your ID number</li>
-                  <li>Copy and paste the number here</li>
+                  <li>Open Telegram and search for "@userinfobot"</li>
+                  <li>Start a chat with this bot and send any message (like "Hi")</li>
+                  <li>The bot will reply with your Telegram ID (a number)</li>
+                  <li>Copy just the number and paste it here</li>
                 </ol>
+                <p className="text-amber-400 mt-2 text-xs">* Connecting your Telegram account will reward you with 30 GLRS tokens!</p>
               </div>
             </div>
 
