@@ -304,13 +304,23 @@ const AdminTasksTab: React.FC = () => {
     <div>
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold">Task Management</h2>
-        <Button 
-          onClick={handleOpenNewTaskDialog}
-          className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700"
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          Add New Task
-        </Button>
+        <div className="flex space-x-3">
+          <Button 
+            onClick={() => setIsResetTasksDialogOpen(true)}
+            variant="outline"
+            className="border-amber-600 text-amber-500 hover:bg-amber-950 hover:text-amber-400"
+          >
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Reset All Tasks
+          </Button>
+          <Button 
+            onClick={handleOpenNewTaskDialog}
+            className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700"
+          >
+            <Plus className="h-4 w-4 mr-2" />
+            Add New Task
+          </Button>
+        </div>
       </div>
       
       {isLoading ? (
@@ -562,6 +572,41 @@ const AdminTasksTab: React.FC = () => {
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
               )}
               Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      
+      {/* Reset All Tasks Confirmation Dialog */}
+      <AlertDialog open={isResetTasksDialogOpen} onOpenChange={setIsResetTasksDialogOpen}>
+        <AlertDialogContent className="bg-[#1c3252] border-[#2a4365] text-white">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Reset all user task completions?</AlertDialogTitle>
+            <AlertDialogDescription className="text-gray-300">
+              <p className="mb-2">
+                This action will reset all users' task completion history, allowing them to complete tasks again and earn tokens again.
+              </p>
+              <p className="mb-2">
+                Users will keep their current token balance, but will be able to re-complete all tasks for additional tokens.
+              </p>
+              <p className="font-semibold text-amber-500">
+                This action cannot be undone and will affect all users on the platform.
+              </p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="bg-transparent border-gray-600 text-gray-300 hover:bg-gray-800 hover:text-white">
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={() => resetAllTasksMutation.mutate()}
+              className="bg-amber-600 hover:bg-amber-700 text-white border-none"
+              disabled={resetAllTasksMutation.isPending}
+            >
+              {resetAllTasksMutation.isPending && (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              )}
+              Reset All Tasks
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
