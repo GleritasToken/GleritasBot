@@ -195,10 +195,23 @@ const TasksPage: React.FC = () => {
         window.open(task.link, '_blank', 'noopener,noreferrer');
       }
       
-      // Extract telegram ID from user data if available
-      const telegramId = user?.fingerprint?.startsWith('telegram_') 
-        ? parseInt(user.fingerprint.replace('telegram_', ''))
-        : undefined;
+      // Check if user has connected their Telegram account
+      if (!user?.telegramId) {
+        // Suggest connecting Telegram account
+        toast({
+          title: "Telegram Account Required",
+          description: "Please connect your Telegram account to verify this task automatically.",
+          action: (
+            <Button 
+              className="bg-blue-600 hover:bg-blue-700 text-xs py-1 px-2 h-auto"
+              onClick={() => setTelegramConnectOpen(true)}
+            >
+              Connect Now
+            </Button>
+          )
+        });
+        return;
+      }
       
       if (user) {
         // Show a helpful toast notification
@@ -211,7 +224,7 @@ const TasksPage: React.FC = () => {
         telegramVerifyMutation.mutate({
           userId: user.id,
           taskId: task.name,
-          telegramId
+          telegramId: user.telegramId
         });
       }
       return;
@@ -349,6 +362,39 @@ const TasksPage: React.FC = () => {
               </TabsList>
               
               <TabsContent value="available">
+                {/* Telegram Connect Button - only show if telegram tasks exist and user doesn't have telegramId */}
+                {allTasks?.some(task => task.name === 'telegram_channel' || task.name === 'telegram_group') && !user?.telegramId && (
+                  <motion.div 
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3 }}
+                    className="mb-5"
+                  >
+                    <Card className="bg-[#1a2e47] border-blue-500/50">
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center">
+                            <div className="bg-blue-500 p-2 rounded-full mr-3">
+                              <MessageCircle className="h-5 w-5" />
+                            </div>
+                            <div>
+                              <h3 className="font-medium">Connect Telegram Account</h3>
+                              <p className="text-sm text-gray-400">Automatically verify Telegram tasks</p>
+                            </div>
+                          </div>
+                          <Button 
+                            size="sm" 
+                            className="bg-blue-600 hover:bg-blue-700"
+                            onClick={() => setTelegramConnectOpen(true)}
+                          >
+                            Connect
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                )}
+                
                 {availableTasks.length === 0 ? (
                   <motion.div 
                     className="text-center py-12"
@@ -519,6 +565,19 @@ const TasksPage: React.FC = () => {
       {/* Footer with padding for mobile nav */}
       <div className="h-16 md:h-0"></div>
       
+      {/* Telegram Connect Dialog */}
+      <TelegramConnectDialog
+        isOpen={telegramConnectOpen}
+        onClose={() => setTelegramConnectOpen(false)}
+        onSuccess={() => {
+          refreshUser();
+          toast({
+            title: "Telegram Connected",
+            description: "Your Telegram account has been linked successfully. You can now verify Telegram tasks automatically.",
+          });
+        }}
+      />
+      
       {/* Task Verification Dialog */}
       <Dialog open={verificationDialogOpen} onOpenChange={setVerificationDialogOpen}>
         <DialogContent className="bg-[#1c3252] border-[#2a4365] text-white">
@@ -588,19 +647,14 @@ const TasksPage: React.FC = () => {
                   onClick={() => {
                     if (!currentTask || !user) return;
                     
-                    // Extract telegram ID from user data if available
-                    const telegramId = user.fingerprint?.startsWith('telegram_') 
-                      ? parseInt(user.fingerprint.replace('telegram_', ''))
-                      : undefined;
-                    
                     setVerificationDialogOpen(false);
                     setCompletedTaskId(`task-${currentTask.id}`);
                     
-                    // Use the Telegram verification API
+                    // Use the Telegram verification API with the stored telegramId
                     telegramVerifyMutation.mutate({
                       userId: user.id,
                       taskId: currentTask.name,
-                      telegramId
+                      telegramId: user.telegramId
                     });
                   }}
                   className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700"

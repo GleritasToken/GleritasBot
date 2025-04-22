@@ -342,8 +342,11 @@ export function setupTelegramRoutes(app: any) {
         });
       }
       
-      // Get the user's Telegram ID from fingerprint if available
-      const userTelegramId = telegramId || 
+      // Get the user's Telegram ID from multiple sources with priority:
+      // 1. User's telegramId property
+      // 2. telegramId from request
+      // 3. Telegram ID embedded in fingerprint
+      const userTelegramId = user.telegramId || telegramId || 
         (user.fingerprint?.startsWith('telegram_') 
           ? parseInt(user.fingerprint.replace('telegram_', ''))
           : null);
