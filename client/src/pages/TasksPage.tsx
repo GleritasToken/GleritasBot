@@ -71,7 +71,7 @@ const TasksPage: React.FC = () => {
         setTimeout(() => {
           setActiveTab('completed');
           setCompletedTaskId(null);
-        }, 3000);
+        }, 2000);
       } else {
         toast({
           title: "Verification Failed",
@@ -123,7 +123,7 @@ const TasksPage: React.FC = () => {
       setTimeout(() => {
         setActiveTab('completed');
         setCompletedTaskId(null);
-      }, 3000);
+      }, 2000);
     },
     onError: (error: Error) => {
       // Don't show error toast for pending verification tasks that have been redirected
@@ -346,7 +346,7 @@ const TasksPage: React.FC = () => {
       {/* Confetti effect */}
       <ConfettiEffect 
         run={showConfetti} 
-        duration={4000} 
+        duration={2000} 
         onComplete={() => setShowConfetti(false)} 
       />
       
