@@ -515,18 +515,18 @@ export class MemStorage implements IStorage {
     const stats = allTasks.map(task => {
       const completions = allUserTasks.filter(ut => ut.taskName === task.name && ut.completed);
       const completionCount = completions.length;
-      const totalTokensAwarded = completions.reduce((sum, ut) => sum + ut.tokenAmount, 0);
+      const totalPointsAwarded = completions.reduce((sum, ut) => sum + ut.pointAmount, 0);
       
       return {
         id: task.id,
         name: task.name,
         description: task.description,
-        tokenAmount: task.tokenAmount,
+        pointAmount: task.pointAmount,
         isRequired: task.isRequired,
         iconClass: task.iconClass,
         createdAt: task.createdAt,
         completionCount,
-        totalTokensAwarded
+        totalPointsAwarded
       };
     });
     
@@ -612,7 +612,7 @@ export class MemStorage implements IStorage {
       {
         name: "telegram_connect",
         description: "Connect your Telegram account",
-        tokenAmount: 30,
+        pointAmount: 30,
         isRequired: true,
         iconClass: "fab fa-telegram-plane text-blue-500",
         link: null
@@ -620,7 +620,7 @@ export class MemStorage implements IStorage {
       {
         name: "telegram_group",
         description: "Join our official Telegram group",
-        tokenAmount: 10,
+        pointAmount: 10,
         isRequired: true,
         iconClass: "fab fa-telegram-plane text-blue-500",
         link: "https://t.me/+hcJdayisPFIxOGVk"
@@ -628,7 +628,7 @@ export class MemStorage implements IStorage {
       {
         name: "telegram_channel",
         description: "Subscribe to our announcement channel",
-        tokenAmount: 5,
+        pointAmount: 5,
         isRequired: true,
         iconClass: "fab fa-telegram-plane text-blue-500",
         link: "https://t.me/gleritaschat"
@@ -636,7 +636,7 @@ export class MemStorage implements IStorage {
       {
         name: "twitter_follow",
         description: "Follow @GleritasToken on Twitter",
-        tokenAmount: 10,
+        pointAmount: 10,
         isRequired: true,
         iconClass: "fab fa-twitter text-blue-500",
         link: "https://twitter.com/GleritasToken"
@@ -644,7 +644,7 @@ export class MemStorage implements IStorage {
       {
         name: "twitter_engage",
         description: "Like, retweet, and comment on our pinned tweet",
-        tokenAmount: 10,
+        pointAmount: 10,
         isRequired: true,
         iconClass: "fab fa-twitter text-blue-500",
         link: "https://twitter.com/GleritasToken"
@@ -652,7 +652,7 @@ export class MemStorage implements IStorage {
       {
         name: "youtube",
         description: "Watch and like our intro video (Optional)",
-        tokenAmount: 10,
+        pointAmount: 10,
         isRequired: false,
         iconClass: "fab fa-youtube text-red-500",
         link: "https://www.youtube.com"
@@ -660,7 +660,7 @@ export class MemStorage implements IStorage {
       {
         name: "wallet_submit",
         description: "Provide a valid wallet address for token distribution",
-        tokenAmount: 0,
+        pointAmount: 0,
         isRequired: true,
         iconClass: "fas fa-wallet text-yellow-500",
         link: null
