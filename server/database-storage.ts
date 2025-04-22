@@ -195,7 +195,14 @@ export class DatabaseStorage implements IStorage {
   }
   
   async getAllUsers(): Promise<User[]> {
-    return await db.select().from(users);
+    try {
+      // Using raw query to avoid schema issues
+      const { rows } = await this.pool.query('SELECT * FROM users');
+      return rows;
+    } catch (error) {
+      console.error("Error fetching all users:", error);
+      return [];
+    }
   }
   
   async getAllUserTasks(): Promise<UserTask[]> {
@@ -211,7 +218,14 @@ export class DatabaseStorage implements IStorage {
   
   // Task operations
   async getAllTasks(): Promise<Task[]> {
-    return await db.select().from(tasks);
+    try {
+      // Using raw query to avoid schema issues
+      const { rows } = await this.pool.query('SELECT * FROM tasks');
+      return rows;
+    } catch (error) {
+      console.error("Error fetching all tasks:", error);
+      return [];
+    }
   }
   
   async getTask(name: string): Promise<Task | undefined> {
