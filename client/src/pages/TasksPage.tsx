@@ -362,13 +362,12 @@ const TasksPage: React.FC = () => {
               </TabsList>
               
               <TabsContent value="available">
-                {/* Telegram Connect Button - only show if telegram tasks exist and user doesn't have telegramId */}
-                {allTasks?.some(task => task.name === 'telegram_channel' || task.name === 'telegram_group') && !user?.telegramId && (
+                {/* Telegram Connect Button - show if user doesn't have telegramId */}
+                {!user?.telegramId ? (
                   <motion.div 
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.3 }}
-                    className="mb-5"
                   >
                     <Card className="bg-[#1a2e47] border-blue-500/50">
                       <CardContent className="p-4">
@@ -379,7 +378,7 @@ const TasksPage: React.FC = () => {
                             </div>
                             <div>
                               <h3 className="font-medium">Connect Telegram Account</h3>
-                              <p className="text-sm text-gray-400">Automatically verify Telegram tasks</p>
+                              <p className="text-sm text-gray-400">Required to participate in airdrop</p>
                             </div>
                           </div>
                           <Button 
@@ -392,10 +391,17 @@ const TasksPage: React.FC = () => {
                         </div>
                       </CardContent>
                     </Card>
+                    
+                    <div className="mt-8 text-center py-12">
+                      <AlertCircle className="h-12 w-12 mx-auto mb-4 text-amber-400" />
+                      <h3 className="text-xl font-medium mb-2">Connect Telegram First</h3>
+                      <p className="text-gray-400">
+                        You need to connect your Telegram account to access airdrop tasks. 
+                        This step is required and will reward you with 30 GLRS tokens.
+                      </p>
+                    </div>
                   </motion.div>
-                )}
-                
-                {availableTasks.length === 0 ? (
+                ) : availableTasks.length === 0 ? (
                   <motion.div 
                     className="text-center py-12"
                     initial={{ opacity: 0 }}

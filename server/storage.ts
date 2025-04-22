@@ -569,6 +569,14 @@ export class MemStorage implements IStorage {
   async initializeDefaultTasks(): Promise<void> {
     const defaultTasks: InsertTask[] = [
       {
+        name: "telegram_connect",
+        description: "Connect your Telegram account",
+        tokenAmount: 30,
+        isRequired: true,
+        iconClass: "fab fa-telegram-plane text-blue-500",
+        link: null
+      },
+      {
         name: "telegram_group",
         description: "Join our official Telegram group",
         tokenAmount: 10,

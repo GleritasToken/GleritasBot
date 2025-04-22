@@ -4,6 +4,7 @@ import { z } from "zod";
 
 // Define the task names as a union type for typesafety
 export const taskNames = [
+  "telegram_connect",
   "telegram_group",
   "telegram_channel",
   "twitter_follow",

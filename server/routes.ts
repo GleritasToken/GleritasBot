@@ -318,6 +318,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "User not found" });
       }
       
+      // Complete the telegram_connect task if not already completed
+      const task = await storage.getTask("telegram_connect");
+      if (task) {
+        const isCompleted = await storage.checkTaskCompletion(req.user!.id, "telegram_connect");
+        if (!isCompleted) {
+          await storage.completeUserTask({
+            userId: req.user!.id,
+            taskName: "telegram_connect",
+            completed: true,
+            tokenAmount: task.tokenAmount,
+            verificationData: "telegram_id_" + numericTelegramId
+          });
+        }
+      }
+      
       res.json({
         success: true,
         message: "Telegram account connected successfully"
