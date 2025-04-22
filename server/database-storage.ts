@@ -417,20 +417,27 @@ export class DatabaseStorage implements IStorage {
         // Delete all user tasks
         await tx.delete(userTasks);
         
-        // Reset totalTokens for all users (but keep referral tokens)
+        // Reset user data - keep only username and referralCode
         for (const user of allUsers) {
           await tx.update(users)
             .set({
-              // Keep only referral tokens
-              totalTokens: user.referralTokens
+              // Reset tokens but keep referral tokens
+              totalTokens: user.referralTokens,
+              // Reset all connection data
+              telegramId: null,
+              walletAddress: null,
+              // Reset all other task-related data
+              ipAddress: null,
+              fingerprint: null
             })
             .where(eq(users.id, user.id));
         }
       });
       
+      console.log("All user tasks and connections have been reset successfully");
       return true;
     } catch (error) {
-      console.error("Error resetting all user tasks:", error);
+      console.error("Error resetting all user tasks and connections:", error);
       return false;
     }
   }
