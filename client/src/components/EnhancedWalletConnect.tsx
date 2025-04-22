@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { BsFillWalletFill } from "react-icons/bs";
+import { SiMeta } from "react-icons/si";
 import { FaWallet } from "react-icons/fa";
 import { isTelegramMiniApp, TelegramMiniAppWebApp } from "@/lib/telegram-app";
 import { ethers } from "ethers";
@@ -214,7 +214,7 @@ export default function EnhancedWalletConnect({
           onClick={() => connectWallet('metamask')}
           disabled={connecting}
         >
-          {connecting ? <Loader2 className="h-4 w-4 animate-spin" /> : <BsFillWalletFill className="h-5 w-5 text-orange-500" />}
+          {connecting ? <Loader2 className="h-4 w-4 animate-spin" /> : <SiMeta className="h-5 w-5 text-orange-500" />}
           Connect MetaMask
         </Button>
         <Button 
@@ -246,7 +246,7 @@ export default function EnhancedWalletConnect({
             onClick={() => connectWallet('metamask')}
             disabled={connecting}
           >
-            {connecting ? <Loader2 className="h-4 w-4 animate-spin" /> : <BsFillWalletFill className="h-5 w-5 text-orange-500" />}
+            {connecting ? <Loader2 className="h-4 w-4 animate-spin" /> : <SiMeta className="h-5 w-5 text-orange-500" />}
             Connect MetaMask
           </Button>
           <Button 
