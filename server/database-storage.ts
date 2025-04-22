@@ -396,15 +396,27 @@ export class DatabaseStorage implements IStorage {
   }
   
   async resetUserTokens(userId: number): Promise<User | undefined> {
-    const result = await db.update(users)
-      .set({
-        totalTokens: 0,
-        referralTokens: 0
-      })
-      .where(eq(users.id, userId))
-      .returning();
-    
-    return result[0];
+    try {
+      // First, delete all user tasks
+      await db.delete(userTasks)
+        .where(eq(userTasks.userId, userId));
+      
+      // Then reset user data
+      const result = await db.update(users)
+        .set({
+          totalTokens: 0,
+          referralTokens: 0,
+          telegramId: null,
+          walletAddress: null
+        })
+        .where(eq(users.id, userId))
+        .returning();
+      
+      return result[0];
+    } catch (error) {
+      console.error(`Error resetting user ${userId} tokens:`, error);
+      return undefined;
+    }
   }
   
   async resetAllUserTasks(): Promise<boolean> {
@@ -417,12 +429,18 @@ export class DatabaseStorage implements IStorage {
         // Delete all user tasks
         await tx.delete(userTasks);
         
-        // Reset totalTokens for all users (but keep referral tokens)
+        // Reset user data for all users
         for (const user of allUsers) {
           await tx.update(users)
             .set({
-              // Keep only referral tokens
-              totalTokens: user.referralTokens
+              // Keep only username and referral-related data
+              telegramId: null,
+              walletAddress: null,
+              totalTokens: user.referralTokens, // Keep only referral tokens
+              ipAddress: null,
+              fingerprint: null,
+              isBanned: false,
+              banReason: null
             })
             .where(eq(users.id, user.id));
         }
