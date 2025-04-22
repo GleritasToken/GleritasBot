@@ -7,7 +7,7 @@ import {
   walletSubmissionSchema,
   createTaskSchema,
   banUserSchema,
-  resetTokensSchema,
+  resetPointsSchema,
   withdrawalActionSchema,
   withdrawalStatusUpdateSchema,
   taskNames,
@@ -850,11 +850,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
-  // Reset a user's tokens only (admin only)
-  app.post("/api/admin/users/:userId/reset-tokens", requireAdmin, async (req: Request, res: Response) => {
+  // Reset a user's points only (admin only)
+  app.post("/api/admin/users/:userId/reset-points", requireAdmin, async (req: Request, res: Response) => {
     try {
       const userId = parseInt(req.params.userId);
-      const validationResult = resetTokensSchema.safeParse({
+      const validationResult = resetPointsSchema.safeParse({
         userId,
         ...req.body
       });
@@ -886,7 +886,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/admin/users/:userId/reset-tasks", requireAdmin, async (req: Request, res: Response) => {
     try {
       const userId = parseInt(req.params.userId);
-      const validationResult = resetTokensSchema.safeParse({
+      const validationResult = resetPointsSchema.safeParse({
         userId,
         ...req.body
       });
@@ -918,7 +918,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/admin/users/:userId/reset-data", requireAdmin, async (req: Request, res: Response) => {
     try {
       const userId = parseInt(req.params.userId);
-      const validationResult = resetTokensSchema.safeParse({
+      const validationResult = resetPointsSchema.safeParse({
         userId,
         ...req.body
       });

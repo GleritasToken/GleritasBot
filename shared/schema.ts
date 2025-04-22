@@ -61,7 +61,7 @@ export const userTasks = pgTable("user_tasks", {
   userId: integer("user_id").notNull(),
   taskName: text("task_name").notNull(),
   completed: boolean("completed").notNull().default(false),
-  tokenAmount: integer("token_amount").notNull().default(0),
+  pointAmount: integer("token_amount").notNull().default(0),
   verificationData: text("verification_data"),
   completedAt: timestamp("completed_at"),
 });
@@ -76,7 +76,7 @@ export const referrals = pgTable("referrals", {
   id: serial("id").primaryKey(),
   referrerUserId: integer("referrer_user_id").notNull(),
   referredUserId: integer("referred_user_id").notNull(),
-  tokenAmount: integer("token_amount").notNull().default(0),
+  pointAmount: integer("token_amount").notNull().default(0),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
@@ -90,7 +90,7 @@ export const tasks = pgTable("tasks", {
   id: serial("id").primaryKey(),
   name: text("name").notNull().unique(),
   description: text("description").notNull(),
-  tokenAmount: integer("token_amount").notNull(),
+  pointAmount: integer("token_amount").notNull(),
   isRequired: boolean("is_required").notNull().default(true),
   iconClass: text("icon_class").notNull(),
   link: text("link"),
@@ -199,7 +199,7 @@ export const walletSubmissionSchema = z.object({
 export const createTaskSchema = z.object({
   name: z.string().min(3).max(50),
   description: z.string().min(3),
-  tokenAmount: z.number().min(1),
+  pointAmount: z.number().min(1),
   isRequired: z.boolean().default(false),
   iconClass: z.string(),
   link: z.union([
@@ -216,7 +216,7 @@ export const banUserSchema = z.object({
   banReason: z.string().min(3).max(255)
 });
 
-export const resetTokensSchema = z.object({
+export const resetPointsSchema = z.object({
   userId: z.number().positive(),
   reason: z.string().min(3).max(255).optional()
 });
@@ -237,7 +237,7 @@ export const withdrawalStatusUpdateSchema = z.object({
 });
 
 // Premium options enum
-export const premiumOptionTypes = ['boost_earnings', 'premium_tasks', 'priority_withdrawal'] as const;
+export const premiumOptionTypes = ['earnings_boost', 'premium_tasks', 'priority_withdrawals'] as const;
 export type PremiumOptionType = typeof premiumOptionTypes[number];
 
 // Fee payment schema for premium features

@@ -506,7 +506,7 @@ export class DatabaseStorage implements IStorage {
       const completions = allUserTasks.filter(ut => 
         ut.taskName === task.name && ut.completed);
       const completionCount = completions.length;
-      const totalTokensAwarded = completions.reduce((sum, ut) => 
+      const totalPointsAwarded = completions.reduce((sum, ut) => 
         sum + ut.tokenAmount, 0);
       
       return {
@@ -518,7 +518,7 @@ export class DatabaseStorage implements IStorage {
         iconClass: task.iconClass,
         createdAt: task.createdAt,
         completionCount,
-        totalTokensAwarded
+        totalPointsAwarded
       };
     });
   }
