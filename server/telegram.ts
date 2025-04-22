@@ -261,26 +261,41 @@ export async function startBot() {
 // Task verification methods
 export async function verifyTelegramChannel(userTelegramId: number, channelUsername: string): Promise<boolean> {
   try {
-    let chatIdentifier = channelUsername;
+    console.log(`Attempting to verify channel membership for user ${userTelegramId} in channel ${channelUsername}`);
     
     // Handle private channel links that start with +
     if (channelUsername.startsWith('+')) {
-      // For private channels, we need to use the invite link directly
-      // In production, we'd need more robust handling of these links
-      // For now, we'll simulate successful verification for testing when in development mode
+      // For private channels, we need special handling
+      
+      // In development mode, simulate successful verification for testing
       if (process.env.NODE_ENV === 'development') {
-        console.log(`Simulating verification for private channel (${channelUsername}) for user ${userTelegramId}`);
+        console.log(`[DEV MODE] Simulating verification for private channel (${channelUsername}) for user ${userTelegramId}`);
         return true;
       }
       
       try {
-        // Try to use the link directly
-        const member = await bot.telegram.getChatMember(`-${channelUsername.substring(1)}`, userTelegramId);
-        return ['member', 'administrator', 'creator'].includes(member.status);
+        // Try to use the invite code directly by converting the invite link format to chat ID format
+        // Note: This approach is experimental and might not work for all private channels
+        console.log(`Attempting to verify private channel membership using invite code: ${channelUsername}`);
+        const chatId = `-${channelUsername.substring(1)}`;
+        console.log(`Converted to chat ID: ${chatId}`);
+        
+        const member = await bot.telegram.getChatMember(chatId, userTelegramId);
+        const isVerified = ['member', 'administrator', 'creator'].includes(member.status);
+        console.log(`Verification result: ${isVerified ? 'Successfully verified' : 'Not verified'}`);
+        return isVerified;
       } catch (err) {
         console.error(`Could not verify private channel membership:`, err);
-        // If that fails, fall back to assuming verified (not ideal, but the best we can do without full channel access)
-        return true; 
+        
+        // For private channels, if verification fails, we should assume the user is not a member
+        // ONLY in development mode we'll return true as a fallback
+        if (process.env.NODE_ENV === 'development') {
+          console.log(`[DEV MODE] Falling back to simulated verification for private channel`);
+          return true;
+        }
+        
+        // In production, inform the user that verification failed
+        return false;
       }
     }
     
@@ -289,31 +304,57 @@ export async function verifyTelegramChannel(userTelegramId: number, channelUsern
       ? channelUsername 
       : `@${channelUsername}`;
     
+    console.log(`Checking membership in public channel: ${formattedChannelUsername}`);
+    
     // Get chat member information
     const member = await bot.telegram.getChatMember(formattedChannelUsername, userTelegramId);
     
     // Check if user is a member or admin
-    return ['member', 'administrator', 'creator'].includes(member.status);
+    const isVerified = ['member', 'administrator', 'creator'].includes(member.status);
+    console.log(`Public channel verification result: ${isVerified ? 'Successfully verified' : 'Not verified'}`);
+    
+    return isVerified;
   } catch (error) {
     console.error(`Error verifying channel membership for user ${userTelegramId}:`, error);
+    
+    // In development mode, return true to allow testing without actual channel access
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`[DEV MODE] Error occurred, falling back to simulated verification`);
+      return true;
+    }
+    
     return false;
   }
 }
 
 export async function verifyTelegramGroup(userTelegramId: number, groupUsername: string): Promise<boolean> {
   try {
+    console.log(`Attempting to verify group membership for user ${userTelegramId} in group ${groupUsername}`);
+    
     // Make sure group username starts with @ for the API call
     const formattedGroupUsername = groupUsername.startsWith('@') 
       ? groupUsername 
       : `@${groupUsername}`;
     
+    console.log(`Checking membership in group: ${formattedGroupUsername}`);
+    
     // Get chat member information
     const member = await bot.telegram.getChatMember(formattedGroupUsername, userTelegramId);
     
     // Check if user is a member or admin
-    return ['member', 'administrator', 'creator'].includes(member.status);
+    const isVerified = ['member', 'administrator', 'creator'].includes(member.status);
+    console.log(`Group verification result: ${isVerified ? 'Successfully verified' : 'Not verified'}, status: ${member.status}`);
+    
+    return isVerified;
   } catch (error) {
     console.error(`Error verifying group membership for user ${userTelegramId}:`, error);
+    
+    // In development mode, return true to allow testing without actual group access
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`[DEV MODE] Error occurred during group verification, falling back to simulated verification`);
+      return true;
+    }
+    
     return false;
   }
 }
@@ -385,26 +426,35 @@ export function setupTelegramRoutes(app: any) {
       let verificationData = "";
       
       // Verify task based on task type
+      console.log(`Verifying task ${taskId} for user ${userId} with Telegram ID ${userTelegramId}`);
+      
       switch(taskId) {
         case 'telegram_channel':
+          console.log(`Starting Telegram channel verification for user ${userId}`);
           // Channel link is https://t.me/+hcJdayisPFIxOGVk
           // For private channels, we need to use the invite link instead of username
           verificationSuccess = await verifyTelegramChannel(userTelegramId, '+hcJdayisPFIxOGVk');
           verificationData = "joined_channel";
+          console.log(`Telegram channel verification result: ${verificationSuccess ? 'Success' : 'Failed'}`);
           break;
           
         case 'telegram_group':
+          console.log(`Starting Telegram group verification for user ${userId}`);
           // Group link is https://t.me/gleritaschat
           verificationSuccess = await verifyTelegramGroup(userTelegramId, 'gleritaschat');
           verificationData = "joined_group";
+          console.log(`Telegram group verification result: ${verificationSuccess ? 'Success' : 'Failed'}`);
           break;
           
         case 'twitter_follow':
+          console.log(`Starting Twitter follow verification for user ${userId}`);
           verificationSuccess = await verifyTwitterFollow(userTelegramId, 'GleritasToken');
           verificationData = "followed";
+          console.log(`Twitter follow verification result: ${verificationSuccess ? 'Success' : 'Failed'}`);
           break;
           
         default:
+          console.log(`No specific verification for task type ${taskId}, auto-completing`);
           // For other task types, we'll just accept the completion for now
           verificationSuccess = true;
           verificationData = "completed";
