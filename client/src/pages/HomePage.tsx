@@ -1,13 +1,11 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import WalletSubmission from '@/components/WalletSubmission';
-import TaskCard from '@/components/TaskCard';
 import { useUser } from '@/providers/UserProvider';
-import { Wallet, Plus, ChevronDown, ChevronRight, ChevronUp } from 'lucide-react';
+import { Wallet, Plus, ChevronDown, ChevronUp } from 'lucide-react';
 import Navigation from '@/components/Navigation';
 import { useIsMobile } from '@/hooks/use-mobile';
-import SimpleWalletConnect from '@/components/SimpleWalletConnect';
+import TelegramWalletConnect from '@/components/TelegramWalletConnect';
 
 const HomePage: React.FC = () => {
   const { user } = useUser();
@@ -26,12 +24,6 @@ const HomePage: React.FC = () => {
   // Handle wallet connection button click
   const handleWalletClick = () => {
     setShowConnectWallet(!showConnectWallet);
-  };
-  
-  // Wallet submit handler
-  const handleWalletSubmit = (address: string) => {
-    // Handle successful wallet connection
-    setShowConnectWallet(false);
   };
 
   return (
@@ -52,11 +44,11 @@ const HomePage: React.FC = () => {
               </CardHeader>
               <CardContent className="p-6">
                 {showConnectWallet ? (
-                  <WalletSubmission />
+                  <TelegramWalletConnect />
                 ) : (
                   <div className="text-center">
                     <p className="mb-4 text-gray-300">
-                      Connect your BSC wallet to receive your GLRS tokens when the airdrop distribution begins.
+                      Connect your BSC wallet to receive your GLRS points when the airdrop distribution begins.
                     </p>
                     <Button 
                       onClick={handleWalletClick} 
@@ -178,16 +170,6 @@ const HomePage: React.FC = () => {
           </Card>
         </div>
       </div>
-      
-      {/* Mobile wallet connect modal */}
-      {showMobileWalletConnect && (
-        <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4">
-          <MobileWalletConnect 
-            onConnect={handleMobileWalletConnect}
-            onCancel={handleMobileWalletCancel}
-          />
-        </div>
-      )}
       
       {/* Footer with padding for mobile nav */}
       <div className="h-16 md:h-0"></div>

@@ -11,6 +11,7 @@ import WithdrawalPage from "@/pages/WithdrawalPage";
 import AboutPage from "@/pages/AboutPage";
 import AdminPage from "@/pages/AdminPage";
 import AuthPage from "@/pages/auth-page";
+import WalletConnectPage from "@/pages/WalletConnectPage";
 // Theme provider removed - using fixed dark theme
 import { UserProvider } from "@/providers/UserProvider";
 import { TelegramProvider, useTelegram } from "@/providers/TelegramProvider";
@@ -193,6 +194,7 @@ function Router() {
         <ProtectedRoute path="/about" component={AboutPage} />
         <ProtectedRoute path="/admin" component={AdminPage} />
         <Route path="/auth" component={AuthPage} />
+        <Route path="/wallet-connect" component={WalletConnectPage} />
         {/* Fallback to 404 */}
         <Route component={NotFound} />
       </Switch>
