@@ -76,7 +76,7 @@ export const referrals = pgTable("referrals", {
   id: serial("id").primaryKey(),
   referrerUserId: integer("referrer_user_id").notNull(),
   referredUserId: integer("referred_user_id").notNull(),
-  pointAmount: integer("token_amount").notNull().default(0),
+  pointAmount: integer("point_amount").notNull().default(0),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
@@ -85,12 +85,12 @@ export const insertReferralSchema = createInsertSchema(referrals).omit({
   createdAt: true
 });
 
-// Task definitions (token rewards and requirements)
+// Task definitions (point rewards and requirements)
 export const tasks = pgTable("tasks", {
   id: serial("id").primaryKey(),
   name: text("name").notNull().unique(),
   description: text("description").notNull(),
-  pointAmount: integer("token_amount").notNull(),
+  pointAmount: integer("point_amount").notNull(),
   isRequired: boolean("is_required").notNull().default(true),
   iconClass: text("icon_class").notNull(),
   link: text("link"),
