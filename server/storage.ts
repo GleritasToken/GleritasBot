@@ -53,8 +53,6 @@ export interface IStorage {
   banUser(userId: number, banReason: string): Promise<User | undefined>;
   unbanUser(userId: number): Promise<User | undefined>;
   resetUserTokens(userId: number): Promise<User | undefined>;
-  resetUserTasks(userId: number): Promise<User | undefined>;
-  resetUserData(userId: number): Promise<User | undefined>;
   getTaskCompletionStats(): Promise<any>;
   getUserActivityStats(): Promise<any>;
   
@@ -457,34 +455,6 @@ export class MemStorage implements IStorage {
   }
   
   async resetUserTokens(userId: number): Promise<User | undefined> {
-    const user = this.users.get(userId);
-    if (!user) return undefined;
-    
-    const updatedUser = { 
-      ...user,
-      totalTokens: 0,
-      referralTokens: 0
-    };
-    
-    this.users.set(userId, updatedUser);
-    return updatedUser;
-  }
-  
-  async resetUserTasks(userId: number): Promise<User | undefined> {
-    const user = this.users.get(userId);
-    if (!user) return undefined;
-    
-    // Delete all user tasks
-    for (const [id, task] of this.userTasks.entries()) {
-      if (task.userId === userId) {
-        this.userTasks.delete(id);
-      }
-    }
-    
-    return user;
-  }
-  
-  async resetUserData(userId: number): Promise<User | undefined> {
     const user = this.users.get(userId);
     if (!user) return undefined;
     
