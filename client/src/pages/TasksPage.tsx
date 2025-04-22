@@ -42,7 +42,52 @@ const TasksPage: React.FC = () => {
     }
   });
   
-  // Complete task mutation
+  // Telegram verification mutation
+  const telegramVerifyMutation = useMutation({
+    mutationFn: async (data: {userId: number, taskId: string, telegramId?: number}) => {
+      const response = await apiRequest('POST', '/api/verify-task', data);
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Verification failed. Please make sure you've completed the task.");
+      }
+      
+      return response.json();
+    },
+    onSuccess: (data) => {
+      if (data.success) {
+        queryClient.invalidateQueries({ queryKey: ['/api/user'] });
+        refreshUser();
+        setShowConfetti(true);
+        
+        toast({
+          title: "Task Verified!",
+          description: "You've earned GLRS tokens for completing this task!",
+        });
+        
+        // Auto-switch to completed tab after a delay
+        setTimeout(() => {
+          setActiveTab('completed');
+          setCompletedTaskId(null);
+        }, 3000);
+      } else {
+        toast({
+          title: "Verification Failed",
+          description: data.error || "Please make sure you've completed the task first.",
+          variant: "destructive",
+        });
+      }
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Verification Failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  });
+  
+  // Complete task mutation (legacy)
   const completeMutation = useMutation({
     mutationFn: async (data: {taskName: string; verificationData?: string}) => {
       const response = await apiRequest('POST', '/api/tasks/complete', data);
@@ -138,15 +183,45 @@ const TasksPage: React.FC = () => {
   
   // Handle task action (start or verify)
   const handleTaskAction = (task: Task) => {
-    // For tasks that require verification, open the verification dialog
+    // Set the task as the one being completed (for animation)
+    setCompletedTaskId(`task-${task.id}`);
+    
+    // For Telegram-specific tasks, use our new verification API
+    if (task.name === 'telegram_channel' || task.name === 'telegram_group') {
+      // If the task has a link, open it first
+      if (task.link) {
+        window.open(task.link, '_blank', 'noopener,noreferrer');
+      }
+      
+      // Extract telegram ID from user data if available
+      const telegramId = user?.fingerprint?.startsWith('telegram_') 
+        ? parseInt(user.fingerprint.replace('telegram_', ''))
+        : undefined;
+      
+      if (user) {
+        // Show a helpful toast notification
+        toast({
+          title: "Verifying your task...",
+          description: "Please make sure you've joined the channel/group before verification.",
+        });
+        
+        // Use the Telegram verification API
+        telegramVerifyMutation.mutate({
+          userId: user.id,
+          taskId: task.name,
+          telegramId
+        });
+      }
+      return;
+    }
+    
+    // For other tasks that require verification, open the verification dialog
     if (needsVerification(task)) {
       openVerificationDialog(task);
       return;
     }
     
     // For simple tasks or tasks with links only
-    setCompletedTaskId(`task-${task.id}`);
-    
     // If the task has a link, just open the link and don't auto-complete
     if (task.link) {
       window.open(task.link, '_blank', 'noopener,noreferrer');
@@ -448,15 +523,26 @@ const TasksPage: React.FC = () => {
           <DialogHeader>
             <DialogTitle>Verify Task Completion</DialogTitle>
             <DialogDescription className="text-gray-400">
-              {currentTask ? (
-                <>Please provide verification for completing the "{currentTask.name.split('_').map(word => 
-                  word.charAt(0).toUpperCase() + word.slice(1)
-                ).join(' ')}" task.</>
-              ) : 'Please provide verification to complete this task.'}
+              {currentTask?.name === 'telegram_group' || currentTask?.name === 'telegram_channel' ? (
+                <>
+                  To verify this task automatically, make sure you've completed these steps:
+                  <ol className="list-decimal pl-5 mt-2 space-y-1">
+                    <li>Join the {currentTask.name === 'telegram_group' ? 'Telegram group' : 'Telegram channel'}</li>
+                    <li>Ensure you're using the same Telegram account that's connected to this app</li>
+                    <li>Click "Verify Automatically" below to check your membership</li>
+                  </ol>
+                </>
+              ) : (
+                currentTask ? (
+                  <>Please provide verification for completing the "{currentTask.name.split('_').map(word => 
+                    word.charAt(0).toUpperCase() + word.slice(1)
+                  ).join(' ')}" task.</>
+                ) : 'Please provide verification to complete this task.'
+              )}
             </DialogDescription>
           </DialogHeader>
           
-          <form onSubmit={handleVerificationSubmit}>
+          {(currentTask?.name === 'telegram_group' || currentTask?.name === 'telegram_channel') ? (
             <div className="space-y-4 py-4">
               {verificationError && (
                 <div className="flex items-center bg-red-900/30 text-red-200 p-3 rounded text-sm mb-4">
@@ -465,65 +551,141 @@ const TasksPage: React.FC = () => {
                 </div>
               )}
               
-              {currentTask && (
-                <div className="grid gap-4">
-                  <Label htmlFor="verification-data" className="text-sm">
-                    {getVerificationFieldInfo(currentTask.name).label}
-                  </Label>
-                  <Input
-                    id="verification-data"
-                    value={verificationData}
-                    onChange={e => setVerificationData(e.target.value)}
-                    placeholder={getVerificationFieldInfo(currentTask.name).placeholder}
-                    className="bg-[#172a41] border-[#2a4365]"
-                  />
-                  
-                  {currentTask.link && (
-                    <div className="flex items-center text-sm mt-2 text-blue-400">
-                      <p>If you haven't completed the task yet, <a 
-                        href={currentTask.link} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="underline hover:text-blue-300"
-                        onClick={() => {
-                          if (currentTask.link) {
-                            window.open(currentTask.link, '_blank', 'noopener,noreferrer');
-                          }
-                        }}
-                      >click here</a> to get started.</p>
-                    </div>
-                  )}
+              <p className="text-sm text-white/80">
+                Our system will verify your membership in the {currentTask.name === 'telegram_group' ? 'Telegram group' : 'Telegram channel'} automatically using the Telegram Bot API.
+              </p>
+              
+              {currentTask.link && (
+                <div className="flex items-center text-sm mt-2 text-blue-400">
+                  <p>If you haven't joined yet, <a 
+                    href={currentTask.link} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="underline hover:text-blue-300"
+                    onClick={() => {
+                      if (currentTask.link) {
+                        window.open(currentTask.link, '_blank', 'noopener,noreferrer');
+                      }
+                    }}
+                  >click here</a> to join now.</p>
                 </div>
               )}
+              
+              <DialogFooter>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setVerificationDialogOpen(false)}
+                  className="border-gray-500 text-gray-300 hover:bg-gray-700 hover:text-white"
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  type="button"
+                  disabled={telegramVerifyMutation.isPending}
+                  onClick={() => {
+                    if (!currentTask || !user) return;
+                    
+                    // Extract telegram ID from user data if available
+                    const telegramId = user.fingerprint?.startsWith('telegram_') 
+                      ? parseInt(user.fingerprint.replace('telegram_', ''))
+                      : undefined;
+                    
+                    setVerificationDialogOpen(false);
+                    setCompletedTaskId(`task-${currentTask.id}`);
+                    
+                    // Use the Telegram verification API
+                    telegramVerifyMutation.mutate({
+                      userId: user.id,
+                      taskId: currentTask.name,
+                      telegramId
+                    });
+                  }}
+                  className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700"
+                >
+                  {telegramVerifyMutation.isPending && (
+                    <motion.div
+                      className="mr-2"
+                      animate={{ rotate: 360 }}
+                      transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                    >
+                      <CircleDashed className="h-4 w-4" />
+                    </motion.div>
+                  )}
+                  Verify Automatically
+                </Button>
+              </DialogFooter>
             </div>
-            
-            <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setVerificationDialogOpen(false)}
-                className="border-gray-500 text-gray-300 hover:bg-gray-700 hover:text-white"
-              >
-                Cancel
-              </Button>
-              <Button 
-                type="submit"
-                disabled={completeMutation.isPending}
-                className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700"
-              >
-                {completeMutation.isPending && (
-                  <motion.div
-                    className="mr-2"
-                    animate={{ rotate: 360 }}
-                    transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                  >
-                    <CircleDashed className="h-4 w-4" />
-                  </motion.div>
+          ) : (
+            <form onSubmit={handleVerificationSubmit}>
+              <div className="space-y-4 py-4">
+                {verificationError && (
+                  <div className="flex items-center bg-red-900/30 text-red-200 p-3 rounded text-sm mb-4">
+                    <AlertTriangle className="h-4 w-4 mr-2 flex-shrink-0" />
+                    <p>{verificationError}</p>
+                  </div>
                 )}
-                Verify & Complete
-              </Button>
-            </DialogFooter>
-          </form>
+                
+                {currentTask && (
+                  <div className="grid gap-4">
+                    <Label htmlFor="verification-data" className="text-sm">
+                      {getVerificationFieldInfo(currentTask.name).label}
+                    </Label>
+                    <Input
+                      id="verification-data"
+                      value={verificationData}
+                      onChange={e => setVerificationData(e.target.value)}
+                      placeholder={getVerificationFieldInfo(currentTask.name).placeholder}
+                      className="bg-[#172a41] border-[#2a4365]"
+                    />
+                    
+                    {currentTask.link && (
+                      <div className="flex items-center text-sm mt-2 text-blue-400">
+                        <p>If you haven't completed the task yet, <a 
+                          href={currentTask.link} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="underline hover:text-blue-300"
+                          onClick={() => {
+                            if (currentTask.link) {
+                              window.open(currentTask.link, '_blank', 'noopener,noreferrer');
+                            }
+                          }}
+                        >click here</a> to get started.</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+              
+              <DialogFooter>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setVerificationDialogOpen(false)}
+                  className="border-gray-500 text-gray-300 hover:bg-gray-700 hover:text-white"
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  type="submit"
+                  disabled={completeMutation.isPending}
+                  className="bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700"
+                >
+                  {completeMutation.isPending && (
+                    <motion.div
+                      className="mr-2"
+                      animate={{ rotate: 360 }}
+                      transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                    >
+                      <CircleDashed className="h-4 w-4" />
+                    </motion.div>
+                  )}
+                  Verify & Complete
+                </Button>
+              </DialogFooter>
+            </form>
+          )}
         </DialogContent>
       </Dialog>
     </div>
