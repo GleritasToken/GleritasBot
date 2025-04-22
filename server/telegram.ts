@@ -97,10 +97,10 @@ bot.command('status', async (ctx) => {
     const completedTasks = userWithTasks.tasks.length;
     const totalTasks = tasks.length;
     
-    let message = `📊 *GLRS Token Airdrop Status*\n\n` +
+    let message = `📊 *GLRS Points Airdrop Status*\n\n` +
       `👤 Username: ${user.username}\n` +
-      `🪙 Total Tokens: ${user.totalTokens}\n` +
-      `👥 Referral Tokens: ${user.referralTokens}\n` +
+      `🪙 Total Points: ${user.totalPoints}\n` +
+      `👥 Referral Points: ${user.referralPoints}\n` +
       `👨‍👩‍👧‍👦 Referral Count: ${user.referralCount}\n` +
       `✅ Tasks Completed: ${completedTasks}/${totalTasks}\n\n`;
       
@@ -110,7 +110,7 @@ bot.command('status', async (ctx) => {
       message += `⚠️ Wallet not submitted yet! Please submit your wallet address in the app.\n\n`;
     }
     
-    message += `Use the Web App to complete remaining tasks and earn more tokens!`;
+    message += `Use the Web App to complete remaining tasks and earn more points!`;
     
     await ctx.reply(message, { parse_mode: 'Markdown' });
   } catch (error) {
@@ -137,12 +137,12 @@ bot.command('referral', async (ctx) => {
     const referralLink = `https://t.me/${bot.botInfo?.username}?start=${user.referralCode}`;
     
     await ctx.reply(
-      `🎯 *Your GLRS Token Referral Link*\n\n` +
-      `Share this link to earn 5 tokens for each referral:\n\n` +
+      `🎯 *Your GLRS Points Referral Link*\n\n` +
+      `Share this link to earn 5 points for each referral:\n\n` +
       `${referralLink}\n\n` +
       `👨‍👩‍👧‍👦 Current Referrals: ${user.referralCount}\n` +
-      `🪙 Referral Tokens Earned: ${user.referralTokens}\n\n` +
-      `You can earn up to 250 tokens from referrals (50 referrals max).`,
+      `🪙 Referral Points Earned: ${user.referralPoints}\n\n` +
+      `You can earn up to 250 points from referrals (50 referrals max).`,
       { parse_mode: 'Markdown' }
     );
   } catch (error) {
@@ -188,13 +188,13 @@ bot.on('text', async (ctx) => {
         await storage.createReferral({
           referrerUserId: referrer.id,
           referredUserId: user.id,
-          tokenAmount: 5
+          pointAmount: 5
         });
         
         await ctx.reply(
-          `Welcome to the GLRS Token Airdrop, ${username}! 🚀\n\n` +
+          `Welcome to the GLRS Points Airdrop, ${username}! 🚀\n\n` +
           `You were referred by ${referrer.username}.\n\n` +
-          `Complete tasks to earn tokens for the upcoming airdrop.`
+          `Complete tasks to earn points for the upcoming airdrop.`
         );
       }
       
@@ -710,8 +710,8 @@ export function setupTelegramRoutes(app: any) {
             username: user.username,
             walletAddress: user.walletAddress,
             referralCode: user.referralCode,
-            totalTokens: user.totalTokens,
-            referralTokens: user.referralTokens,
+            totalPoints: user.totalPoints,
+            referralPoints: user.referralPoints,
             referralCount: user.referralCount
           }
         });
