@@ -103,10 +103,10 @@ export async function connectWallet(walletType?: string): Promise<string | null>
             console.error('MetaMask connection error:', error);
           }
         } else if (isMobileDevice) {
-          // Open MetaMask deep link on mobile - use metamask.app.link format
-          const deepLink = `https://metamask.app.link/dapp/${window.location.host.replace('https://', '')}${window.location.pathname}`;
+          // Open MetaMask deep link on mobile - use ethereum: protocol which is more reliable
+          const deepLink = `ethereum:${window.location.href}`;
           console.log("Opening MetaMask deep link:", deepLink);
-          window.open(deepLink, '_blank');
+          window.location.href = deepLink;
           return null;
         }
         break;
@@ -237,11 +237,11 @@ export async function connectWallet(walletType?: string): Promise<string | null>
       const hostUrl = window.location.host;
       const currentUrl = window.location.href;
       
-      // If on mobile, provide links to download wallet apps or open if installed
-      let walletDeepLink = `https://metamask.app.link/dapp/${hostUrl}`;
+      // If on mobile, use ethereum: protocol which works more reliably than metamask.app.link
+      let walletDeepLink = `ethereum:${currentUrl}`;
       
       console.log("Opening wallet deep link:", walletDeepLink);
-      window.open(walletDeepLink, '_blank');
+      window.location.href = walletDeepLink;
       return null;
     } else {
       // No supported wallet found
