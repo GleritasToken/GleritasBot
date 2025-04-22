@@ -9,7 +9,7 @@ import { useUser } from '@/providers/UserProvider';
 import { apiRequest } from '@/lib/queryClient';
 import GleritasLogo from '@/components/GleritasLogo';
 import { useIsMobile } from '@/hooks/use-mobile';
-import MobileWalletConnect from '@/components/MobileWalletConnect';
+import EnhancedWalletConnect from '@/components/EnhancedWalletConnect';
 
 const WalletSubmission: React.FC = () => {
   const { user, refreshUser } = useUser();
@@ -181,9 +181,10 @@ const WalletSubmission: React.FC = () => {
   if (showMobileConnect) {
     return (
       <div className="mt-4">
-        <MobileWalletConnect 
-          onConnect={handleWalletSelected}
-          onCancel={() => setShowMobileConnect(false)}
+        <EnhancedWalletConnect 
+          onWalletConnected={handleWalletSelected}
+          isConnecting={isSubmitting}
+          showCard={true}
         />
       </div>
     );
@@ -202,23 +203,11 @@ const WalletSubmission: React.FC = () => {
         </p>
       </div>
       
-      <Button 
-        onClick={handleAutoConnect}
-        className="w-full bg-amber-500 hover:bg-amber-600 text-black font-medium"
-        disabled={isSubmitting}
-      >
-        {isSubmitting ? (
-          <>
-            <Loader2 className="h-5 w-5 mr-2 animate-spin" />
-            Connecting...
-          </>
-        ) : (
-          <>
-            <Wallet className="h-5 w-5 mr-2" />
-            Connect Wallet Automatically
-          </>
-        )}
-      </Button>
+      <EnhancedWalletConnect 
+        onWalletConnected={handleWalletSelected} 
+        isConnecting={isSubmitting}
+        showCard={false}
+      />
       
       <div className="relative">
         <div className="absolute inset-0 flex items-center">

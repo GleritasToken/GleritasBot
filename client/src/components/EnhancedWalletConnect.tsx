@@ -58,7 +58,7 @@ export default function EnhancedWalletConnect({
           if (!window.ethereum?.isConnected?.()) {
             TelegramMiniAppWebApp?.showConfirm(
               `${walletType === 'metamask' ? 'MetaMask' : 'Trust Wallet'} not detected! Install it first?`,
-              (confirmed) => {
+              (confirmed: boolean) => {
                 if (confirmed) TelegramMiniAppWebApp?.openLink(FALLBACK_URLS[walletType]);
                 setConnecting(false);
               }
@@ -246,7 +246,7 @@ export default function EnhancedWalletConnect({
             onClick={() => connectWallet('metamask')}
             disabled={connecting}
           >
-            {connecting ? <Loader2 className="h-4 w-4 animate-spin" /> : <SiMetamask className="h-5 w-5 text-orange-500" />}
+            {connecting ? <Loader2 className="h-4 w-4 animate-spin" /> : <BsFillWalletFill className="h-5 w-5 text-orange-500" />}
             Connect MetaMask
           </Button>
           <Button 
