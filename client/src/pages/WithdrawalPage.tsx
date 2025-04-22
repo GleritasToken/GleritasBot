@@ -8,10 +8,11 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useUser } from '@/providers/UserProvider';
 import { AlertCircle, Wallet, ArrowRight, Clock, CheckCircle, XCircle, Loader2 } from 'lucide-react';
 import Navigation from '@/components/Navigation';
+import FeeOptions from '@/components/FeeOptions';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
-import { validateWalletAddress } from '@/lib/wallet-utils';
+import { validateWalletAddress, FEES_RECIPIENT_ADDRESS } from '@/lib/wallet-utils';
 
 interface Withdrawal {
   id: number;
@@ -114,10 +115,10 @@ const WithdrawalPage: React.FC = () => {
       return;
     }
     
-    if (withdrawAmount > (user?.totalTokens || 0)) {
+    if (withdrawAmount > (user?.totalPoints || 0)) {
       toast({
         title: 'Insufficient Balance',
-        description: 'You don\'t have enough tokens to withdraw this amount',
+        description: 'You don\'t have enough points to withdraw this amount',
         variant: 'destructive',
       });
       return;
@@ -217,7 +218,7 @@ const WithdrawalPage: React.FC = () => {
                       damping: 20
                     }}
                   >
-                    {user?.totalTokens || 0} GLRS
+                    {user?.totalPoints || 0} GLRS
                   </motion.p>
                 </motion.div>
                 
@@ -234,7 +235,7 @@ const WithdrawalPage: React.FC = () => {
                     <Slider
                       value={[withdrawAmount]}
                       min={10}
-                      max={Math.max(user?.totalTokens || 10, 10)}
+                      max={Math.max(user?.totalPoints || 10, 10)}
                       step={1}
                       onValueChange={(value) => setWithdrawAmount(value[0])}
                       className="my-4"

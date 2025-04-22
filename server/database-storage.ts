@@ -476,11 +476,16 @@ export class DatabaseStorage implements IStorage {
               // Keep only username and referral-related data
               telegramId: null,
               walletAddress: null,
-              totalTokens: user.referralTokens, // Keep only referral tokens
+              totalPoints: user.referralPoints, // Keep only referral points
               ipAddress: null,
               fingerprint: null,
               isBanned: false,
-              banReason: null
+              banReason: null,
+              isPremium: false,
+              premiumOptionChosen: null,
+              premiumTxHash: null,
+              pointsMultiplier: 1,
+              canWithdraw: false
             })
             .where(eq(users.id, user.id));
         }
@@ -532,7 +537,7 @@ export class DatabaseStorage implements IStorage {
     ).length;
     
     const totalCompletedTasks = allUserTasks.filter(task => task.completed).length;
-    const totalTokensClaimed = allWithdrawals
+    const totalPointsClaimed = allWithdrawals
       .filter(w => w.status === 'completed')
       .reduce((sum, w) => sum + w.amount, 0);
     
@@ -590,7 +595,7 @@ export class DatabaseStorage implements IStorage {
       totalUsers,
       activeUsers,
       totalCompletedTasks,
-      totalTokensClaimed,
+      totalPointsClaimed,
       dailyStats: days,
       taskTypeBreakdown
     };
