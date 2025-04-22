@@ -59,6 +59,9 @@ export function validateWalletAddress(address: string): boolean {
   }
 }
 
+// Alias for validateWalletAddress for compatibility with EnhancedWalletConnect component
+export const isValidAddress = validateWalletAddress;
+
 /**
  * Shortens a wallet address for display 
  * e.g. 0x1234...abcd

@@ -1,5 +1,9 @@
 import { WebApp } from 'telegram-web-app';
 
+// Alias for Enhanced Wallet Connect component
+export const isTelegramMiniApp = isTelegramWebApp;
+export const TelegramMiniAppWebApp = typeof window !== 'undefined' ? window.Telegram?.WebApp : null;
+
 // Function to check if the page is running inside a Telegram WebApp
 export function isTelegramWebApp(): boolean {
   // First check if we're in a browser environment

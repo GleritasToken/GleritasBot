@@ -4,7 +4,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { SiMetamask, SiTrustwallet } from "react-icons/si";
+import { BsFillWalletFill } from "react-icons/bs";
+import { FaWallet } from "react-icons/fa";
 import { isTelegramMiniApp, TelegramMiniAppWebApp } from "@/lib/telegram-app";
 import { ethers } from "ethers";
 import { isValidAddress } from "@/lib/wallet-utils";
@@ -213,7 +214,7 @@ export default function EnhancedWalletConnect({
           onClick={() => connectWallet('metamask')}
           disabled={connecting}
         >
-          {connecting ? <Loader2 className="h-4 w-4 animate-spin" /> : <SiMetamask className="h-5 w-5 text-orange-500" />}
+          {connecting ? <Loader2 className="h-4 w-4 animate-spin" /> : <BsFillWalletFill className="h-5 w-5 text-orange-500" />}
           Connect MetaMask
         </Button>
         <Button 
@@ -222,7 +223,7 @@ export default function EnhancedWalletConnect({
           onClick={() => connectWallet('trustwallet')}
           disabled={connecting}
         >
-          {connecting ? <Loader2 className="h-4 w-4 animate-spin" /> : <SiTrustwallet className="h-5 w-5 text-blue-500" />}
+          {connecting ? <Loader2 className="h-4 w-4 animate-spin" /> : <FaWallet className="h-5 w-5 text-blue-500" />}
           Connect Trust Wallet
         </Button>
       </div>
@@ -254,7 +255,7 @@ export default function EnhancedWalletConnect({
             onClick={() => connectWallet('trustwallet')}
             disabled={connecting}
           >
-            {connecting ? <Loader2 className="h-4 w-4 animate-spin" /> : <SiTrustwallet className="h-5 w-5 text-blue-500" />}
+            {connecting ? <Loader2 className="h-4 w-4 animate-spin" /> : <FaWallet className="h-5 w-5 text-blue-500" />}
             Connect Trust Wallet
           </Button>
         </div>
