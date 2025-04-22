@@ -22,16 +22,21 @@ export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   username: text("username").notNull().unique(),
   walletAddress: text("wallet_address"),
-  telegramId: integer("telegram_id"),
+  telegramId: text("telegram_id"),
   referralCode: text("referral_code").notNull().unique(),
   referredBy: text("referred_by"),
-  totalTokens: integer("total_tokens").notNull().default(0),
-  referralTokens: integer("referral_tokens").notNull().default(0),
+  totalTokens: integer("total_points").notNull().default(0),
+  referralTokens: integer("referral_points").notNull().default(0),
   referralCount: integer("referral_count").notNull().default(0),
   ipAddress: text("ip_address"),
   fingerprint: text("fingerprint"),
   isBanned: boolean("is_banned").notNull().default(false),
   banReason: text("ban_reason"),
+  isPremium: boolean("is_premium").notNull().default(false),
+  premiumOptionChosen: text("premium_option_chosen"),
+  premiumTxHash: text("premium_tx_hash"),
+  pointsMultiplier: integer("points_multiplier").notNull().default(1),
+  canWithdraw: boolean("can_withdraw").notNull().default(true),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
@@ -49,7 +54,7 @@ export const userTasks = pgTable("user_tasks", {
   userId: integer("user_id").notNull(),
   taskName: text("task_name").notNull(),
   completed: boolean("completed").notNull().default(false),
-  tokenAmount: integer("token_amount").notNull().default(0),
+  tokenAmount: integer("point_amount").notNull().default(0),
   verificationData: text("verification_data"),
   completedAt: timestamp("completed_at"),
 });
@@ -64,7 +69,7 @@ export const referrals = pgTable("referrals", {
   id: serial("id").primaryKey(),
   referrerUserId: integer("referrer_user_id").notNull(),
   referredUserId: integer("referred_user_id").notNull(),
-  tokenAmount: integer("token_amount").notNull().default(0),
+  tokenAmount: integer("point_amount").notNull().default(0),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
@@ -78,10 +83,11 @@ export const tasks = pgTable("tasks", {
   id: serial("id").primaryKey(),
   name: text("name").notNull().unique(),
   description: text("description").notNull(),
-  tokenAmount: integer("token_amount").notNull(),
+  tokenAmount: integer("point_amount").notNull(),
   isRequired: boolean("is_required").notNull().default(true),
   iconClass: text("icon_class").notNull(),
   link: text("link"),
+  requiresVerification: boolean("requires_verification").default(false),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 

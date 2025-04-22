@@ -70,8 +70,8 @@ export class DatabaseStorage implements IStorage {
       referredBy: insertUser.referredBy || null,
       ipAddress: insertUser.ipAddress || null,
       fingerprint: insertUser.fingerprint || null,
-      totalTokens: 0,
-      referralTokens: 0,
+      total_points: 0,
+      referral_points: 0,
       referralCount: 0,
       createdAt: new Date()
     };
@@ -151,7 +151,7 @@ export class DatabaseStorage implements IStorage {
     const taskData = {
       name: insertTask.name,
       description: insertTask.description,
-      tokenAmount: insertTask.tokenAmount,
+      point_amount: insertTask.tokenAmount,
       isRequired: insertTask.isRequired ?? true, // Default to true if not specified
       iconClass: insertTask.iconClass,
       createdAt: new Date()
@@ -217,15 +217,15 @@ export class DatabaseStorage implements IStorage {
   }
   
   async completeUserTask(insertUserTask: InsertUserTask): Promise<UserTask> {
-    // Get the task to determine token amount
+    // Get the task to determine point amount
     const task = await this.getTask(insertUserTask.taskName);
-    const tokenAmount = task ? task.tokenAmount : 0;
+    const pointAmount = task ? task.tokenAmount : 0;
     
     const userTaskData = {
       userId: insertUserTask.userId,
       taskName: insertUserTask.taskName,
       verificationData: insertUserTask.verificationData || null,
-      tokenAmount,
+      point_amount: pointAmount,
       completed: true,
       completedAt: new Date()
     };
@@ -233,11 +233,11 @@ export class DatabaseStorage implements IStorage {
     // Insert the task completion record
     const result = await db.insert(userTasks).values(userTaskData).returning();
     
-    // Update user's total tokens
+    // Update user's total points
     const user = await this.getUser(insertUserTask.userId);
     if (user) {
-      const updatedTotalTokens = user.totalTokens + tokenAmount;
-      await this.updateUser(user.id, { totalTokens: updatedTotalTokens });
+      const updatedTotalPoints = user.totalTokens + pointAmount;
+      await this.updateUser(user.id, { totalTokens: updatedTotalPoints });
     }
     
     return result[0];
@@ -259,13 +259,13 @@ export class DatabaseStorage implements IStorage {
   
   // Referral operations
   async createReferral(insertReferral: InsertReferral): Promise<Referral> {
-    // Default token amount is 5 if not provided
-    const tokenAmount = insertReferral.tokenAmount ?? 5;
+    // Default point amount is 5 if not provided
+    const pointAmount = insertReferral.tokenAmount ?? 5;
     
     const referralData = {
       referrerUserId: insertReferral.referrerUserId,
       referredUserId: insertReferral.referredUserId,
-      tokenAmount,
+      point_amount: pointAmount,
       createdAt: new Date()
     };
     
@@ -276,13 +276,13 @@ export class DatabaseStorage implements IStorage {
     const referrer = await this.getUser(insertReferral.referrerUserId);
     if (referrer) {
       const newReferralCount = referrer.referralCount + 1;
-      const newReferralTokens = referrer.referralTokens + tokenAmount;
-      const newTotalTokens = referrer.totalTokens + tokenAmount;
+      const newReferralPoints = referrer.referralTokens + pointAmount;
+      const newTotalPoints = referrer.totalTokens + pointAmount;
       
       await this.updateUser(referrer.id, { 
         referralCount: newReferralCount,
-        referralTokens: newReferralTokens,
-        totalTokens: newTotalTokens
+        referralTokens: newReferralPoints,
+        totalTokens: newTotalPoints
       });
     }
     
