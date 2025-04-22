@@ -53,6 +53,8 @@ export interface IStorage {
   banUser(userId: number, banReason: string): Promise<User | undefined>;
   unbanUser(userId: number): Promise<User | undefined>;
   resetUserTokens(userId: number): Promise<User | undefined>;
+  resetUserTasks(userId: number): Promise<User | undefined>;
+  resetUserData(userId: number): Promise<User | undefined>;
   getTaskCompletionStats(): Promise<any>;
   getUserActivityStats(): Promise<any>;
   
@@ -132,6 +134,7 @@ export class MemStorage implements IStorage {
       id,
       username: insertUser.username,
       walletAddress: insertUser.walletAddress || null,
+      telegramId: null,
       referralCode,
       referredBy: insertUser.referredBy || null,
       ipAddress: insertUser.ipAddress || null,
@@ -461,6 +464,44 @@ export class MemStorage implements IStorage {
       ...user,
       totalTokens: 0,
       referralTokens: 0
+    };
+    
+    this.users.set(userId, updatedUser);
+    return updatedUser;
+  }
+  
+  async resetUserTasks(userId: number): Promise<User | undefined> {
+    const user = this.users.get(userId);
+    if (!user) return undefined;
+    
+    // Delete all user tasks
+    for (const [id, task] of this.userTasks.entries()) {
+      if (task.userId === userId) {
+        this.userTasks.delete(id);
+      }
+    }
+    
+    return user;
+  }
+  
+  async resetUserData(userId: number): Promise<User | undefined> {
+    const user = this.users.get(userId);
+    if (!user) return undefined;
+    
+    // Delete all user tasks
+    for (const [id, task] of this.userTasks.entries()) {
+      if (task.userId === userId) {
+        this.userTasks.delete(id);
+      }
+    }
+    
+    // Reset user data completely
+    const updatedUser = { 
+      ...user,
+      totalTokens: 0,
+      referralTokens: 0,
+      telegramId: null,
+      walletAddress: null
     };
     
     this.users.set(userId, updatedUser);

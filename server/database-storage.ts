@@ -395,7 +395,42 @@ export class DatabaseStorage implements IStorage {
     return result[0];
   }
   
+  // Reset only tokens, keep other data
   async resetUserTokens(userId: number): Promise<User | undefined> {
+    try {
+      const result = await db.update(users)
+        .set({
+          totalTokens: 0,
+          referralTokens: 0
+        })
+        .where(eq(users.id, userId))
+        .returning();
+      
+      return result[0];
+    } catch (error) {
+      console.error(`Error resetting user ${userId} tokens:`, error);
+      return undefined;
+    }
+  }
+
+  // Reset user tasks only
+  async resetUserTasks(userId: number): Promise<User | undefined> {
+    try {
+      // Delete all user tasks
+      await db.delete(userTasks)
+        .where(eq(userTasks.userId, userId));
+      
+      // Return the updated user
+      const [user] = await db.select().from(users).where(eq(users.id, userId));
+      return user;
+    } catch (error) {
+      console.error(`Error resetting user ${userId} tasks:`, error);
+      return undefined;
+    }
+  }
+
+  // Full reset of user data (tasks, tokens, connections)
+  async resetUserData(userId: number): Promise<User | undefined> {
     try {
       // First, delete all user tasks
       await db.delete(userTasks)
@@ -414,7 +449,7 @@ export class DatabaseStorage implements IStorage {
       
       return result[0];
     } catch (error) {
-      console.error(`Error resetting user ${userId} tokens:`, error);
+      console.error(`Error resetting user ${userId} data:`, error);
       return undefined;
     }
   }
