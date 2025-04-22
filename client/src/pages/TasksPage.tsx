@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useUser } from '@/providers/UserProvider';
-import { CheckCircle, CircleDashed, ArrowRight, AlertTriangle, ExternalLink } from 'lucide-react';
+import { CheckCircle, CircleDashed, ArrowRight, AlertTriangle, ExternalLink, MessageCircle } from 'lucide-react';
 import Navigation from '@/components/Navigation';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Task } from '@shared/schema';
@@ -14,6 +14,7 @@ import { motion } from 'framer-motion';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import TelegramConnectDialog from '@/components/TelegramConnectDialog';
 
 interface VerificationData {
   taskName: string;
@@ -27,6 +28,7 @@ const TasksPage: React.FC = () => {
   const [showConfetti, setShowConfetti] = useState(false);
   const [completedTaskId, setCompletedTaskId] = useState<string | null>(null);
   const [verificationDialogOpen, setVerificationDialogOpen] = useState(false);
+  const [telegramConnectOpen, setTelegramConnectOpen] = useState(false);
   const [currentTask, setCurrentTask] = useState<Task | null>(null);
   const [verificationData, setVerificationData] = useState("");
   const [verificationError, setVerificationError] = useState("");
