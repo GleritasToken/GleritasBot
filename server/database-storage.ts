@@ -243,51 +243,113 @@ export class DatabaseStorage implements IStorage {
   }
   
   async createTask(insertTask: InsertTask): Promise<Task> {
-    const taskData = {
-      name: insertTask.name,
-      description: insertTask.description,
-      tokenAmount: insertTask.tokenAmount,
-      isRequired: insertTask.isRequired ?? true, // Default to true if not specified
-      iconClass: insertTask.iconClass,
-      createdAt: new Date()
-    };
-    
-    const result = await db.insert(tasks).values(taskData).returning();
-    return result[0];
+    try {
+      // Using raw query to avoid schema issues
+      const { rows } = await this.pool.query(
+        `INSERT INTO tasks (name, description, "tokenAmount", "isRequired", "iconClass", link, "createdAt") 
+         VALUES ($1, $2, $3, $4, $5, $6, $7)
+         RETURNING *`,
+        [
+          insertTask.name,
+          insertTask.description,
+          insertTask.tokenAmount,
+          insertTask.isRequired ?? true,
+          insertTask.iconClass || null,
+          insertTask.link || '',
+          new Date()
+        ]
+      );
+      return rows[0];
+    } catch (error) {
+      console.error("Error creating task:", error);
+      throw error;
+    }
   }
   
   async updateTask(id: number, taskData: Partial<Task>): Promise<Task | undefined> {
-    const result = await db.update(tasks)
-      .set(taskData)
-      .where(eq(tasks.id, id))
-      .returning();
+    try {
+      // First get the existing task to fill in the missing fields
+      const existingTask = await this.pool.query(
+        'SELECT * FROM tasks WHERE id = $1',
+        [id]
+      );
       
-    return result[0];
+      if (existingTask.rows.length === 0) {
+        return undefined;
+      }
+      
+      const existing = existingTask.rows[0];
+      
+      // Using raw query to avoid schema issues
+      const { rows } = await this.pool.query(
+        `UPDATE tasks 
+         SET name = $1, 
+             description = $2, 
+             "tokenAmount" = $3, 
+             "isRequired" = $4, 
+             "iconClass" = $5,
+             link = $6
+         WHERE id = $7
+         RETURNING *`,
+        [
+          taskData.name || existing.name,
+          taskData.description || existing.description,
+          taskData.tokenAmount !== undefined ? taskData.tokenAmount : existing.tokenAmount,
+          taskData.isRequired !== undefined ? taskData.isRequired : existing.isRequired,
+          taskData.iconClass || existing.iconClass,
+          taskData.link || existing.link,
+          id
+        ]
+      );
+      
+      return rows[0];
+    } catch (error) {
+      console.error(`Error updating task ${id}:`, error);
+      return undefined;
+    }
   }
   
   async deleteTask(id: number): Promise<boolean> {
     try {
-      // First, get the task to get its name
-      const taskResult = await db.select()
-        .from(tasks)
-        .where(eq(tasks.id, id));
+      // Start a transaction
+      await this.pool.query('BEGIN');
       
-      if (taskResult.length === 0) {
-        return false; // Task not found
+      try {
+        // First, get the task to get its name
+        const taskResult = await this.pool.query(
+          'SELECT * FROM tasks WHERE id = $1',
+          [id]
+        );
+        
+        if (taskResult.rows.length === 0) {
+          await this.pool.query('ROLLBACK');
+          return false; // Task not found
+        }
+        
+        const taskName = taskResult.rows[0].name;
+        
+        // Delete associated user task completions
+        await this.pool.query(
+          'DELETE FROM user_tasks WHERE task_name = $1',
+          [taskName]
+        );
+        
+        // Delete the task itself
+        const deleteResult = await this.pool.query(
+          'DELETE FROM tasks WHERE id = $1 RETURNING *',
+          [id]
+        );
+        
+        // Commit the transaction
+        await this.pool.query('COMMIT');
+        
+        return deleteResult.rows.length > 0;
+      } catch (txError) {
+        // Rollback in case of error
+        await this.pool.query('ROLLBACK');
+        console.error("Transaction error during task deletion:", txError);
+        return false;
       }
-      
-      const taskName = taskResult[0].name;
-      
-      // Delete associated user task completions
-      await db.delete(userTasks)
-        .where(eq(userTasks.taskName, taskName));
-      
-      // Delete the task itself
-      const deleteResult = await db.delete(tasks)
-        .where(eq(tasks.id, id))
-        .returning();
-      
-      return deleteResult.length > 0;
     } catch (error) {
       console.error("Error deleting task:", error);
       return false;
@@ -387,45 +449,85 @@ export class DatabaseStorage implements IStorage {
   
   // Referral operations
   async createReferral(insertReferral: InsertReferral): Promise<Referral> {
-    // Default token amount is 5 if not provided
-    const tokenAmount = insertReferral.tokenAmount ?? 5;
-    
-    const referralData = {
-      referrerUserId: insertReferral.referrerUserId,
-      referredUserId: insertReferral.referredUserId,
-      tokenAmount,
-      createdAt: new Date()
-    };
-    
-    // Insert the referral record
-    const result = await db.insert(referrals).values(referralData).returning();
-    
-    // Update referrer's stats
-    const referrer = await this.getUser(insertReferral.referrerUserId);
-    if (referrer) {
-      const newReferralCount = referrer.referralCount + 1;
-      const newReferralTokens = referrer.referralTokens + tokenAmount;
-      const newTotalTokens = referrer.totalTokens + tokenAmount;
+    try {
+      // Start a transaction manually
+      await this.pool.query('BEGIN');
       
-      await this.updateUser(referrer.id, { 
-        referralCount: newReferralCount,
-        referralTokens: newReferralTokens,
-        totalTokens: newTotalTokens
-      });
+      try {
+        // Default token amount is 5 if not provided
+        const tokenAmount = insertReferral.tokenAmount ?? 5;
+        const now = new Date();
+        
+        // Insert the referral record using raw SQL
+        const insertResult = await this.pool.query(
+          `INSERT INTO referrals (referrer_user_id, referred_user_id, token_amount, created_at)
+           VALUES ($1, $2, $3, $4)
+           RETURNING *`,
+          [
+            insertReferral.referrerUserId,
+            insertReferral.referredUserId,
+            tokenAmount,
+            now
+          ]
+        );
+        
+        if (insertResult.rows.length === 0) {
+          await this.pool.query('ROLLBACK');
+          throw new Error("Failed to insert referral record");
+        }
+        
+        // Update referrer's stats
+        await this.pool.query(
+          `UPDATE users 
+           SET referral_count = referral_count + 1,
+               referral_points = referral_points + $1,
+               total_points = total_points + $1
+           WHERE id = $2`,
+          [tokenAmount, insertReferral.referrerUserId]
+        );
+        
+        // Commit the transaction
+        await this.pool.query('COMMIT');
+        
+        return insertResult.rows[0];
+      } catch (txError) {
+        // Rollback in case of error
+        await this.pool.query('ROLLBACK');
+        console.error("Transaction error during referral creation:", txError);
+        throw txError;
+      }
+    } catch (error) {
+      console.error("Error creating referral:", error);
+      throw error;
     }
-    
-    return result[0];
   }
   
   async getReferralsByReferrer(referrerId: number): Promise<Referral[]> {
-    return await db.select()
-      .from(referrals)
-      .where(eq(referrals.referrerUserId, referrerId));
+    try {
+      // Using raw query to avoid schema issues
+      const { rows } = await this.pool.query(
+        'SELECT * FROM referrals WHERE referrer_user_id = $1',
+        [referrerId]
+      );
+      return rows;
+    } catch (error) {
+      console.error(`Error fetching referrals for user ${referrerId}:`, error);
+      return [];
+    }
   }
   
   async countReferrals(referrerId: number): Promise<number> {
-    const referrals = await this.getReferralsByReferrer(referrerId);
-    return referrals.length;
+    try {
+      // Using raw query to avoid schema issues and for efficiency
+      const { rows } = await this.pool.query(
+        'SELECT COUNT(*) as count FROM referrals WHERE referrer_user_id = $1',
+        [referrerId]
+      );
+      return parseInt(rows[0]?.count || '0');
+    } catch (error) {
+      console.error(`Error counting referrals for user ${referrerId}:`, error);
+      return 0;
+    }
   }
   
   // Withdrawal operations
