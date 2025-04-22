@@ -407,6 +407,34 @@ export class DatabaseStorage implements IStorage {
     return result[0];
   }
   
+  async resetAllUserTasks(): Promise<boolean> {
+    try {
+      // Begin a transaction
+      await db.transaction(async (tx) => {
+        // Get all users
+        const allUsers = await this.getAllUsers();
+        
+        // Delete all user tasks
+        await tx.delete(userTasks);
+        
+        // Reset totalTokens for all users (but keep referral tokens)
+        for (const user of allUsers) {
+          await tx.update(users)
+            .set({
+              // Keep only referral tokens
+              totalTokens: user.referralTokens
+            })
+            .where(eq(users.id, user.id));
+        }
+      });
+      
+      return true;
+    } catch (error) {
+      console.error("Error resetting all user tasks:", error);
+      return false;
+    }
+  }
+  
   async getTaskCompletionStats(): Promise<any> {
     const allTasks = await this.getAllTasks();
     const allUserTasks = await this.getAllUserTasks();

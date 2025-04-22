@@ -34,6 +34,7 @@ export interface IStorage {
   completeUserTask(userTask: InsertUserTask): Promise<UserTask>;
   checkTaskCompletion(userId: number, taskName: string): Promise<boolean>;
   getAllUserTasks(): Promise<UserTask[]>;
+  resetAllUserTasks(): Promise<boolean>;
   
   // Referral operations
   createReferral(referral: InsertReferral): Promise<Referral>;
@@ -280,6 +281,31 @@ export class MemStorage implements IStorage {
   
   async getAllUserTasks(): Promise<UserTask[]> {
     return Array.from(this.userTasks.values());
+  }
+  
+  async resetAllUserTasks(): Promise<boolean> {
+    try {
+      // Get all users
+      const users = await this.getAllUsers();
+      
+      // Clear all user tasks
+      this.userTasks.clear();
+      this.currentUserTaskId = 1;
+      
+      // Reset totalTokens for all users (but keep referral tokens)
+      for (const user of users) {
+        // Only subtract task-earned tokens (not referral tokens)
+        const taskTokens = user.totalTokens - user.referralTokens;
+        await this.updateUser(user.id, { 
+          totalTokens: user.referralTokens // Keep only referral tokens
+        });
+      }
+      
+      return true;
+    } catch (error) {
+      console.error("Error resetting all user tasks:", error);
+      return false;
+    }
   }
 
   // Referral Operations
