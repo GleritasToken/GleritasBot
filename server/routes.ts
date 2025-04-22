@@ -309,35 +309,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { telegramId } = req.body;
       console.log(`Connecting Telegram ID: ${telegramId} for user: ${req.user!.username}`);
       
-      if (!telegramId || isNaN(Number(telegramId))) {
+      if (!telegramId || telegramId.trim() === '') {
         console.error(`Invalid Telegram ID format: ${telegramId}`);
         return res.status(400).json({ message: "Invalid Telegram ID" });
       }
       
-      const numericTelegramId = Number(telegramId);
-      console.log(`Numeric Telegram ID: ${numericTelegramId}`);
+      // Store as string - no conversion needed
+      const telegramIdStr = String(telegramId).trim();
+      console.log(`Telegram ID (as string): ${telegramIdStr}`);
       
       // Check if Telegram ID is already connected to another account
-      console.log(`Checking if Telegram ID ${numericTelegramId} is already connected to another account`);
+      console.log(`Checking if Telegram ID ${telegramIdStr} is already connected to another account`);
       const users = await storage.getAllUsers();
-      const existingUser = users.find(u => u.telegramId === numericTelegramId);
+      const existingUser = users.find(u => u.telegramId === telegramIdStr);
       
       if (existingUser && existingUser.id !== req.user!.id) {
-        console.error(`Telegram ID ${numericTelegramId} already connected to user: ${existingUser.username}`);
+        console.error(`Telegram ID ${telegramIdStr} already connected to user: ${existingUser.username}`);
         return res.status(400).json({ 
           message: "This Telegram ID is already connected to another account"
         });
       }
       
       // Update user's Telegram ID
-      console.log(`Updating user ${req.user!.id} with Telegram ID: ${numericTelegramId}`);
+      console.log(`Updating user ${req.user!.id} with Telegram ID: ${telegramIdStr}`);
       try {
         // Store the current session ID before making database changes
         const sessionId = req.sessionID;
         console.log(`Current session ID before update: ${sessionId}`);
         
         const updatedUser = await storage.updateUser(req.user!.id, {
-          telegramId: numericTelegramId
+          telegramId: telegramIdStr
         });
         
         if (!updatedUser) {
@@ -363,7 +364,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                   taskName: "telegram_connect",
                   completed: true,
                   pointAmount: task.pointAmount,
-                  verificationData: "telegram_id_" + numericTelegramId
+                  verificationData: "telegram_id_" + telegramIdStr
                 });
                 console.log(`Successfully completed telegram_connect task`);
               } catch (completeTaskError) {

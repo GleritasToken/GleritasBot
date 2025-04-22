@@ -22,7 +22,7 @@ export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   username: text("username").notNull().unique(),
   walletAddress: text("wallet_address"),
-  telegramId: integer("telegram_id"),
+  telegramId: text("telegram_id"), // Changed to text to handle large Telegram IDs
   referralCode: text("referral_code").notNull().unique(),
   referredBy: text("referred_by"),
   // Changed totalTokens to totalPoints for GLRS Points system

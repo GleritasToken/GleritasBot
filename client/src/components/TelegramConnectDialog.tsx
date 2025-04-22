@@ -153,16 +153,7 @@ const TelegramConnectDialog: React.FC<TelegramConnectDialogProps> = ({
                   <li>The bot will reply with your Telegram ID (a number)</li>
                   <li>Copy just the number and paste it here</li>
                 </ol>
-                <div className="mt-3 p-2 bg-blue-900/30 border border-blue-800 rounded-md">
-                  <p className="text-xs text-blue-300">
-                    <strong>Troubleshooting:</strong> If you're experiencing connection issues, try:
-                    <br />- Making sure you're entering just the number (e.g., 123456789)
-                    <br />- Logging out and logging back in before connecting
-                    <br />- Ensuring you're using your main Telegram account ID
-                    <br />- Clearing your browser cache or trying in a private/incognito window
-                    <br />- Waiting a few minutes before trying again
-                  </p>
-                </div>
+
                 <p className="text-amber-400 mt-2 text-xs">* Connecting your Telegram account will reward you with 30 GLRS Points!</p>
               </div>
             </div>
