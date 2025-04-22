@@ -139,8 +139,8 @@ export class MemStorage implements IStorage {
       referredBy: insertUser.referredBy || null,
       ipAddress: insertUser.ipAddress || null,
       fingerprint: insertUser.fingerprint || null,
-      totalTokens: 0,
-      referralTokens: 0,
+      totalPoints: 0,
+      referralPoints: 0,
       referralCount: 0,
       isBanned: false,
       banReason: null,
@@ -456,14 +456,14 @@ export class MemStorage implements IStorage {
     return updatedUser;
   }
   
-  async resetUserTokens(userId: number): Promise<User | undefined> {
+  async resetUserPoints(userId: number): Promise<User | undefined> {
     const user = this.users.get(userId);
     if (!user) return undefined;
     
     const updatedUser = { 
       ...user,
-      totalTokens: 0,
-      referralTokens: 0
+      totalPoints: 0,
+      referralPoints: 0
     };
     
     this.users.set(userId, updatedUser);
@@ -498,8 +498,8 @@ export class MemStorage implements IStorage {
     // Reset user data completely
     const updatedUser = { 
       ...user,
-      totalTokens: 0,
-      referralTokens: 0,
+      totalPoints: 0,
+      referralPoints: 0,
       telegramId: null,
       walletAddress: null
     };
@@ -544,7 +544,7 @@ export class MemStorage implements IStorage {
     }).length;
     
     const totalCompletedTasks = userTasks.filter(task => task.completed).length;
-    const totalTokensClaimed = withdrawals
+    const totalPointsClaimed = withdrawals
       .filter(w => w.status === 'completed')
       .reduce((sum, w) => sum + w.amount, 0);
     
@@ -555,7 +555,7 @@ export class MemStorage implements IStorage {
       totalUsers,
       activeUsers,
       totalCompletedTasks,
-      totalTokensClaimed,
+      totalPointsClaimed,
       dailyStats,
       taskTypeBreakdown
     };
