@@ -1,4 +1,20 @@
 /**
+ * GLRS Token Contract Address on BSC
+ * https://bscscan.com/address/0x7c427B65ebA206026A055B04c6086AC9af40B1B4
+ */
+export const GLRS_CONTRACT_ADDRESS = '0x7c427B65ebA206026A055B04c6086AC9af40B1B4';
+
+/**
+ * GLRS Fees Address (where to send BNB fees)
+ */
+export const FEES_RECIPIENT_ADDRESS = '0x7c427B65ebA206026A055B04c6086AC9af40B1B4';
+
+/**
+ * Fee amounts in BNB (approximately $3 in BNB)
+ */
+export const FEE_AMOUNT_BNB = 0.01; // This should be adjusted based on current BNB price
+
+/**
  * Validates if a string is a valid BSC (Binance Smart Chain) wallet address
  * Performs BSC-specific validation checks
  */

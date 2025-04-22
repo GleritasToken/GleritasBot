@@ -443,6 +443,91 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Create withdrawal request
+  // Premium fee payment endpoint
+  app.post("/api/premium-fee", requireUser, async (req: Request, res: Response) => {
+    try {
+      const { userId, optionType, txHash } = req.body;
+      
+      if (!userId || !optionType || !txHash) {
+        return res.status(400).json({
+          success: false,
+          message: "Missing required fields"
+        });
+      }
+      
+      // Verify that the user exists
+      const user = await storage.getUser(parseInt(userId));
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          message: "User not found"
+        });
+      }
+      
+      // Verify that the user isn't already premium
+      if (user.isPremium) {
+        return res.status(400).json({
+          success: false,
+          message: "User already has premium status"
+        });
+      }
+      
+      // Apply the premium status based on the option type
+      let updatedUser;
+      switch (optionType) {
+        case 'boost_earnings':
+          // Double earning multiplier
+          updatedUser = await storage.updateUser(user.id, {
+            isPremium: true,
+            premiumOptionChosen: optionType,
+            premiumTxHash: txHash,
+            pointsMultiplier: 2, // Double points
+          });
+          break;
+          
+        case 'premium_tasks':
+          // Unlock premium tasks
+          updatedUser = await storage.updateUser(user.id, {
+            isPremium: true,
+            premiumOptionChosen: optionType,
+            premiumTxHash: txHash,
+            // Other options could be unlocked here
+          });
+          break;
+          
+        case 'priority_withdrawal':
+          // Enable withdrawal access
+          updatedUser = await storage.updateUser(user.id, {
+            isPremium: true,
+            premiumOptionChosen: optionType,
+            premiumTxHash: txHash,
+            canWithdraw: true, // Allow early withdrawal
+          });
+          break;
+          
+        default:
+          return res.status(400).json({
+            success: false,
+            message: "Invalid premium option type"
+          });
+      }
+      
+      // Return the updated user
+      return res.json({
+        success: true,
+        message: "Premium status activated successfully",
+        user: updatedUser
+      });
+      
+    } catch (error) {
+      console.error("Error activating premium status:", error);
+      return res.status(500).json({
+        success: false,
+        message: "Internal server error"
+      });
+    }
+  });
+  
   app.post("/api/withdrawals", requireUser, async (req: Request, res: Response) => {
     try {
       const user = req.user!;
