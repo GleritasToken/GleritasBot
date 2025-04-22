@@ -8,7 +8,7 @@ import { SiMeta } from "react-icons/si";
 import { FaWallet } from "react-icons/fa";
 import { isTelegramMiniApp, TelegramMiniAppWebApp } from "@/lib/telegram-app";
 import { ethers } from "ethers";
-import { isValidAddress, WALLET_DEEP_LINKS, WALLET_STORE_LINKS } from "@/lib/wallet-utils";
+import { isValidAddress } from "@/lib/wallet-utils";
 
 // BSC Token Contract
 const TOKEN_ADDRESS = "0x7c427B65ebA206026A055B04c6086AC9af40B1B4";
@@ -35,122 +35,164 @@ export default function EnhancedWalletConnect({
     setConnecting(true);
     
     try {
-      // Detect device OS
-      const isAndroid = /Android/i.test(navigator.userAgent);
-      const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
-      
-      // Choose the appropriate deep link based on device
-      const deepLink = isAndroid 
-        ? WALLET_DEEP_LINKS[walletType].android 
-        : WALLET_DEEP_LINKS[walletType].ios;
-      
-      // Store links if wallet not installed
-      const storeLink = isAndroid
-        ? WALLET_STORE_LINKS[walletType].android
-        : WALLET_STORE_LINKS[walletType].ios;
-      
-      // Check if we're in a Telegram Mini App - SIMPLIFIED APPROACH
+      // Check if we're in a Telegram Mini App
       if (isTelegramMiniApp()) {
-        console.log(`Opening ${walletType} via Telegram WebApp with deep link: ${deepLink}`);
+        const miniAppUrl = window.location.origin;
+        const encodedUrl = encodeURIComponent(miniAppUrl);
         
-        // DIRECT APPROACH: Just open the wallet link immediately
-        if (TelegramMiniAppWebApp?.openLink) {
-          TelegramMiniAppWebApp.openLink(deepLink);
-        } else {
-          // Fallback if Telegram's openLink is not available
-          window.location.href = deepLink;
-        }
+        const DEEP_LINKS = {
+          metamask: `https://metamask.app.link/dapp/${encodedUrl.replace('https://', '')}`,
+          trustwallet: `https://link.trustwallet.com/open_url?coin_id=56&url=${encodedUrl}`
+        };
         
-        // Don't try to handle the connection here - wait for the user to come back with wallet
-        setTimeout(() => {
-          setConnecting(false);
-          
-          // When user returns, they'll need to manually click "Submit" on the wallet address
-          toast({
-            title: "Wallet Opening",
-            description: "If your wallet opened, please connect your wallet and return to this app.",
-          });
-        }, 1500);
+        const FALLBACK_URLS = {
+          metamask: "https://metamask.io/download.html",
+          trustwallet: "https://trustwallet.com/download"
+        };
         
-        return; // Exit early - don't try to auto-detect connection
-      } else if (isAndroid || isIOS) {
-        // For mobile devices not in Telegram, just open the wallet directly
-        console.log(`Opening ${walletType} app with deep link for mobile browser: ${deepLink}`);
-        window.location.href = deepLink;
+        TelegramMiniAppWebApp?.openLink(DEEP_LINKS[walletType]);
         
-        // Set timeout to provide feedback
-        setTimeout(() => {
-          setConnecting(false);
-          toast({
-            title: "Wallet Opening",
-            description: "If your wallet opened, please connect your wallet and return to this app.",
-          });
-        }, 1500);
-        
-        return;
-      } else if (!window.ethereum) {
-        // Desktop browser without extension
-        toast({
-          title: "Wallet Not Found",
-          description: `Please install ${walletType === 'metamask' ? 'MetaMask' : 'Trust Wallet'} extension or app first.`,
-          variant: "destructive",
-        });
-        setConnecting(false);
-        return;
-      }
-      
-      // Desktop browser with ethereum provider - standard connection
-      try {
-        // @ts-ignore
-        await window.ethereum.request({
-          method: 'wallet_addEthereumChain',
-          params: [{
-            chainId: '0x38',
-            chainName: 'Binance Smart Chain',
-            nativeCurrency: { name: 'BNB', symbol: 'BNB', decimals: 18 },
-            rpcUrls: ['https://bsc-dataseed.binance.org/'],
-            blockExplorerUrls: ['https://bscscan.com/']
-          }]
-        });
-        
-        // @ts-ignore
-        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-        const walletAddress = accounts[0];
-        
-        if (!isValidAddress(walletAddress)) {
-          throw new Error("Invalid wallet address format");
-        }
-        
-        // Save the wallet address to the user account
-        const response = await apiRequest("POST", "/api/wallet", { 
-          walletAddress,
-          captchaToken: "demo-token" // In a real app, use a real captcha
-        });
-        
-        if (response.ok) {
-          queryClient.invalidateQueries({ queryKey: ["/api/user"] });
-          
-          toast({
-            title: "Wallet Connected",
-            description: `Your wallet has been connected successfully!`,
-          });
-          
-          if (onWalletConnected) {
-            onWalletConnected(walletAddress);
+        // Give the wallet time to connect
+        setTimeout(async () => {
+          // @ts-ignore
+          if (!window.ethereum?.isConnected?.()) {
+            TelegramMiniAppWebApp?.showConfirm(
+              `${walletType === 'metamask' ? 'MetaMask' : 'Trust Wallet'} not detected! Install it first?`,
+              (confirmed: boolean) => {
+                if (confirmed) TelegramMiniAppWebApp?.openLink(FALLBACK_URLS[walletType]);
+                setConnecting(false);
+              }
+            );
+          } else {
+            try {
+              // @ts-ignore
+              await window.ethereum.request({
+                method: 'wallet_addEthereumChain',
+                params: [{
+                  chainId: '0x38',
+                  chainName: 'Binance Smart Chain',
+                  nativeCurrency: { name: 'BNB', symbol: 'BNB', decimals: 18 },
+                  rpcUrls: ['https://bsc-dataseed.binance.org/'],
+                  blockExplorerUrls: ['https://bscscan.com/']
+                }]
+              });
+              
+              // @ts-ignore
+              const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+              if (!accounts || accounts.length === 0) {
+                throw new Error("No accounts found");
+              }
+              
+              // @ts-ignore
+              const signature = await window.ethereum.request({
+                method: 'personal_sign',
+                params: ["Connect to GLRS Airdrop MiniApp", accounts[0]]
+              });
+              
+              const walletAddress = accounts[0];
+              
+              if (!isValidAddress(walletAddress)) {
+                throw new Error("Invalid wallet address format");
+              }
+              
+              // Save the wallet address to the user account
+              const response = await apiRequest("POST", "/api/wallet", { 
+                walletAddress,
+                captchaToken: "demo-token" // In a real app, use a real captcha
+              });
+              
+              if (response.ok) {
+                queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+                
+                toast({
+                  title: "Wallet Connected",
+                  description: `Your wallet has been connected successfully!`,
+                });
+                
+                if (onWalletConnected) {
+                  onWalletConnected(walletAddress);
+                }
+              } else {
+                const errorData = await response.json();
+                throw new Error(errorData.message || "Failed to connect wallet");
+              }
+            } catch (error: any) {
+              console.error("Wallet connection error:", error);
+              toast({
+                title: "Connection Failed",
+                description: error.message || "Failed to connect your wallet. Please try again.",
+                variant: "destructive",
+              });
+            } finally {
+              setConnecting(false);
+            }
           }
-        } else {
-          const errorData = await response.json();
-          throw new Error(errorData.message || "Failed to connect wallet");
+        }, 2000);
+      } else {
+        // Regular web browser connection logic
+        // @ts-ignore
+        if (!window.ethereum) {
+          toast({
+            title: "Wallet Not Found",
+            description: `Please install ${walletType === 'metamask' ? 'MetaMask' : 'Trust Wallet'} extension or app first.`,
+            variant: "destructive",
+          });
+          setConnecting(false);
+          return;
         }
-      } catch (error: any) {
-        console.error("Wallet connection error:", error);
-        toast({
-          title: "Connection Failed",
-          description: error.message || "Failed to connect your wallet. Please try again.",
-          variant: "destructive",
-        });
-      } finally {
-        setConnecting(false);
+        
+        try {
+          // @ts-ignore
+          await window.ethereum.request({
+            method: 'wallet_addEthereumChain',
+            params: [{
+              chainId: '0x38',
+              chainName: 'Binance Smart Chain',
+              nativeCurrency: { name: 'BNB', symbol: 'BNB', decimals: 18 },
+              rpcUrls: ['https://bsc-dataseed.binance.org/'],
+              blockExplorerUrls: ['https://bscscan.com/']
+            }]
+          });
+          
+          // @ts-ignore
+          const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+          const walletAddress = accounts[0];
+          
+          if (!isValidAddress(walletAddress)) {
+            throw new Error("Invalid wallet address format");
+          }
+          
+          // Save the wallet address to the user account
+          const response = await apiRequest("POST", "/api/wallet", { 
+            walletAddress,
+            captchaToken: "demo-token" // In a real app, use a real captcha
+          });
+          
+          if (response.ok) {
+            queryClient.invalidateQueries({ queryKey: ["/api/user"] });
+            
+            toast({
+              title: "Wallet Connected",
+              description: `Your wallet has been connected successfully!`,
+            });
+            
+            if (onWalletConnected) {
+              onWalletConnected(walletAddress);
+            }
+          } else {
+            const errorData = await response.json();
+            throw new Error(errorData.message || "Failed to connect wallet");
+          }
+        } catch (error: any) {
+          console.error("Wallet connection error:", error);
+          toast({
+            title: "Connection Failed",
+            description: error.message || "Failed to connect your wallet. Please try again.",
+            variant: "destructive",
+          });
+        } finally {
+          setConnecting(false);
+        }
       }
     } catch (error: any) {
       console.error("Wallet connection error:", error);

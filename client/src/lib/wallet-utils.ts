@@ -10,34 +10,6 @@ export const GLRS_CONTRACT_ADDRESS = '0x7c427B65ebA206026A055B04c6086AC9af40B1B4
 export const FEES_RECIPIENT_ADDRESS = '0x7c427B65ebA206026A055B04c6086AC9af40B1B4';
 
 /**
- * Device-specific deep links for instant wallet app opening
- */
-export const WALLET_DEEP_LINKS = {
-  metamask: {
-    android: "intent://io.metamask#Intent;package=io.metamask;end;",
-    ios: "metamask://"
-  },
-  trustwallet: {
-    android: "intent://com.wallet.crypto.trustapp#Intent;package=com.wallet.crypto.trustapp;end;",
-    ios: "trust://"
-  }
-};
-
-/**
- * App store links for wallet installation
- */
-export const WALLET_STORE_LINKS = {
-  metamask: {
-    android: "https://play.google.com/store/apps/details?id=io.metamask",
-    ios: "https://apps.apple.com/app/metamask/id1438144202"
-  },
-  trustwallet: {
-    android: "https://play.google.com/store/apps/details?id=com.wallet.crypto.trustapp",
-    ios: "https://apps.apple.com/app/trust-crypto-bitcoin-wallet/id1288339409"
-  }
-};
-
-/**
  * Fee amounts in BNB (approximately $3 in BNB)
  */
 export const FEE_AMOUNT_BNB = 0.01; // This should be adjusted based on current BNB price
@@ -131,10 +103,10 @@ export async function connectWallet(walletType?: string): Promise<string | null>
             console.error('MetaMask connection error:', error);
           }
         } else if (isMobileDevice) {
-          // Open MetaMask deep link on mobile - use ethereum: protocol which is more reliable
-          const deepLink = `ethereum:${window.location.href}`;
+          // Open MetaMask deep link on mobile - use metamask.app.link format
+          const deepLink = `https://metamask.app.link/dapp/${window.location.host.replace('https://', '')}${window.location.pathname}`;
           console.log("Opening MetaMask deep link:", deepLink);
-          window.location.href = deepLink;
+          window.open(deepLink, '_blank');
           return null;
         }
         break;
@@ -261,28 +233,15 @@ export async function connectWallet(walletType?: string): Promise<string | null>
     else if (isMobileDevice) {
       console.log("Attempting to detect mobile wallet browser...");
       
-      // Detect device OS
-      const isAndroid = /Android/i.test(navigator.userAgent);
-      const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+      // Try to open wallet directly for mobile - this is a common approach for mobile wallets
+      const hostUrl = window.location.host;
+      const currentUrl = window.location.href;
       
-      // Choose the appropriate deep link based on device - default to MetaMask
-      const deepLink = isAndroid 
-        ? WALLET_DEEP_LINKS.metamask.android 
-        : WALLET_DEEP_LINKS.metamask.ios;
+      // If on mobile, provide links to download wallet apps or open if installed
+      let walletDeepLink = `https://metamask.app.link/dapp/${hostUrl}`;
       
-      console.log("Opening wallet deep link:", deepLink);
-      window.location.href = deepLink;
-      
-      // Set timeout to try Trust Wallet as fallback if MetaMask doesn't respond
-      setTimeout(() => {
-        const trustDeepLink = isAndroid 
-          ? WALLET_DEEP_LINKS.trustwallet.android 
-          : WALLET_DEEP_LINKS.trustwallet.ios;
-        
-        console.log("Trying Trust Wallet as fallback:", trustDeepLink);
-        window.location.href = trustDeepLink;
-      }, 1500);
-      
+      console.log("Opening wallet deep link:", walletDeepLink);
+      window.open(walletDeepLink, '_blank');
       return null;
     } else {
       // No supported wallet found

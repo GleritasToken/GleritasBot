@@ -1,17 +1,20 @@
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import WalletSubmission from '@/components/WalletSubmission';
+import TaskCard from '@/components/TaskCard';
 import { useUser } from '@/providers/UserProvider';
-import { Wallet, Plus, ChevronDown, ChevronUp } from 'lucide-react';
+import { Wallet, Plus, ChevronDown, ChevronRight, ChevronUp } from 'lucide-react';
 import Navigation from '@/components/Navigation';
 import { useIsMobile } from '@/hooks/use-mobile';
-import TelegramWalletConnect from '@/components/TelegramWalletConnect';
+import MobileWalletConnect from '@/components/MobileWalletConnect';
 
 const HomePage: React.FC = () => {
   const { user } = useUser();
   const [showConnectWallet, setShowConnectWallet] = useState(false);
   const [showAllTasks, setShowAllTasks] = useState(false);
   const isMobile = useIsMobile();
+  const [showMobileWalletConnect, setShowMobileWalletConnect] = useState(false);
 
   // Filter completed tasks
   const completedTasks = user?.tasks?.filter(task => task.completed) || [];
@@ -21,9 +24,24 @@ const HomePage: React.FC = () => {
     ? completedTasks 
     : completedTasks.slice(0, 7);
   
-  // Handle wallet connection button click
+  // Handle wallet connection for mobile
   const handleWalletClick = () => {
-    setShowConnectWallet(!showConnectWallet);
+    if (isMobile) {
+      setShowMobileWalletConnect(true);
+    } else {
+      setShowConnectWallet(!showConnectWallet);
+    }
+  };
+  
+  // Handle mobile wallet connection
+  const handleMobileWalletConnect = (address: string) => {
+    // Handle the wallet connection here
+    setShowMobileWalletConnect(false);
+  };
+  
+  // Cancel mobile wallet connection
+  const handleMobileWalletCancel = () => {
+    setShowMobileWalletConnect(false);
   };
 
   return (
@@ -44,11 +62,11 @@ const HomePage: React.FC = () => {
               </CardHeader>
               <CardContent className="p-6">
                 {showConnectWallet ? (
-                  <TelegramWalletConnect />
+                  <WalletSubmission />
                 ) : (
                   <div className="text-center">
                     <p className="mb-4 text-gray-300">
-                      Connect your BSC wallet to receive your GLRS points when the airdrop distribution begins.
+                      Connect your BSC wallet to receive your GLRS tokens when the airdrop distribution begins.
                     </p>
                     <Button 
                       onClick={handleWalletClick} 
@@ -80,7 +98,7 @@ const HomePage: React.FC = () => {
                   <div className="mt-4 md:mt-0 text-center">
                     <div className="bg-[#243b5c] rounded-lg p-4 border border-[#2a4365]">
                       <p className="text-gray-300 text-sm">Current Balance</p>
-                      <p className="text-2xl font-bold text-amber-400">{user.totalPoints} GLRS</p>
+                      <p className="text-2xl font-bold text-amber-400">{user.totalTokens} GLRS</p>
                     </div>
                   </div>
                 </div>
@@ -170,6 +188,16 @@ const HomePage: React.FC = () => {
           </Card>
         </div>
       </div>
+      
+      {/* Mobile wallet connect modal */}
+      {showMobileWalletConnect && (
+        <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4">
+          <MobileWalletConnect 
+            onConnect={handleMobileWalletConnect}
+            onCancel={handleMobileWalletCancel}
+          />
+        </div>
+      )}
       
       {/* Footer with padding for mobile nav */}
       <div className="h-16 md:h-0"></div>
