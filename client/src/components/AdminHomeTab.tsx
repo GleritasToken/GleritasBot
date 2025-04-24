@@ -1,19 +1,7 @@
 import React from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Loader2, Users, WalletIcon, Award, CheckCircle, AlertCircle, Trash2 } from 'lucide-react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Button } from '@/components/ui/button';
-import { Progress } from "@/components/ui/progress";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { useToast } from '@/hooks/use-toast';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Loader2, Users, WalletIcon, Award, CheckCircle } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
 
 interface AdminStats {
   totalUsers: number;
@@ -28,146 +16,14 @@ interface AdminHomeTabProps {
 }
 
 const AdminHomeTab: React.FC<AdminHomeTabProps> = ({ adminStats, isLoadingStats }) => {
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false);
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
-  
-  // Get users data
   const { data: users = [], isLoading: isLoadingUsers } = useQuery({
     queryKey: ['/api/admin/users'],
     retry: false,
     gcTime: 0
   });
-  
-  // Get token allocation stats
-  const { data: tokenAllocationResponse, isLoading: isLoadingAllocation } = useQuery({
-    queryKey: ['/api/admin/token-allocation'],
-    retry: false,
-    gcTime: 0
-  });
-  
-  // Access the data property of the response
-  const tokenAllocation = tokenAllocationResponse?.success ? tokenAllocationResponse.data : null;
-  
-  // Delete all users mutation
-  const deleteAllUsersMutation = useMutation({
-    mutationFn: async () => {
-      const response = await fetch('/api/admin/delete-all-users', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        }
-      });
-      
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to delete all users');
-      }
-      
-      return response.json();
-    },
-    onSuccess: () => {
-      toast({
-        title: "System Reset Complete",
-        description: "All users and related data have been deleted successfully",
-        variant: "default"
-      });
-      setIsDeleteDialogOpen(false);
-      
-      // Refresh all admin data
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/users'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/stats'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/token-allocation'] });
-    },
-    onError: (error) => {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to delete all users",
-        variant: "destructive"
-      });
-    }
-  });
-  
-  // Calculate token allocation percentage
-  const tokenPercentage = React.useMemo(() => {
-    if (!tokenAllocation) return 0;
-    const { totalTokensClaimed, totalAllocation } = tokenAllocation;
-    return (totalTokensClaimed / totalAllocation) * 100;
-  }, [tokenAllocation]);
 
   return (
     <div>
-      {/* Token Allocation Card */}
-      <Card className="bg-[#1c3252] border-[#2a4365] shadow-lg mb-8">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-lg font-medium flex items-center">
-            <Award className="h-5 w-5 mr-2 text-amber-400" />
-            GLRS Token Allocation
-          </CardTitle>
-          <CardDescription>
-            Total allocation: 500,000 GLRS tokens
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {isLoadingAllocation ? (
-            <div className="flex justify-center p-4">
-              <Loader2 className="h-8 w-8 animate-spin text-amber-400" />
-            </div>
-          ) : tokenAllocation ? (
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <span>Tokens Claimed</span>
-                <span className="font-bold text-amber-400">
-                  {tokenAllocation.totalTokensClaimed.toLocaleString()} / {tokenAllocation.totalAllocation.toLocaleString()} GLRS
-                </span>
-              </div>
-              <Progress 
-                value={tokenPercentage} 
-                max={100} 
-                className="h-2" 
-              />
-              <div className="flex justify-between text-xs text-gray-400">
-                <span>{tokenPercentage.toFixed(2)}% claimed</span>
-                <span>{(100 - tokenPercentage).toFixed(2)}% remaining</span>
-              </div>
-            </div>
-          ) : (
-            <div className="text-center py-4 text-gray-400">Failed to load token allocation data</div>
-          )}
-        </CardContent>
-      </Card>
-      
-      {/* System Reset Card */}
-      <Card className="bg-[#1c3252] border-[#2a4365] shadow-lg mb-8">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-lg font-medium flex items-center text-red-400">
-            <Trash2 className="h-5 w-5 mr-2" />
-            System Reset
-          </CardTitle>
-          <CardDescription>
-            Delete all users and data after testing phase
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Alert className="bg-red-900/30 border-red-800 mb-4">
-            <AlertCircle className="h-4 w-4 text-red-400" />
-            <AlertDescription className="text-red-300">
-              Warning: This action will permanently delete all users, tasks, referrals, and withdrawals. Use only when moving from testing to production phase.
-            </AlertDescription>
-          </Alert>
-          
-          <Button 
-            variant="destructive" 
-            className="w-full mt-2"
-            onClick={() => setIsDeleteDialogOpen(true)}
-          >
-            <Trash2 className="h-4 w-4 mr-2" />
-            Delete All Users
-          </Button>
-        </CardContent>
-      </Card>
-      
-      {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <Card className="bg-[#1c3252] border-[#2a4365] shadow-lg">
           <CardHeader className="pb-2">
@@ -296,52 +152,6 @@ const AdminHomeTab: React.FC<AdminHomeTabProps> = ({ adminStats, isLoadingStats 
           )}
         </CardContent>
       </Card>
-      
-      {/* Confirmation Dialog for System Reset */}
-      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <DialogContent className="bg-[#1c3252] border-[#2a4365] text-white">
-          <DialogHeader>
-            <DialogTitle className="text-red-400 flex items-center">
-              <AlertCircle className="h-5 w-5 mr-2" />
-              Confirm System Reset
-            </DialogTitle>
-            <DialogDescription className="text-gray-300">
-              This action will permanently delete all users, tasks, referrals, and withdrawals from the system.
-              This cannot be undone.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="py-4">
-            <Alert className="bg-red-900/30 border-red-800">
-              <AlertCircle className="h-4 w-4 text-red-400" />
-              <AlertDescription className="text-red-300">
-                Only proceed if you are moving from testing to production phase and want to start with a clean database.
-              </AlertDescription>
-            </Alert>
-          </div>
-          <DialogFooter className="flex gap-2 justify-end">
-            <Button
-              variant="outline"
-              onClick={() => setIsDeleteDialogOpen(false)}
-            >
-              Cancel
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={() => deleteAllUsersMutation.mutate()}
-              disabled={deleteAllUsersMutation.isPending}
-            >
-              {deleteAllUsersMutation.isPending ? (
-                <>
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Deleting...
-                </>
-              ) : (
-                "Yes, Delete All Users"
-              )}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };

@@ -22,7 +22,6 @@ export interface IStorage {
   getUserWithTasks(userId: number): Promise<UserWithTasks | undefined>;
   checkDuplicateRegistration(ipAddress: string, fingerprint: string): Promise<boolean>;
   getAllUsers(): Promise<User[]>;
-  deleteAllUsers(): Promise<boolean>;
   
   // Task operations
   getAllTasks(): Promise<Task[]>;
@@ -56,8 +55,6 @@ export interface IStorage {
   resetUserTokens(userId: number): Promise<User | undefined>;
   getTaskCompletionStats(): Promise<any>;
   getUserActivityStats(): Promise<any>;
-  getTokenAllocationStats(): Promise<{ totalTokensClaimed: number, totalAllocation: number }>;
-  deleteAllUsers(): Promise<boolean>;
   
   // Init data
   initializeDefaultTasks(): Promise<void>;
@@ -177,31 +174,6 @@ export class MemStorage implements IStorage {
   
   async getAllUsers(): Promise<User[]> {
     return Array.from(this.users.values());
-  }
-  
-  async deleteAllUsers(): Promise<boolean> {
-    try {
-      // Clear all users
-      this.users.clear();
-      this.currentUserId = 1;
-      
-      // Clear all user tasks
-      this.userTasks.clear();
-      this.currentUserTaskId = 1;
-      
-      // Clear all referrals
-      this.referrals.clear();
-      this.currentReferralId = 1;
-      
-      // Clear all withdrawals
-      this.withdrawals.clear();
-      this.currentWithdrawalId = 1;
-      
-      return true;
-    } catch (error) {
-      console.error("Error deleting all users:", error);
-      return false;
-    }
   }
 
   // Task Operations
@@ -556,20 +528,6 @@ export class MemStorage implements IStorage {
       totalTokensClaimed,
       dailyStats,
       taskTypeBreakdown
-    };
-  }
-  
-  async getTokenAllocationStats(): Promise<{ totalTokensClaimed: number, totalAllocation: number }> {
-    // Sum up all tokens earned by users (both from tasks and referrals)
-    const users = await this.getAllUsers();
-    const totalTokensClaimed = users.reduce((sum, user) => sum + user.totalTokens, 0);
-    
-    // Total allocation is 500,000 GLRS tokens
-    const totalAllocation = 500000;
-    
-    return {
-      totalTokensClaimed,
-      totalAllocation
     };
   }
   
