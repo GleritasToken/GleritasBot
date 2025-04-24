@@ -50,8 +50,37 @@ const HomePage: React.FC = () => {
       
       {/* Main content */}
       <div className="container mx-auto px-4 py-6 max-w-5xl">
-        {/* Wallet section */}
+        {/* Telegram section */}
         <div className="mb-8">
+          {user?.telegramId && (
+            <Card className="bg-[#1c3252] border-[#2a4365] mb-8">
+              <CardHeader className="bg-[#172a41] border-b border-[#2a4365]">
+                <CardTitle className="flex items-center text-lg">
+                  <MessageSquare className="h-5 w-5 mr-2 text-blue-400" />
+                  Telegram Connected
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-6">
+                <div className="flex flex-col md:flex-row items-center justify-between">
+                  <div>
+                    <p className="text-gray-300 mb-2">Your Telegram account is connected</p>
+                    <div className="bg-[#243b5c] p-3 rounded-lg border border-[#2a4365]">
+                      <div className="flex items-center mb-2">
+                        <span className="text-gray-400 inline-block w-24">Telegram ID:</span>
+                        <span className="font-mono font-medium text-white">{user.telegramId}</span>
+                      </div>
+                      <div className="flex items-center">
+                        <span className="text-gray-400 inline-block w-24">Username:</span>
+                        <span className="font-medium text-blue-400">@{user.username}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+          
+          {/* Wallet section */}
           {!user?.walletAddress ? (
             <Card className="bg-[#1c3252] border-[#2a4365] overflow-hidden">
               <CardHeader className="bg-[#172a41] border-b border-[#2a4365]">
