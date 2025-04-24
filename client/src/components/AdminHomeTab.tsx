@@ -1,7 +1,8 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Users, WalletIcon, Award, CheckCircle } from 'lucide-react';
+import { Loader2, Users, WalletIcon, Award, CheckCircle, AlertTriangle } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
+import { Progress } from "@/components/ui/progress";
 
 interface AdminStats {
   totalUsers: number;
@@ -24,6 +25,48 @@ const AdminHomeTab: React.FC<AdminHomeTabProps> = ({ adminStats, isLoadingStats 
 
   return (
     <div>
+      {/* Token Allocation Progress */}
+      <Card className="bg-[#1c3252] border-[#2a4365] shadow-lg mb-8">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-md font-medium flex items-center">
+            <Award className="h-5 w-5 mr-2 text-amber-400" />
+            GLRS Token Allocation
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex justify-between items-center mb-2">
+            <div className="text-sm font-medium">
+              {isLoadingStats ? (
+                <Loader2 className="h-4 w-4 animate-spin text-amber-400 inline mr-2" />
+              ) : (
+                <>
+                  <span className="text-2xl font-bold mr-2">{adminStats?.totalTokensClaimed || 0}</span>
+                  <span className="text-gray-400">/ 500,000 GLRS</span>
+                </>
+              )}
+            </div>
+            <div className="text-xs text-gray-400">
+              {isLoadingStats ? "" : (
+                <>
+                  {((adminStats?.totalTokensClaimed || 0) / 500000 * 100).toFixed(2)}% used
+                </>
+              )}
+            </div>
+          </div>
+          <Progress 
+            value={isLoadingStats ? 0 : ((adminStats?.totalTokensClaimed || 0) / 500000 * 100)} 
+            max={100} 
+            className="h-2 bg-[#243b5c]" 
+          />
+          {!isLoadingStats && (adminStats?.totalTokensClaimed || 0) > 450000 && (
+            <div className="flex items-center mt-2 text-xs text-amber-400">
+              <AlertTriangle className="h-3 w-3 mr-1" />
+              Warning: Approaching total allocation limit
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <Card className="bg-[#1c3252] border-[#2a4365] shadow-lg">
           <CardHeader className="pb-2">
@@ -86,7 +129,7 @@ const AdminHomeTab: React.FC<AdminHomeTabProps> = ({ adminStats, isLoadingStats 
           <CardHeader className="pb-2">
             <CardTitle className="text-md font-medium flex items-center">
               <Award className="h-5 w-5 mr-2 text-purple-400" />
-              GLRS Claimed
+              Average GLRS/User
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -94,10 +137,12 @@ const AdminHomeTab: React.FC<AdminHomeTabProps> = ({ adminStats, isLoadingStats 
               {isLoadingStats ? (
                 <Loader2 className="h-6 w-6 animate-spin text-purple-400" />
               ) : (
-                adminStats?.totalTokensClaimed || 0
+                adminStats?.totalUsers && adminStats.totalUsers > 0 
+                  ? Math.round((adminStats?.totalTokensClaimed || 0) / adminStats.totalUsers) 
+                  : 0
               )}
             </div>
-            <p className="text-xs text-gray-400 mt-1">Total GLRS tokens claimed</p>
+            <p className="text-xs text-gray-400 mt-1">Average tokens per user</p>
           </CardContent>
         </Card>
       </div>

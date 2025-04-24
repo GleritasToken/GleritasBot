@@ -14,7 +14,8 @@ import {
   Check,
   UserX,
   UserCheck,
-  Wallet 
+  Wallet,
+  Trash2
 } from 'lucide-react';
 import { 
   Dialog, 
@@ -63,8 +64,10 @@ const AdminUserManagementTab: React.FC = () => {
   const [isResetTokensDialogOpen, setIsResetTokensDialogOpen] = useState(false);
   const [isResetTasksDialogOpen, setIsResetTasksDialogOpen] = useState(false);
   const [isResetDataDialogOpen, setIsResetDataDialogOpen] = useState(false);
+  const [isDeleteUserDialogOpen, setIsDeleteUserDialogOpen] = useState(false);
   const [banReason, setBanReason] = useState('');
   const [resetReason, setResetReason] = useState('');
+  const [deleteConfirmation, setDeleteConfirmation] = useState('');
   const itemsPerPage = 10;
   
   const { toast } = useToast();
@@ -277,6 +280,12 @@ const AdminUserManagementTab: React.FC = () => {
     setResetReason('');
     setIsResetDataDialogOpen(true);
   };
+  
+  const handleOpenDeleteUserDialog = (user: User) => {
+    setSelectedUser(user);
+    setDeleteConfirmation('');
+    setIsDeleteUserDialogOpen(true);
+  };
 
   const handleBanUser = () => {
     if (!selectedUser) return;
@@ -326,6 +335,54 @@ const AdminUserManagementTab: React.FC = () => {
       userId: selectedUser.id,
       reason: resetReason
     });
+  };
+  
+  // Delete user mutation
+  const deleteUserMutation = useMutation({
+    mutationFn: async (userId: number) => {
+      const res = await fetch(`/api/admin/users/${userId}/delete`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message || 'Failed to delete user');
+      }
+      
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/users'] });
+      setIsDeleteUserDialogOpen(false);
+      toast({
+        title: "User deleted",
+        description: "The user has been permanently deleted from the system",
+        variant: "default"
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Failed to delete user",
+        description: error.message || "An error occurred while deleting the user",
+        variant: "destructive"
+      });
+    }
+  });
+  
+  const handleDeleteUser = () => {
+    if (!selectedUser) return;
+    
+    if (deleteConfirmation !== selectedUser.username) {
+      toast({
+        title: "Confirmation required",
+        description: "Please type the username correctly to confirm deletion",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    deleteUserMutation.mutate(selectedUser.id);
   };
 
   // Filter users based on search query
@@ -472,6 +529,15 @@ const AdminUserManagementTab: React.FC = () => {
                               >
                                 <RotateCcw className="h-4 w-4 mr-1" />
                                 Reset All
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleOpenDeleteUserDialog(user)}
+                                className="h-8 border-red-950 bg-red-950/40 text-red-300 hover:bg-red-950/60"
+                              >
+                                <Trash2 className="h-4 w-4 mr-1" />
+                                Delete User
                               </Button>
                             </div>
                           </div>
