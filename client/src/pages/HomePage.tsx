@@ -6,15 +6,11 @@ import TaskCard from '@/components/TaskCard';
 import { useUser } from '@/providers/UserProvider';
 import { Wallet, Plus, ChevronDown, ChevronRight, ChevronUp, MessageSquare } from 'lucide-react';
 import Navigation from '@/components/Navigation';
-import { useIsMobile } from '@/hooks/use-mobile';
-import MobileWalletConnect from '@/components/MobileWalletConnect';
 
 const HomePage: React.FC = () => {
   const { user } = useUser();
   const [showConnectWallet, setShowConnectWallet] = useState(false);
   const [showAllTasks, setShowAllTasks] = useState(false);
-  const isMobile = useIsMobile();
-  const [showMobileWalletConnect, setShowMobileWalletConnect] = useState(false);
 
   // Filter completed tasks
   const completedTasks = user?.tasks?.filter(task => task.completed) || [];
@@ -24,24 +20,9 @@ const HomePage: React.FC = () => {
     ? completedTasks 
     : completedTasks.slice(0, 7);
   
-  // Handle wallet connection for mobile
+  // Handle wallet connection
   const handleWalletClick = () => {
-    if (isMobile) {
-      setShowMobileWalletConnect(true);
-    } else {
-      setShowConnectWallet(!showConnectWallet);
-    }
-  };
-  
-  // Handle mobile wallet connection
-  const handleMobileWalletConnect = (address: string) => {
-    // Handle the wallet connection here
-    setShowMobileWalletConnect(false);
-  };
-  
-  // Cancel mobile wallet connection
-  const handleMobileWalletCancel = () => {
-    setShowMobileWalletConnect(false);
+    setShowConnectWallet(!showConnectWallet);
   };
 
   return (
@@ -53,31 +34,15 @@ const HomePage: React.FC = () => {
         {/* Telegram section */}
         <div className="mb-8">
           {user?.telegramId && (
-            <Card className="bg-[#1c3252] border-[#2a4365] mb-8">
-              <CardHeader className="bg-[#172a41] border-b border-[#2a4365]">
-                <CardTitle className="flex items-center text-lg">
-                  <MessageSquare className="h-5 w-5 mr-2 text-blue-400" />
-                  Telegram Connected
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-6">
-                <div className="flex flex-col md:flex-row items-center justify-between">
-                  <div>
-                    <p className="text-gray-300 mb-2">Your Telegram account is connected</p>
-                    <div className="bg-[#243b5c] p-3 rounded-lg border border-[#2a4365]">
-                      <div className="flex items-center mb-2">
-                        <span className="text-gray-400 inline-block w-24">Telegram ID:</span>
-                        <span className="font-mono font-medium text-white">{user.telegramId}</span>
-                      </div>
-                      <div className="flex items-center">
-                        <span className="text-gray-400 inline-block w-24">Username:</span>
-                        <span className="font-medium text-blue-400">@{user.username}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            <div className="flex flex-wrap items-center justify-between bg-[#243b5c] p-3 rounded-lg border border-[#2a4365] mb-8">
+              <div className="flex items-center mr-4 mb-2 md:mb-0">
+                <MessageSquare className="h-5 w-5 mr-2 text-blue-400" />
+                <span className="text-white">{user.telegramId}</span>
+              </div>
+              <div className="flex items-center">
+                <span className="text-blue-400">@{user.username}</span>
+              </div>
+            </div>
           )}
           
           {/* Wallet section */}
@@ -217,16 +182,6 @@ const HomePage: React.FC = () => {
           </Card>
         </div>
       </div>
-      
-      {/* Mobile wallet connect modal */}
-      {showMobileWalletConnect && (
-        <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4">
-          <MobileWalletConnect 
-            onConnect={handleMobileWalletConnect}
-            onCancel={handleMobileWalletCancel}
-          />
-        </div>
-      )}
       
       {/* Footer with padding for mobile nav */}
       <div className="h-16 md:h-0"></div>
