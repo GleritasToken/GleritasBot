@@ -312,7 +312,7 @@ const AboutPage: React.FC = () => {
                 <dl className="space-y-2">
                   <div className="flex justify-between py-2 border-b border-[#2a4365]">
                     <dt className="text-gray-400">Total Airdrop Supply</dt>
-                    <dd className="font-medium">1,000,000 GLRS</dd>
+                    <dd className="font-medium">500,000 GLRS</dd>
                   </div>
                   <div className="flex justify-between py-2 border-b border-[#2a4365]">
                     <dt className="text-gray-400">Base Reward</dt>

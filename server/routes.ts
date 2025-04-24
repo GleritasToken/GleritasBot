@@ -1052,7 +1052,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Sort users by total tokens in descending order
       const sortedUsers = allUsers
-        .filter(user => !user.isBanned) // Filter out banned users
+        .filter(user => !user.isBanned && user.username !== 'gleritas_admin_login_only') // Filter out banned users and admin
         .sort((a, b) => b.totalTokens - a.totalTokens)
         .slice(0, 50) // Get top 50 users
         .map(user => ({
