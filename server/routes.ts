@@ -202,7 +202,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             // Use Telegram Bot API to check membership
             try {
               // Group link is https://t.me/gleritaschat
-              isVerified = await verifyTelegramGroup(user.telegramId, 'gleritaschat');
+              isVerified = await verifyTelegramGroup(Number(user.telegramId), 'gleritaschat');
               if (!isVerified) {
                 verificationMessage = "Verification failed. Please make sure you have joined our Telegram group.";
               }
@@ -221,7 +221,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             // Use Telegram Bot API to check channel subscription
             try {
               // Channel link is https://t.me/+hcJdayisPFIxOGVk (private channel)
-              isVerified = await verifyTelegramChannel(user.telegramId, '+hcJdayisPFIxOGVk');
+              isVerified = await verifyTelegramChannel(Number(user.telegramId), '+hcJdayisPFIxOGVk');
               if (!isVerified) {
                 verificationMessage = "Verification failed. Please make sure you have joined our Telegram channel.";
               }
@@ -320,7 +320,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Check if Telegram ID is already connected to another account
       const users = await storage.getAllUsers();
-      const existingUser = users.find(u => u.telegramId === numericTelegramId);
+      const existingUser = users.find(u => u.telegramId === String(numericTelegramId));
       
       if (existingUser && existingUser.id !== req.user!.id) {
         return res.status(400).json({ 
@@ -328,9 +328,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
       
-      // Update user's Telegram ID
+      // Update user's Telegram ID (store as string in the database)
       const updatedUser = await storage.updateUser(req.user!.id, {
-        telegramId: numericTelegramId
+        telegramId: String(numericTelegramId)
       });
       
       if (!updatedUser) {
