@@ -622,7 +622,7 @@ export class MemStorage implements IStorage {
       {
         name: "telegram_connect",
         description: "Connect your Telegram account",
-        tokenAmount: 30,
+        tokenAmount: 2,
         isRequired: true,
         iconClass: "fab fa-telegram-plane text-blue-500",
         link: null

@@ -414,7 +414,7 @@ const TasksPage: React.FC = () => {
                         This is the first required step of the airdrop process.
                       </p>
                       <p className="text-amber-400 font-medium">
-                        Completing this task will reward you with 30 GLRS tokens!
+                        Completing this task will reward you with 2 GLRS tokens!
                       </p>
                       <Button 
                         size="lg" 
