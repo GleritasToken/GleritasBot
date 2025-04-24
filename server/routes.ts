@@ -50,9 +50,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
     
     // Check if user has admin username
-    // Allow "Your_Mum" for testing admin functionality
-    const adminUsernames = ['gleritas_admin_login_only', 'Your_Mum'];
-    if (!adminUsernames.includes(user.username)) {
+    if (user.username !== 'gleritas_admin_login_only') {
       return res.status(403).json({ message: "Admin access required." });
     }
     
