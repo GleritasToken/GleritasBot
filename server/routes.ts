@@ -1003,6 +1003,77 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Delete a user permanently (admin only)
+  app.post("/api/admin/users/:userId/delete", requireAdmin, async (req: Request, res: Response) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      const validationResult = resetTokensSchema.safeParse({
+        userId,
+        ...req.body
+      });
+      
+      if (!validationResult.success) {
+        return res.status(400).json({ 
+          message: "Invalid delete user request", 
+          errors: validationResult.error.format() 
+        });
+      }
+      
+      // Check if the user exists
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found." });
+      }
+      
+      // Delete the user
+      const result = await storage.deleteUser(userId);
+      
+      if (!result) {
+        return res.status(500).json({ message: "Failed to delete user." });
+      }
+      
+      res.json({
+        message: "User permanently deleted successfully"
+      });
+    } catch (error) {
+      console.error("Delete user error:", error);
+      res.status(500).json({ message: "Failed to delete user." });
+    }
+  });
+  
+  // Edit user's referral tokens amount (admin only)
+  app.post("/api/admin/users/:userId/edit-referral-tokens", requireAdmin, async (req: Request, res: Response) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      const amount = parseInt(req.body.amount);
+      
+      if (isNaN(amount) || amount < 0) {
+        return res.status(400).json({ message: "Invalid amount. Must be a non-negative number." });
+      }
+      
+      // Check if the user exists
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found." });
+      }
+      
+      // Update the user's referral tokens
+      const updatedUser = await storage.updateUserReferralTokens(userId, amount);
+      
+      if (!updatedUser) {
+        return res.status(500).json({ message: "Failed to update referral tokens." });
+      }
+      
+      res.json({
+        message: "Referral tokens updated successfully",
+        user: updatedUser
+      });
+    } catch (error) {
+      console.error("Edit referral tokens error:", error);
+      res.status(500).json({ message: "Failed to update referral tokens." });
+    }
+  });
+  
   // Create HTTP server
   const httpServer = createServer(app);
 
