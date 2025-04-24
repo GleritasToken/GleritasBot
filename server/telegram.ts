@@ -188,7 +188,7 @@ bot.on('text', async (ctx) => {
         await storage.createReferral({
           referrerUserId: referrer.id,
           referredUserId: user.id,
-          tokenAmount: 5
+          tokenAmount: 0.2
         });
         
         await ctx.reply(

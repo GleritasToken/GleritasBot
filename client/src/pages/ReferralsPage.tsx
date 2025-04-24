@@ -174,7 +174,7 @@ const ReferralsPage: React.FC = () => {
                 <Alert className="bg-blue-900/30 border-blue-800/50 text-blue-300 mb-4">
                   <AlertCircle className="h-4 w-4 mr-2" />
                   <AlertDescription>
-                    Earn 5 GLRS tokens for each friend who joins using your referral link (maximum 50 referrals).
+                    Earn 0.2 GLRS tokens for each friend who joins using your referral link (maximum 50 referrals).
                   </AlertDescription>
                 </Alert>
               </motion.div>
@@ -388,7 +388,7 @@ const ReferralsPage: React.FC = () => {
                             <td className="px-6 py-4 whitespace-nowrap text-sm">{referral.username}</td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-400">{formatDate(referral.createdAt)}</td>
                             <td className="px-6 py-4 whitespace-nowrap text-sm">{referral.tasksCompleted || 0}</td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-amber-400">+5 GLRS</td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-amber-400">+0.2 GLRS</td>
                           </motion.tr>
                         ))}
                       </tbody>

@@ -259,8 +259,8 @@ export class DatabaseStorage implements IStorage {
   
   // Referral operations
   async createReferral(insertReferral: InsertReferral): Promise<Referral> {
-    // Default point amount is 5 if not provided
-    const pointAmount = insertReferral.tokenAmount ?? 5;
+    // Default point amount is 0.2 GLRS per referral
+    const pointAmount = insertReferral.tokenAmount ?? 0.2;
     
     const referralData = {
       referrerUserId: insertReferral.referrerUserId,

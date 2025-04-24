@@ -315,8 +315,8 @@ export class MemStorage implements IStorage {
   // Referral Operations
   async createReferral(insertReferral: InsertReferral): Promise<Referral> {
     const id = this.currentReferralId++;
-    // Default token amount is 5 if not provided
-    const tokenAmount = insertReferral.tokenAmount ?? 5;
+    // Default token amount is 0.2 GLRS per referral
+    const tokenAmount = insertReferral.tokenAmount ?? 0.2;
     
     const referral: Referral = { 
       id,

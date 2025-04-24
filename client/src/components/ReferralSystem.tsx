@@ -65,7 +65,7 @@ const ReferralSystem: React.FC = () => {
     <Card className="bg-[#1c3252] rounded-xl shadow-sm overflow-hidden border border-[#2a4365]">
       <CardHeader className="bg-gradient-to-r from-blue-700 to-blue-900 p-4 text-white border-b border-[#2a4365]">
         <h3 className="font-semibold text-lg">Referral Program</h3>
-        <p className="text-sm text-white/80">Earn +5 GLRS for each friend who completes tasks</p>
+        <p className="text-sm text-white/80">Earn +0.2 GLRS for each friend who completes tasks</p>
       </CardHeader>
       
       <CardContent className="p-4">
