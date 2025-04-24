@@ -53,6 +53,10 @@ export interface IStorage {
   banUser(userId: number, banReason: string): Promise<User | undefined>;
   unbanUser(userId: number): Promise<User | undefined>;
   resetUserTokens(userId: number): Promise<User | undefined>;
+  resetUserTasks(userId: number): Promise<User | undefined>;
+  resetUserData(userId: number): Promise<User | undefined>;
+  deleteUser(userId: number): Promise<boolean>;
+  updateUserReferralTokens(userId: number, amount: number): Promise<User | undefined>;
   getTaskCompletionStats(): Promise<any>;
   getUserActivityStats(): Promise<any>;
   
@@ -458,20 +462,110 @@ export class MemStorage implements IStorage {
     const user = this.users.get(userId);
     if (!user) return undefined;
     
-    // Delete all user tasks
+    // Only reset tokens, don't delete tasks or connections
+    const updatedUser = { 
+      ...user,
+      totalTokens: 0,
+      referralTokens: 0
+    };
+    
+    this.users.set(userId, updatedUser);
+    return updatedUser;
+  }
+  
+  async resetUserTasks(userId: number): Promise<User | undefined> {
+    const user = this.users.get(userId);
+    if (!user) return undefined;
+    
+    // Delete all user's tasks
     for (const [id, task] of this.userTasks.entries()) {
       if (task.userId === userId) {
         this.userTasks.delete(id);
       }
     }
     
-    // Reset user data completely
+    // Update user token balance to only include referral tokens
+    const updatedUser = { 
+      ...user,
+      totalTokens: user.referralTokens // Keep only referral tokens
+    };
+    
+    this.users.set(userId, updatedUser);
+    return updatedUser;
+  }
+  
+  async resetUserData(userId: number): Promise<User | undefined> {
+    const user = this.users.get(userId);
+    if (!user) return undefined;
+    
+    // Delete all user's tasks
+    for (const [id, task] of this.userTasks.entries()) {
+      if (task.userId === userId) {
+        this.userTasks.delete(id);
+      }
+    }
+    
+    // Reset everything except username, wallet, and referral code
     const updatedUser = { 
       ...user,
       totalTokens: 0,
       referralTokens: 0,
       telegramId: null,
-      walletAddress: null
+      referralCount: 0
+    };
+    
+    this.users.set(userId, updatedUser);
+    return updatedUser;
+  }
+  
+  async deleteUser(userId: number): Promise<boolean> {
+    const user = this.users.get(userId);
+    if (!user) return false;
+    
+    try {
+      // Delete all user tasks
+      for (const [id, task] of this.userTasks.entries()) {
+        if (task.userId === userId) {
+          this.userTasks.delete(id);
+        }
+      }
+      
+      // Delete all referrals where user is either referrer or referred
+      for (const [id, referral] of this.referrals.entries()) {
+        if (referral.referrerUserId === userId || referral.referredUserId === userId) {
+          this.referrals.delete(id);
+        }
+      }
+      
+      // Delete all withdrawals
+      for (const [id, withdrawal] of this.withdrawals.entries()) {
+        if (withdrawal.userId === userId) {
+          this.withdrawals.delete(id);
+        }
+      }
+      
+      // Delete the user
+      this.users.delete(userId);
+      
+      return true;
+    } catch (error) {
+      console.error("Error deleting user:", error);
+      return false;
+    }
+  }
+  
+  async updateUserReferralTokens(userId: number, amount: number): Promise<User | undefined> {
+    const user = this.users.get(userId);
+    if (!user) return undefined;
+    
+    // Calculate the difference between new amount and current referral tokens
+    const tokenDifference = amount - user.referralTokens;
+    
+    // Update user with new referral token amount and adjust total tokens accordingly
+    const updatedUser = { 
+      ...user,
+      referralTokens: amount,
+      totalTokens: user.totalTokens + tokenDifference
     };
     
     this.users.set(userId, updatedUser);
