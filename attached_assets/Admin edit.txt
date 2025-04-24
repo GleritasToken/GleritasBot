@@ -1,0 +1,8 @@
+﻿Admin can delete a single user info or all users info
+Admin can edit tokens amount to be awarded per referral
+And on the withdrawal navigation section, lock the withdraw button with description *withdrawal available soon*
+Change text (Withdrawals require a small BNB network fee (0.001 BNB) to be paid separately after submission.) to (Withdrawals require a small BNB network fee ($1 BNB) to be paid separately after submission.)
+
+Users telegram ID and username should be displayed on the homepage 
+
+

@@ -14,7 +14,8 @@ import {
   Check,
   UserX,
   UserCheck,
-  Wallet 
+  Wallet,
+  Trash2 
 } from 'lucide-react';
 import { 
   Dialog, 
@@ -63,8 +64,12 @@ const AdminUserManagementTab: React.FC = () => {
   const [isResetTokensDialogOpen, setIsResetTokensDialogOpen] = useState(false);
   const [isResetTasksDialogOpen, setIsResetTasksDialogOpen] = useState(false);
   const [isResetDataDialogOpen, setIsResetDataDialogOpen] = useState(false);
+  const [isDeleteUserDialogOpen, setIsDeleteUserDialogOpen] = useState(false);
+  const [isEditReferralAmountDialogOpen, setIsEditReferralAmountDialogOpen] = useState(false);
   const [banReason, setBanReason] = useState('');
   const [resetReason, setResetReason] = useState('');
+  const [deleteReason, setDeleteReason] = useState('');
+  const [referralTokensAmount, setReferralTokensAmount] = useState(0);
   const itemsPerPage = 10;
   
   const { toast } = useToast();
