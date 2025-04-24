@@ -293,6 +293,52 @@ const AdminHomeTab: React.FC<AdminHomeTabProps> = ({ adminStats, isLoadingStats 
           )}
         </CardContent>
       </Card>
+      
+      {/* Confirmation Dialog for System Reset */}
+      <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <DialogContent className="bg-[#1c3252] border-[#2a4365] text-white">
+          <DialogHeader>
+            <DialogTitle className="text-red-400 flex items-center">
+              <AlertCircle className="h-5 w-5 mr-2" />
+              Confirm System Reset
+            </DialogTitle>
+            <DialogDescription className="text-gray-300">
+              This action will permanently delete all users, tasks, referrals, and withdrawals from the system.
+              This cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <Alert className="bg-red-900/30 border-red-800">
+              <AlertCircle className="h-4 w-4 text-red-400" />
+              <AlertDescription className="text-red-300">
+                Only proceed if you are moving from testing to production phase and want to start with a clean database.
+              </AlertDescription>
+            </Alert>
+          </div>
+          <DialogFooter className="flex gap-2 justify-end">
+            <Button
+              variant="outline"
+              onClick={() => setIsDeleteDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => deleteAllUsersMutation.mutate()}
+              disabled={deleteAllUsersMutation.isPending}
+            >
+              {deleteAllUsersMutation.isPending ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Deleting...
+                </>
+              ) : (
+                "Yes, Delete All Users"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

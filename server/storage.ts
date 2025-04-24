@@ -57,6 +57,7 @@ export interface IStorage {
   getTaskCompletionStats(): Promise<any>;
   getUserActivityStats(): Promise<any>;
   getTokenAllocationStats(): Promise<{ totalTokensClaimed: number, totalAllocation: number }>;
+  deleteAllUsers(): Promise<boolean>;
   
   // Init data
   initializeDefaultTasks(): Promise<void>;
