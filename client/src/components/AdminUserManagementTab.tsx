@@ -253,6 +253,75 @@ const AdminUserManagementTab: React.FC = () => {
       });
     }
   });
+  
+  // Delete user mutation
+  const deleteUserMutation = useMutation({
+    mutationFn: async (data: ResetTokensData) => {
+      const res = await fetch(`/api/admin/users/${data.userId}/delete`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reason: data.reason })
+      });
+      
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message || 'Failed to delete user');
+      }
+      
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/users'] });
+      setIsDeleteUserDialogOpen(false);
+      setDeleteReason('');
+      toast({
+        title: "User deleted",
+        description: "The user has been permanently deleted from the system",
+        variant: "default"
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Failed to delete user",
+        description: error.message || "An error occurred while deleting the user",
+        variant: "destructive"
+      });
+    }
+  });
+  
+  // Edit referral tokens amount mutation
+  const editReferralTokensMutation = useMutation({
+    mutationFn: async (data: { userId: number, amount: number }) => {
+      const res = await fetch(`/api/admin/users/${data.userId}/edit-referral-tokens`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ amount: data.amount })
+      });
+      
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message || 'Failed to update referral tokens amount');
+      }
+      
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/users'] });
+      setIsEditReferralAmountDialogOpen(false);
+      toast({
+        title: "Referral tokens updated",
+        description: "The referral tokens amount has been updated successfully",
+        variant: "default"
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Failed to update referral tokens",
+        description: error.message || "An error occurred while updating the referral tokens amount",
+        variant: "destructive"
+      });
+    }
+  });
 
   const handleOpenBanDialog = (user: User) => {
     setSelectedUser(user);
@@ -281,6 +350,18 @@ const AdminUserManagementTab: React.FC = () => {
     setSelectedUser(user);
     setResetReason('');
     setIsResetDataDialogOpen(true);
+  };
+  
+  const handleOpenDeleteUserDialog = (user: User) => {
+    setSelectedUser(user);
+    setDeleteReason('');
+    setIsDeleteUserDialogOpen(true);
+  };
+  
+  const handleOpenEditReferralAmountDialog = (user: User) => {
+    setSelectedUser(user);
+    setReferralTokensAmount(user.referralTokens);
+    setIsEditReferralAmountDialogOpen(true);
   };
 
   const handleBanUser = () => {
@@ -330,6 +411,42 @@ const AdminUserManagementTab: React.FC = () => {
     resetDataMutation.mutate({
       userId: selectedUser.id,
       reason: resetReason
+    });
+  };
+  
+  const handleDeleteUser = () => {
+    if (!selectedUser) return;
+    
+    if (!deleteReason.trim()) {
+      toast({
+        title: "Deletion reason required",
+        description: "Please provide a reason for deleting this user",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    deleteUserMutation.mutate({
+      userId: selectedUser.id,
+      reason: deleteReason
+    });
+  };
+  
+  const handleEditReferralTokens = () => {
+    if (!selectedUser) return;
+    
+    if (referralTokensAmount < 0) {
+      toast({
+        title: "Invalid amount",
+        description: "Referral tokens amount cannot be negative",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    editReferralTokensMutation.mutate({
+      userId: selectedUser.id,
+      amount: referralTokensAmount
     });
   };
 
@@ -477,6 +594,26 @@ const AdminUserManagementTab: React.FC = () => {
                               >
                                 <RotateCcw className="h-4 w-4 mr-1" />
                                 Reset All
+                              </Button>
+                            </div>
+                            <div className="flex gap-1 mt-1">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleOpenEditReferralAmountDialog(user)}
+                                className="h-8 border-blue-700 bg-blue-900/20 text-blue-400 hover:bg-blue-800/30"
+                              >
+                                <Wallet className="h-4 w-4 mr-1" />
+                                Edit Referrals
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleOpenDeleteUserDialog(user)}
+                                className="h-8 border-red-700 bg-red-900/20 text-red-400 hover:bg-red-800/30"
+                              >
+                                <Trash2 className="h-4 w-4 mr-1" />
+                                Delete User
                               </Button>
                             </div>
                           </div>
@@ -908,6 +1045,153 @@ const AdminUserManagementTab: React.FC = () => {
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
               )}
               Reset All Data
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Delete User Dialog */}
+      <Dialog open={isDeleteUserDialogOpen} onOpenChange={setIsDeleteUserDialogOpen}>
+        <DialogContent className="bg-[#1c3252] border-[#2a4365] text-white">
+          <DialogHeader>
+            <DialogTitle className="flex items-center">
+              <Trash2 className="h-5 w-5 mr-2 text-red-400" />
+              Delete User Permanently
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="py-4">
+            <div className="mb-4">
+              <p className="text-sm text-gray-300 mb-2">
+                You are about to permanently delete user:
+              </p>
+              <div className="bg-[#172a41] p-2 rounded text-sm mb-4">
+                <span className="font-bold">{selectedUser?.username}</span>
+                {selectedUser?.walletAddress && (
+                  <div className="text-xs text-gray-400 mt-1">
+                    Wallet: {selectedUser.walletAddress}
+                  </div>
+                )}
+                <div className="flex items-center mt-1">
+                  <Wallet className="h-3 w-3 mr-1 text-yellow-400" />
+                  <span className="text-yellow-400">
+                    Tokens: {selectedUser?.totalTokens || 0} GLRS
+                  </span>
+                </div>
+              </div>
+              
+              <div className="bg-red-950/30 border border-red-800 rounded p-3 mb-4">
+                <p className="text-sm font-medium text-red-400 mb-2">EXTREME CAUTION: This action will:</p>
+                <ul className="list-disc pl-5 mb-2 space-y-1 text-xs text-gray-300">
+                  <li>Permanently delete the user account</li>
+                  <li>Remove all their task data</li>
+                  <li>Remove all referral connections</li>
+                  <li>Delete all wallet connections</li>
+                </ul>
+                <p className="text-xs text-red-400 font-bold">This action CANNOT be undone. The user will need to register again with a new account.</p>
+              </div>
+              
+              <p className="text-sm text-gray-300 mb-2">
+                Please provide a reason for permanently deleting this user (required):
+              </p>
+              <Textarea
+                value={deleteReason}
+                onChange={(e) => setDeleteReason(e.target.value)}
+                placeholder="Reason for deletion..."
+                className="bg-[#172a41] border-[#2a4365] mb-2"
+              />
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsDeleteUserDialogOpen(false)}
+              className="border-gray-500 text-gray-300 hover:bg-gray-700 hover:text-white"
+            >
+              Cancel
+            </Button>
+            <Button 
+              type="button"
+              onClick={handleDeleteUser}
+              disabled={deleteUserMutation.isPending}
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              {deleteUserMutation.isPending && (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              )}
+              Delete Permanently
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Edit Referral Amount Dialog */}
+      <Dialog open={isEditReferralAmountDialogOpen} onOpenChange={setIsEditReferralAmountDialogOpen}>
+        <DialogContent className="bg-[#1c3252] border-[#2a4365] text-white">
+          <DialogHeader>
+            <DialogTitle className="flex items-center">
+              <Wallet className="h-5 w-5 mr-2 text-blue-400" />
+              Edit Referral Tokens Amount
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="py-4">
+            <div className="mb-4">
+              <p className="text-sm text-gray-300 mb-2">
+                Edit referral tokens for user:
+              </p>
+              <div className="bg-[#172a41] p-2 rounded text-sm mb-4">
+                <span className="font-bold">{selectedUser?.username}</span>
+                <div className="flex items-center mt-1">
+                  <Wallet className="h-3 w-3 mr-1 text-blue-400" />
+                  <span className="text-blue-400">
+                    Current Referral Tokens: {selectedUser?.referralTokens || 0} GLRS
+                  </span>
+                </div>
+              </div>
+              
+              <div className="mb-4">
+                <label className="text-sm text-gray-300 mb-2 block">
+                  New Referral Tokens Amount:
+                </label>
+                <Input
+                  type="number"
+                  value={referralTokensAmount}
+                  onChange={(e) => setReferralTokensAmount(parseInt(e.target.value) || 0)}
+                  min={0}
+                  className="bg-[#172a41] border-[#2a4365] text-white"
+                />
+              </div>
+              
+              <div className="bg-blue-950/30 border border-blue-800 rounded p-3 mb-4">
+                <p className="text-sm text-blue-400">
+                  This will update the number of tokens the user has received from referrals. The total token amount will be adjusted automatically.
+                </p>
+              </div>
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsEditReferralAmountDialogOpen(false)}
+              className="border-gray-500 text-gray-300 hover:bg-gray-700 hover:text-white"
+            >
+              Cancel
+            </Button>
+            <Button 
+              type="button"
+              onClick={handleEditReferralTokens}
+              disabled={editReferralTokensMutation.isPending}
+              className="bg-blue-600 hover:bg-blue-700 text-white"
+            >
+              {editReferralTokensMutation.isPending && (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              )}
+              Update Referral Tokens
             </Button>
           </DialogFooter>
         </DialogContent>
