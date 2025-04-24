@@ -40,11 +40,14 @@ const AdminHomeTab: React.FC<AdminHomeTabProps> = ({ adminStats, isLoadingStats 
   });
   
   // Get token allocation stats
-  const { data: tokenAllocation, isLoading: isLoadingAllocation } = useQuery({
+  const { data: tokenAllocationResponse, isLoading: isLoadingAllocation } = useQuery({
     queryKey: ['/api/admin/token-allocation'],
     retry: false,
     gcTime: 0
   });
+  
+  // Access the data property of the response
+  const tokenAllocation = tokenAllocationResponse?.success ? tokenAllocationResponse.data : null;
   
   // Delete all users mutation
   const deleteAllUsersMutation = useMutation({
@@ -87,8 +90,8 @@ const AdminHomeTab: React.FC<AdminHomeTabProps> = ({ adminStats, isLoadingStats 
   
   // Calculate token allocation percentage
   const tokenPercentage = React.useMemo(() => {
-    if (!tokenAllocation || !tokenAllocation.data) return 0;
-    const { totalTokensClaimed, totalAllocation } = tokenAllocation.data;
+    if (!tokenAllocation) return 0;
+    const { totalTokensClaimed, totalAllocation } = tokenAllocation;
     return (totalTokensClaimed / totalAllocation) * 100;
   }, [tokenAllocation]);
 
@@ -110,12 +113,12 @@ const AdminHomeTab: React.FC<AdminHomeTabProps> = ({ adminStats, isLoadingStats 
             <div className="flex justify-center p-4">
               <Loader2 className="h-8 w-8 animate-spin text-amber-400" />
             </div>
-          ) : tokenAllocation?.data ? (
+          ) : tokenAllocation ? (
             <div className="space-y-4">
               <div className="flex justify-between items-center">
                 <span>Tokens Claimed</span>
                 <span className="font-bold text-amber-400">
-                  {tokenAllocation.data.totalTokensClaimed.toLocaleString()} / {tokenAllocation.data.totalAllocation.toLocaleString()} GLRS
+                  {tokenAllocation.totalTokensClaimed.toLocaleString()} / {tokenAllocation.totalAllocation.toLocaleString()} GLRS
                 </span>
               </div>
               <Progress 
