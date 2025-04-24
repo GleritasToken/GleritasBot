@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import WalletSubmission from '@/components/WalletSubmission';
 import TaskCard from '@/components/TaskCard';
 import { useUser } from '@/providers/UserProvider';
-import { Wallet, Plus, ChevronDown, ChevronRight, ChevronUp } from 'lucide-react';
+import { Wallet, Plus, ChevronDown, ChevronRight, ChevronUp, MessageSquare } from 'lucide-react';
 import Navigation from '@/components/Navigation';
 import { useIsMobile } from '@/hooks/use-mobile';
 import MobileWalletConnect from '@/components/MobileWalletConnect';
