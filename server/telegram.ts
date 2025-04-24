@@ -260,19 +260,17 @@ export async function startBot() {
 // Set up an API endpoint to initialize the Telegram Mini App in the frontend
 // Task verification methods
 export async function verifyTelegramChannel(userTelegramId: number, channelUsername: string): Promise<boolean> {
+  // In development mode, always simulate successful verification for testing
+  if (process.env.NODE_ENV === 'development') {
+    console.log(`[DEV MODE] Auto-verifying channel (${channelUsername}) for user ${userTelegramId}`);
+    return true;
+  }
+  
   try {
     let chatIdentifier = channelUsername;
     
     // Handle private channel links that start with +
     if (channelUsername.startsWith('+')) {
-      // For private channels, we need to use the invite link directly
-      // In production, we'd need more robust handling of these links
-      // For now, we'll simulate successful verification for testing when in development mode
-      if (process.env.NODE_ENV === 'development') {
-        console.log(`Simulating verification for private channel (${channelUsername}) for user ${userTelegramId}`);
-        return true;
-      }
-      
       try {
         // Try to use the link directly
         const member = await bot.telegram.getChatMember(`-${channelUsername.substring(1)}`, userTelegramId);
@@ -301,6 +299,12 @@ export async function verifyTelegramChannel(userTelegramId: number, channelUsern
 }
 
 export async function verifyTelegramGroup(userTelegramId: number, groupUsername: string): Promise<boolean> {
+  // In development mode, always simulate successful verification for testing
+  if (process.env.NODE_ENV === 'development') {
+    console.log(`[DEV MODE] Auto-verifying group (${groupUsername}) for user ${userTelegramId}`);
+    return true;
+  }
+  
   try {
     // Make sure group username starts with @ for the API call
     const formattedGroupUsername = groupUsername.startsWith('@') 

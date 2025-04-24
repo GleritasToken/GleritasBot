@@ -15,6 +15,7 @@ import {
 } from "@shared/schema";
 import { z } from "zod";
 import { randomBytes } from "crypto";
+import { verifyTelegramChannel, verifyTelegramGroup, verifyTwitterFollow } from "./telegram";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Initialize tasks
@@ -194,22 +195,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
         }
         // For telegram_group task, verify the user has joined the group
         else if (taskName === "telegram_group") {
-          // Here we'd use Telegram Bot API to check membership
-          // For now, we'll require proof of membership via screenshot or verification code
-          if (verificationData) {
-            // In a real implementation, we'd verify this with Telegram Bot API
-            isVerified = true;
+          // First check if user has connected their Telegram account
+          if (!user.telegramId) {
+            verificationMessage = "Please connect your Telegram account first.";
           } else {
-            verificationMessage = "Please join our Telegram group and provide verification.";
+            // Use Telegram Bot API to check membership
+            try {
+              // Group link is https://t.me/gleritaschat
+              isVerified = await verifyTelegramGroup(user.telegramId, 'gleritaschat');
+              if (!isVerified) {
+                verificationMessage = "Verification failed. Please make sure you have joined our Telegram group.";
+              }
+            } catch (error) {
+              console.error('Telegram group verification error:', error);
+              verificationMessage = "Error verifying group membership. Please try again.";
+            }
           }
         }
         // For telegram_channel task
         else if (taskName === "telegram_channel") {
-          if (verificationData) {
-            // In a real implementation, we'd verify this with Telegram Bot API
-            isVerified = true;
+          // First check if user has connected their Telegram account
+          if (!user.telegramId) {
+            verificationMessage = "Please connect your Telegram account first.";
           } else {
-            verificationMessage = "Please subscribe to our Telegram channel and provide verification.";
+            // Use Telegram Bot API to check channel subscription
+            try {
+              // Channel link is https://t.me/+hcJdayisPFIxOGVk (private channel)
+              isVerified = await verifyTelegramChannel(user.telegramId, '+hcJdayisPFIxOGVk');
+              if (!isVerified) {
+                verificationMessage = "Verification failed. Please make sure you have joined our Telegram channel.";
+              }
+            } catch (error) {
+              console.error('Telegram channel verification error:', error);
+              verificationMessage = "Error verifying channel subscription. Please try again.";
+            }
           }
         }
         // For twitter_follow task
