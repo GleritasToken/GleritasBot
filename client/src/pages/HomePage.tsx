@@ -94,6 +94,20 @@ const HomePage: React.FC = () => {
                     <p className="font-mono bg-[#243b5c] p-2 rounded border border-[#2a4365] text-sm break-all">
                       {user.walletAddress}
                     </p>
+                    
+                    {user.telegramId && (
+                      <div className="mt-3 p-2 bg-[#1c3252] rounded border border-[#2a4365]">
+                        <p className="text-gray-300 text-sm mb-1">Telegram Account</p>
+                        <div className="flex items-center">
+                          <span className="bg-blue-900/50 text-blue-300 px-2 py-1 rounded text-xs mr-2">
+                            ID: {user.telegramId}
+                          </span>
+                          <span className="text-amber-400 text-sm">
+                            @{user.username}
+                          </span>
+                        </div>
+                      </div>
+                    )}
                   </div>
                   <div className="mt-4 md:mt-0 text-center">
                     <div className="bg-[#243b5c] rounded-lg p-4 border border-[#2a4365]">

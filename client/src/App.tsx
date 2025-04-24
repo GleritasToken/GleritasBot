@@ -8,6 +8,7 @@ import HomePage from "@/pages/HomePage";
 import TasksPage from "@/pages/TasksPage";
 import ReferralsPage from "@/pages/ReferralsPage";
 import WithdrawalPage from "@/pages/WithdrawalPage";
+import UpgradePage from "@/pages/UpgradePage";
 import AboutPage from "@/pages/AboutPage";
 import AdminPage from "@/pages/AdminPage";
 import AuthPage from "@/pages/auth-page";
@@ -190,6 +191,7 @@ function Router() {
         <ProtectedRoute path="/tasks" component={TasksPage} />
         <ProtectedRoute path="/referrals" component={ReferralsPage} />
         <ProtectedRoute path="/withdrawals" component={WithdrawalPage} />
+        <ProtectedRoute path="/upgrade" component={UpgradePage} />
         <ProtectedRoute path="/about" component={AboutPage} />
         <ProtectedRoute path="/admin" component={AdminPage} />
         <Route path="/auth" component={AuthPage} />

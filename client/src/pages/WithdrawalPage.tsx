@@ -224,7 +224,7 @@ const WithdrawalPage: React.FC = () => {
                 <Alert className="bg-blue-900/30 border-blue-800/50 text-blue-300 mb-6">
                   <AlertCircle className="h-4 w-4 mr-2" />
                   <AlertDescription>
-                    Withdrawals require a small BNB network fee (0.001 BNB) to be paid separately after submission.
+                    Withdrawals require a small BNB network fee ($1 BNB) to be paid separately after submission.
                   </AlertDescription>
                 </Alert>
                 
@@ -257,22 +257,11 @@ const WithdrawalPage: React.FC = () => {
                       />
                     </div>
                     <Button
-                      onClick={handleWithdraw}
-                      disabled={withdrawMutation.isPending || !user?.walletAddress || user?.totalTokens < 10}
-                      className="bg-blue-600 hover:bg-blue-700 relative overflow-hidden group"
+                      disabled={true}
+                      className="bg-gray-600 hover:bg-gray-600 cursor-not-allowed relative overflow-hidden group"
                     >
-                      {withdrawMutation.isPending ? (
-                        <>
-                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                          Processing...
-                        </>
-                      ) : (
-                        <>
-                          <Wallet className="h-4 w-4 mr-2" />
-                          Withdraw
-                          <ArrowRight className="h-4 w-4 ml-2 group-hover:translate-x-1 transition-transform" />
-                        </>
-                      )}
+                      <Wallet className="h-4 w-4 mr-2" />
+                      Withdrawal Available Soon
                     </Button>
                   </div>
                   
