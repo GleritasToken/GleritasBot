@@ -1003,6 +1003,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Delete all users endpoint (for resetting after testing phase)
+  app.post("/api/admin/delete-all-users", requireAdmin, async (req: Request, res: Response) => {
+    try {
+      const result = await storage.deleteAllUsers();
+      
+      if (result) {
+        res.json({
+          success: true,
+          message: "All users and related data have been deleted successfully. System has been reset to initial state."
+        });
+      } else {
+        res.status(500).json({
+          success: false,
+          error: "Failed to delete all users."
+        });
+      }
+    } catch (error) {
+      console.error("Error deleting all users:", error);
+      res.status(500).json({
+        success: false,
+        error: "An error occurred while deleting all users."
+      });
+    }
+  });
+  
+  // Token allocation stats endpoint
+  app.get("/api/admin/token-allocation", requireAdmin, async (req: Request, res: Response) => {
+    try {
+      const stats = await storage.getTokenAllocationStats();
+      res.json({
+        success: true,
+        data: stats
+      });
+    } catch (error) {
+      console.error("Error getting token allocation stats:", error);
+      res.status(500).json({
+        success: false,
+        error: "An error occurred while fetching token allocation stats."
+      });
+    }
+  });
+  
   // Create HTTP server
   const httpServer = createServer(app);
 
