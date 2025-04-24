@@ -125,7 +125,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             await storage.createReferral({
               referrerUserId: referrer.id,
               referredUserId: newUser.id,
-              tokenAmount: 5 // 5 GLRS tokens per referral
+              tokenAmount: 0.2 // 0.2 GLRS tokens per referral
             });
           } else {
             console.log(`Referral not processed: User ${referrer.id} has reached the 50 referrals limit`);
@@ -1042,6 +1042,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
         success: false,
         error: "An error occurred while deleting the user"
       });
+    }
+  });
+  
+  // Leaderboard endpoint to get top 50 users by tokens
+  app.get("/api/leaderboard", async (req: Request, res: Response) => {
+    try {
+      const allUsers = await storage.getAllUsers();
+      
+      // Sort users by total tokens in descending order
+      const sortedUsers = allUsers
+        .filter(user => !user.isBanned) // Filter out banned users
+        .sort((a, b) => b.totalTokens - a.totalTokens)
+        .slice(0, 50) // Get top 50 users
+        .map(user => ({
+          username: user.username,
+          totalTokens: user.totalTokens,
+          walletConnected: !!user.walletAddress,
+          referralCount: user.referralCount
+        }));
+      
+      res.json({
+        leaderboard: sortedUsers
+      });
+    } catch (error) {
+      console.error("Leaderboard error:", error);
+      res.status(500).json({ message: "Failed to fetch leaderboard data." });
     }
   });
   

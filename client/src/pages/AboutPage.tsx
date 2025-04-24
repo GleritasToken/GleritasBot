@@ -1,10 +1,45 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Navigation from '@/components/Navigation';
-import { ExternalLink, FileText, MessageCircle, Twitter, Globe } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { ExternalLink, FileText, MessageCircle, Twitter, Globe, Trophy, Loader2 } from 'lucide-react';
 
 const AboutPage: React.FC = () => {
+  const [leaderboard, setLeaderboard] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    // Fetch leaderboard data
+    const fetchLeaderboard = async () => {
+      try {
+        setIsLoading(true);
+        const response = await fetch('/api/leaderboard');
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch leaderboard data');
+        }
+        
+        const data = await response.json();
+        setLeaderboard(data.leaderboard || []);
+      } catch (err) {
+        console.error('Leaderboard fetch error:', err);
+        setError('Could not load leaderboard data');
+        toast({
+          title: "Error",
+          description: "Failed to load leaderboard data",
+          variant: "destructive"
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    fetchLeaderboard();
+  }, [toast]);
+  
   return (
     <div className="min-h-screen bg-[#12243B] text-white pb-16 md:pb-0">
       <Navigation />
@@ -144,6 +179,104 @@ const AboutPage: React.FC = () => {
         </Card>
         
         {/* Token Metrics section */}
+        {/* Leaderboard Section */}
+        <Card className="bg-[#1c3252] border-[#2a4365] mb-6">
+          <CardHeader className="bg-[#172a41] border-b border-[#2a4365]">
+            <CardTitle className="flex items-center text-lg">
+              <Trophy className="h-5 w-5 mr-2 text-yellow-400" />
+              Leaderboard
+            </CardTitle>
+            <CardDescription className="text-gray-400">
+              Top 50 users with most GLRS tokens earned
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="p-6">
+            {isLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="h-8 w-8 animate-spin text-blue-500" />
+                <span className="ml-3 text-gray-400">Loading leaderboard data...</span>
+              </div>
+            ) : error ? (
+              <div className="bg-red-900/20 border border-red-800/30 rounded-lg p-4 text-center text-red-300">
+                <p>{error}</p>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="mt-2 bg-transparent border-red-800 hover:bg-red-900/30 text-red-300"
+                  onClick={() => window.location.reload()}
+                >
+                  Try Again
+                </Button>
+              </div>
+            ) : leaderboard.length === 0 ? (
+              <div className="text-center p-8 text-gray-400">
+                <Trophy className="h-12 w-12 mx-auto mb-4 text-gray-600 opacity-50" />
+                <p>No users on the leaderboard yet. Be the first!</p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse">
+                  <thead>
+                    <tr className="bg-[#172a41] text-gray-300">
+                      <th className="py-3 px-4 text-left font-medium text-xs uppercase tracking-wider">#</th>
+                      <th className="py-3 px-4 text-left font-medium text-xs uppercase tracking-wider">Username</th>
+                      <th className="py-3 px-4 text-left font-medium text-xs uppercase tracking-wider">Tokens Earned</th>
+                      <th className="py-3 px-4 text-left font-medium text-xs uppercase tracking-wider">Referrals</th>
+                      <th className="py-3 px-4 text-left font-medium text-xs uppercase tracking-wider">Wallet</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {leaderboard.map((user, index) => (
+                      <tr 
+                        key={index} 
+                        className={`border-b border-[#2a4365] ${
+                          index === 0 ? 'bg-yellow-500/10' : 
+                          index === 1 ? 'bg-gray-400/10' : 
+                          index === 2 ? 'bg-amber-700/10' : 
+                          index % 2 === 0 ? 'bg-[#1c3252]' : 'bg-[#243b5c]'
+                        } hover:bg-blue-900/20`}
+                      >
+                        <td className="py-3 px-4 whitespace-nowrap">
+                          {index === 0 ? (
+                            <span className="text-yellow-500 font-bold">🥇 1</span>
+                          ) : index === 1 ? (
+                            <span className="text-gray-400 font-bold">🥈 2</span>
+                          ) : index === 2 ? (
+                            <span className="text-amber-700 font-bold">🥉 3</span>
+                          ) : (
+                            index + 1
+                          )}
+                        </td>
+                        <td className="py-3 px-4 whitespace-nowrap font-medium">
+                          {user.username}
+                        </td>
+                        <td className="py-3 px-4 whitespace-nowrap text-amber-400 font-medium">
+                          {user.totalTokens.toFixed(2)} GLRS
+                        </td>
+                        <td className="py-3 px-4 whitespace-nowrap text-blue-400">
+                          {user.referralCount}
+                        </td>
+                        <td className="py-3 px-4 whitespace-nowrap">
+                          {user.walletConnected ? (
+                            <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-green-900/30 text-green-400">
+                              Connected
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center px-2 py-1 rounded text-xs font-medium bg-gray-800 text-gray-400">
+                              Not connected
+                            </span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+        
+        {/* Token Metrics section */}
         <Card className="bg-[#1c3252] border-[#2a4365]">
           <CardHeader className="bg-[#172a41] border-b border-[#2a4365]">
             <CardTitle className="flex items-center text-lg">
@@ -187,7 +320,7 @@ const AboutPage: React.FC = () => {
                   </div>
                   <div className="flex justify-between py-2 border-b border-[#2a4365]">
                     <dt className="text-gray-400">Referral Reward</dt>
-                    <dd className="font-medium">5 GLRS per referral</dd>
+                    <dd className="font-medium">0.2 GLRS per referral</dd>
                   </div>
                   <div className="flex justify-between py-2 border-b border-[#2a4365]">
                     <dt className="text-gray-400">Max Referrals</dt>
