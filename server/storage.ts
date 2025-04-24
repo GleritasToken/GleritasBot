@@ -53,6 +53,9 @@ export interface IStorage {
   banUser(userId: number, banReason: string): Promise<User | undefined>;
   unbanUser(userId: number): Promise<User | undefined>;
   resetUserTokens(userId: number): Promise<User | undefined>;
+  resetUserTasks(userId: number): Promise<User | undefined>;
+  resetUserData(userId: number): Promise<User | undefined>;
+  deleteUser(userId: number): Promise<boolean>;
   getTaskCompletionStats(): Promise<any>;
   getUserActivityStats(): Promise<any>;
   

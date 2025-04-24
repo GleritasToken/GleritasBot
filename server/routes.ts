@@ -1003,6 +1003,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Delete a user permanently (admin only)
+  app.delete("/api/admin/users/:userId/delete", requireAdmin, async (req: Request, res: Response) => {
+    try {
+      const userId = parseInt(req.params.userId);
+      if (isNaN(userId)) {
+        return res.status(400).json({
+          success: false,
+          error: "Invalid user ID"
+        });
+      }
+      
+      // Check if user exists
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          error: "User not found"
+        });
+      }
+      
+      const result = await storage.deleteUser(userId);
+      if (result) {
+        res.json({
+          success: true,
+          message: "User has been permanently deleted",
+          userId
+        });
+      } else {
+        res.status(500).json({
+          success: false,
+          error: "Failed to delete user"
+        });
+      }
+    } catch (error) {
+      console.error("Delete user error:", error);
+      res.status(500).json({
+        success: false,
+        error: "An error occurred while deleting the user"
+      });
+    }
+  });
+  
   // Create HTTP server
   const httpServer = createServer(app);
 

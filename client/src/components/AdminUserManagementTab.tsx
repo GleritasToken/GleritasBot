@@ -973,6 +973,86 @@ const AdminUserManagementTab: React.FC = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      {/* Delete User Dialog */}
+      <Dialog open={isDeleteUserDialogOpen} onOpenChange={setIsDeleteUserDialogOpen}>
+        <DialogContent className="bg-[#1c3252] border-[#2a4365] text-white">
+          <DialogHeader>
+            <DialogTitle className="flex items-center">
+              <Trash2 className="h-5 w-5 mr-2 text-red-400" />
+              Delete User Permanently
+            </DialogTitle>
+          </DialogHeader>
+          
+          <div className="py-4">
+            <div className="mb-4">
+              <div className="bg-red-950/30 border border-red-800 rounded p-3 mb-4">
+                <p className="text-sm font-medium text-red-400 mb-2 flex items-center">
+                  <AlertCircle className="h-4 w-4 mr-1" />
+                  Warning: Permanent Action
+                </p>
+                <p className="text-xs text-gray-300 mb-2">
+                  You are about to permanently delete this user from the system. This action:
+                </p>
+                <ul className="list-disc pl-5 mb-2 space-y-1 text-xs text-gray-300">
+                  <li>Cannot be undone</li>
+                  <li>Will remove the user from all records</li>
+                  <li>Will delete all their completed tasks and tokens</li>
+                  <li>Will remove the username from the system, allowing someone else to claim it</li>
+                </ul>
+              </div>
+              
+              <p className="text-sm text-gray-300 mb-2">
+                User to be deleted:
+              </p>
+              <div className="bg-[#172a41] p-2 rounded text-sm mb-4">
+                <span className="font-bold">{selectedUser?.username}</span>
+                <div className="text-xs text-gray-400 mt-1">
+                  ID: {selectedUser?.id} • Tokens: {selectedUser?.totalTokens || 0} GLRS
+                </div>
+                {selectedUser?.walletAddress && (
+                  <div className="text-xs text-gray-400 mt-1">
+                    Wallet: {selectedUser.walletAddress}
+                  </div>
+                )}
+              </div>
+              
+              <div className="space-y-2">
+                <p className="text-sm text-red-400 font-medium">
+                  To confirm deletion, type the username "{selectedUser?.username}" below:
+                </p>
+                <Input
+                  value={deleteConfirmation}
+                  onChange={(e) => setDeleteConfirmation(e.target.value)}
+                  placeholder={`Type ${selectedUser?.username} to confirm`}
+                  className="bg-[#172a41] border-[#2a4365]"
+                />
+              </div>
+            </div>
+          </div>
+          
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsDeleteUserDialogOpen(false)}
+              className="border-gray-500 text-gray-300 hover:bg-gray-700 hover:text-white"
+            >
+              Cancel
+            </Button>
+            <Button 
+              type="button"
+              onClick={handleDeleteUser}
+              disabled={deleteUserMutation.isPending || deleteConfirmation !== selectedUser?.username}
+              className="bg-red-700 hover:bg-red-800 text-white"
+            >
+              {deleteUserMutation.isPending && (
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+              )}
+              Delete Permanently
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
