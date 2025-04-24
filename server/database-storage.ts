@@ -454,6 +454,41 @@ export class DatabaseStorage implements IStorage {
     }
   }
   
+  // Completely delete a user and all associated data
+  async deleteUser(userId: number): Promise<boolean> {
+    try {
+      // Start a transaction to ensure everything is deleted or nothing
+      return await db.transaction(async (tx) => {
+        // First, delete all user tasks
+        await tx.delete(userTasks)
+          .where(eq(userTasks.userId, userId));
+        
+        // Delete all referrals where user is referrer or referred
+        await tx.delete(referrals)
+          .where(
+            or(
+              eq(referrals.referrerUserId, userId),
+              eq(referrals.referredUserId, userId)
+            )
+          );
+        
+        // Delete all withdrawals by this user
+        await tx.delete(withdrawals)
+          .where(eq(withdrawals.userId, userId));
+        
+        // Finally, delete the user
+        const result = await tx.delete(users)
+          .where(eq(users.id, userId));
+        
+        // Return true if at least one user was deleted
+        return result.rowCount > 0;
+      });
+    } catch (error) {
+      console.error(`Error deleting user ${userId}:`, error);
+      return false;
+    }
+  }
+  
   async resetAllUserTasks(): Promise<boolean> {
     try {
       // Begin a transaction

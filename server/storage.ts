@@ -481,6 +481,43 @@ export class MemStorage implements IStorage {
     return updatedUser;
   }
   
+  async deleteUser(userId: number): Promise<boolean> {
+    try {
+      // Check if user exists
+      const user = this.users.get(userId);
+      if (!user) return false;
+      
+      // Delete the user
+      this.users.delete(userId);
+      
+      // Delete all user tasks
+      for (const [id, task] of this.userTasks.entries()) {
+        if (task.userId === userId) {
+          this.userTasks.delete(id);
+        }
+      }
+      
+      // Delete all referrals where user is referrer or referred
+      for (const [id, referral] of this.referrals.entries()) {
+        if (referral.referrerUserId === userId || referral.referredUserId === userId) {
+          this.referrals.delete(id);
+        }
+      }
+      
+      // Delete all withdrawals by this user
+      for (const [id, withdrawal] of this.withdrawals.entries()) {
+        if (withdrawal.userId === userId) {
+          this.withdrawals.delete(id);
+        }
+      }
+      
+      return true;
+    } catch (error) {
+      console.error("Error deleting user:", error);
+      return false;
+    }
+  }
+  
   async getTaskCompletionStats(): Promise<any> {
     const allTasks = await this.getAllTasks();
     const allUserTasks = await this.getAllUserTasks();
