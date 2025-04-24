@@ -1,7 +1,7 @@
 import React from 'react';
 import { useLocation, Link } from 'wouter';
 import { Button } from '@/components/ui/button';
-import { Home, CheckSquare, Users, Info, LogOut, Wallet, Star } from 'lucide-react';
+import { Home, CheckSquare, Users, Info, LogOut, Wallet } from 'lucide-react';
 import { useUser } from '@/providers/UserProvider';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
@@ -109,17 +109,6 @@ export default function Navigation() {
           >
             <Wallet className="h-5 w-5" />
             <span className="text-xs mt-1">Withdraw</span>
-          </Button>
-        </Link>
-        
-        <Link href="/upgrade">
-          <Button 
-            variant="ghost" 
-            size="sm"
-            className={`${isActive('/upgrade')} flex flex-col items-center p-2`}
-          >
-            <Star className="h-5 w-5" />
-            <span className="text-xs mt-1">Upgrade</span>
           </Button>
         </Link>
         
