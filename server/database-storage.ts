@@ -661,4 +661,50 @@ export class DatabaseStorage implements IStorage {
       // even if task initialization fails
     }
   }
+  
+  async getTokenAllocationStats(): Promise<{ totalTokensClaimed: number, totalAllocation: number }> {
+    try {
+      // Sum up all tokens earned by users (both from tasks and referrals)
+      const allUsers = await db.select().from(users);
+      const totalTokensClaimed = allUsers.reduce((sum, user) => sum + user.totalTokens, 0);
+      
+      // Total allocation is 500,000 GLRS tokens
+      const totalAllocation = 500000;
+      
+      return {
+        totalTokensClaimed,
+        totalAllocation
+      };
+    } catch (error) {
+      console.error("Error getting token allocation stats:", error);
+      return {
+        totalTokensClaimed: 0,
+        totalAllocation: 500000
+      };
+    }
+  }
+  
+  async deleteAllUsers(): Promise<boolean> {
+    try {
+      // Using a transaction to ensure data consistency
+      await db.transaction(async (tx) => {
+        // Delete all withdrawals
+        await tx.delete(withdrawals);
+        
+        // Delete all user tasks
+        await tx.delete(userTasks);
+        
+        // Delete all referrals
+        await tx.delete(referrals);
+        
+        // Delete all users
+        await tx.delete(users);
+      });
+      
+      return true;
+    } catch (error) {
+      console.error("Error deleting all users:", error);
+      return false;
+    }
+  }
 }
