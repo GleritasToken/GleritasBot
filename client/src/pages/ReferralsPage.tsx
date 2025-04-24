@@ -4,12 +4,16 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useUser } from '@/providers/UserProvider';
-import { Copy, Users, AlertCircle, CheckCircle } from 'lucide-react';
+import { Copy, Users, AlertCircle, CheckCircle, Share2 } from 'lucide-react';
 import Navigation from '@/components/Navigation';
 import { useQuery } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 import { motion } from 'framer-motion';
 import { Progress } from '@/components/ui/progress';
+import { 
+  FacebookShareButton, TwitterShareButton, TelegramShareButton, WhatsappShareButton,
+  FacebookIcon, TwitterIcon, TelegramIcon, WhatsappIcon
+} from 'react-share';
 
 const ReferralsPage: React.FC = () => {
   const { user } = useUser();
@@ -226,6 +230,43 @@ const ReferralsPage: React.FC = () => {
                     )}
                   </Button>
                 </motion.div>
+              </motion.div>
+              
+              {/* Social media share buttons */}
+              <motion.div
+                className="mt-4"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.7 }}
+              >
+                <div className="flex justify-between items-center mb-3">
+                  <h4 className="text-sm font-medium flex items-center">
+                    <Share2 className="h-4 w-4 mr-2 text-blue-400" />
+                    Share with friends
+                  </h4>
+                </div>
+                <div className="flex space-x-3 justify-center">
+                  <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+                    <FacebookShareButton url={referralUrl} quote="Join me on Gleritas Token Airdrop and earn GLRS tokens!">
+                      <FacebookIcon size={40} round={true} />
+                    </FacebookShareButton>
+                  </motion.div>
+                  <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+                    <TwitterShareButton url={referralUrl} title="Join me on Gleritas Token Airdrop and earn GLRS tokens!" via="GleritasToken">
+                      <TwitterIcon size={40} round={true} />
+                    </TwitterShareButton>
+                  </motion.div>
+                  <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+                    <TelegramShareButton url={referralUrl} title="Join me on Gleritas Token Airdrop and earn GLRS tokens!">
+                      <TelegramIcon size={40} round={true} />
+                    </TelegramShareButton>
+                  </motion.div>
+                  <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+                    <WhatsappShareButton url={referralUrl} title="Join me on Gleritas Token Airdrop and earn GLRS tokens!">
+                      <WhatsappIcon size={40} round={true} />
+                    </WhatsappShareButton>
+                  </motion.div>
+                </div>
               </motion.div>
             </div>
             
