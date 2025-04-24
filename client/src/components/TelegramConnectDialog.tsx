@@ -7,6 +7,7 @@ import { AlertCircle } from "lucide-react";
 import { useMutation } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
+import RewardAnimation from './RewardAnimation';
 
 interface TelegramConnectDialogProps {
   isOpen: boolean;
@@ -21,6 +22,7 @@ const TelegramConnectDialog: React.FC<TelegramConnectDialogProps> = ({
 }) => {
   const [telegramId, setTelegramId] = useState("");
   const [error, setError] = useState("");
+  const [showReward, setShowReward] = useState(false);
   const { toast } = useToast();
 
   const connectMutation = useMutation({
@@ -33,12 +35,9 @@ const TelegramConnectDialog: React.FC<TelegramConnectDialogProps> = ({
       return response.json();
     },
     onSuccess: () => {
-      toast({
-        title: "Success!",
-        description: "Your Telegram account has been connected successfully.",
-      });
+      // Show reward animation instead of immediately closing
+      setShowReward(true);
       onSuccess();
-      onClose();
     },
     onError: (error: Error) => {
       setError(error.message);
@@ -97,7 +96,7 @@ const TelegramConnectDialog: React.FC<TelegramConnectDialogProps> = ({
                   <li>The bot will reply with your Telegram ID (a number)</li>
                   <li>Copy just the number and paste it here</li>
                 </ol>
-                <p className="text-amber-400 mt-2 text-xs">* Connecting your Telegram account will reward you with 30 GLRS tokens!</p>
+                <p className="text-amber-400 mt-2 text-xs">* Connecting your Telegram account will reward you with 2 GLRS tokens!</p>
               </div>
             </div>
 
