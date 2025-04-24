@@ -68,66 +68,80 @@ const TelegramConnectDialog: React.FC<TelegramConnectDialogProps> = ({
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="bg-[#1c3252] border-[#2a4365] text-white">
-        <DialogHeader>
-          <DialogTitle>Connect Telegram Account</DialogTitle>
-          <DialogDescription className="text-gray-300">
-            Connecting your Telegram account allows for automatic verification of Telegram tasks.
-          </DialogDescription>
-        </DialogHeader>
+    <>
+      <Dialog open={isOpen && !showReward} onOpenChange={(open) => !showReward && onClose()}>
+        <DialogContent className="bg-[#1c3252] border-[#2a4365] text-white">
+          <DialogHeader>
+            <DialogTitle>Connect Telegram Account</DialogTitle>
+            <DialogDescription className="text-gray-300">
+              Connecting your Telegram account allows for automatic verification of Telegram tasks.
+            </DialogDescription>
+          </DialogHeader>
 
-        <form onSubmit={handleConnect}>
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="telegramId">Your Telegram ID</Label>
-              <Input
-                id="telegramId"
-                placeholder="Enter your Telegram ID number"
-                value={telegramId}
-                onChange={(e) => setTelegramId(e.target.value)}
-                className="bg-[#243b5c] border-[#2a4365] focus:border-blue-500"
-              />
-              <div className="text-sm text-gray-400">
-                <p>To find your Telegram ID:</p>
-                <ol className="list-decimal pl-5 mt-1">
-                  <li>Open Telegram and search for "@userinfobot"</li>
-                  <li>Start a chat with this bot and send any message (like "Hi")</li>
-                  <li>The bot will reply with your Telegram ID (a number)</li>
-                  <li>Copy just the number and paste it here</li>
-                </ol>
-                <p className="text-amber-400 mt-2 text-xs">* Connecting your Telegram account will reward you with 2 GLRS tokens!</p>
+          <form onSubmit={handleConnect}>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="telegramId">Your Telegram ID</Label>
+                <Input
+                  id="telegramId"
+                  placeholder="Enter your Telegram ID number"
+                  value={telegramId}
+                  onChange={(e) => setTelegramId(e.target.value)}
+                  className="bg-[#243b5c] border-[#2a4365] focus:border-blue-500"
+                />
+                <div className="text-sm text-gray-400">
+                  <p>To find your Telegram ID:</p>
+                  <ol className="list-decimal pl-5 mt-1">
+                    <li>Open Telegram and search for "@userinfobot"</li>
+                    <li>Start a chat with this bot and send any message (like "Hi")</li>
+                    <li>The bot will reply with your Telegram ID (a number)</li>
+                    <li>Copy just the number and paste it here</li>
+                  </ol>
+                  <p className="text-amber-400 mt-2 text-xs">* Connecting your Telegram account will reward you with 2 GLRS tokens!</p>
+                </div>
               </div>
+
+              {error && (
+                <div className="bg-red-900/30 p-3 rounded-md flex items-start">
+                  <AlertCircle className="h-5 w-5 text-red-500 mr-2 mt-0.5" />
+                  <p className="text-sm text-red-400">{error}</p>
+                </div>
+              )}
             </div>
 
-            {error && (
-              <div className="bg-red-900/30 p-3 rounded-md flex items-start">
-                <AlertCircle className="h-5 w-5 text-red-500 mr-2 mt-0.5" />
-                <p className="text-sm text-red-400">{error}</p>
-              </div>
-            )}
-          </div>
+            <DialogFooter className="mt-6">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={onClose}
+                className="border-gray-600"
+              >
+                Cancel
+              </Button>
+              <Button 
+                type="submit"
+                className="bg-blue-600 hover:bg-blue-700"
+                disabled={connectMutation.isPending}
+              >
+                {connectMutation.isPending ? "Connecting..." : "Connect Account"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
 
-          <DialogFooter className="mt-6">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={onClose}
-              className="border-gray-600"
-            >
-              Cancel
-            </Button>
-            <Button 
-              type="submit"
-              className="bg-blue-600 hover:bg-blue-700"
-              disabled={connectMutation.isPending}
-            >
-              {connectMutation.isPending ? "Connecting..." : "Connect Account"}
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
+      {/* Reward Animation */}
+      <RewardAnimation
+        isOpen={showReward}
+        onClose={() => {
+          setShowReward(false);
+          onClose();
+        }}
+        rewardAmount={2}
+        rewardType="GLRS"
+        message="Telegram Account Connected!"
+      />
+    </>
   );
 };
 

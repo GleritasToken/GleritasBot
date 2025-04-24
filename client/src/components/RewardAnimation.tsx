@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Confetti from 'react-confetti';
-import { useWindowSize } from '@/hooks/use-window-size';
+import { useWindowSize } from '../hooks/use-window-size';
 import { Gift, Sparkles, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
